@@ -1,2 +1,2 @@
 # QtSerialMonitor
-Universal serial / network terminal with data plotting capabilities.
+Universal serial / network terminal with data plotting capabilities, designed for Arduino based projects and more...
