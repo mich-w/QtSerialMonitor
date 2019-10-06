@@ -1,7 +1,7 @@
 # QtSerialMonitor
 Universal serial monitor with data plotting capabilities, based on [Qt](https://www.qt.io/). Designed with all sorts of [Arduino](https://www.arduino.cc/) projects in mind, as a handy tool for debugging and experimentation :) 
 
-![mainwindow](/docs/_screenshots/mainwindow.png)
+<img src="https://raw.githubusercontent.com/mich-w/QtSerialMonitor/master/docs/_screenshots/mainwindow.jpg">
 
 Features:
 - In/out serial data terminal with command history,
