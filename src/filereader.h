@@ -1,33 +1,33 @@
 #ifndef FILEREADER_H
 #define FILEREADER_H
 
-#include <QObject>
-#include <QTimer>
 #include <QFile>
+#include <QObject>
 #include <QTextStream>
+#include <QTimer>
 
 class FileReader : public QObject
 {
     Q_OBJECT
 public:
     explicit FileReader(QObject *parent = nullptr);
-    bool startRead(QFile *fileToRead);
-    void setReadInterval(int newVal);
-    void abortRead();
     bool readAllAtOnce(QFile *fileToRead);
+    bool startRead(QFile *fileToRead);
+    void abortRead();
+    void setReadInterval(int newVal);
 signals:
-    void lineReady(QString*, int*);
     void fileReadFinished();
-    void textReady(QString*);
+    void lineReady(QString *, int *);
+    void textReady(QString *);
 public slots:
-
 private slots:
     void readLineSendLine();
+
 private:
-    QTimer fileReadTimer;
+    int lineReadIterator = 0;
     int readInterval = 1; // ms
     QStringList readFileSplitLines;
-    int lineReadIterator = 0;
+    QTimer fileReadTimer;
 };
 
 #endif // FILEREADER_H

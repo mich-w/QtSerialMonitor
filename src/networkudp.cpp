@@ -26,7 +26,6 @@ bool NetworkUDP::end()
         return true;
     else
         return false;
-
 }
 
 bool NetworkUDP::bind(QHostAddress ip, qint16 port)

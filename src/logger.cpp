@@ -2,7 +2,6 @@
 
 Logger::Logger(QObject *parent) : QObject(parent)
 {
-
 }
 
 void Logger::openFile(QString fileName)
@@ -36,7 +35,7 @@ bool Logger::beginLog(QString path, bool autoLogging, QString fileName)
         if (autoLogging)
             openFile(path + "/" + QDateTime::currentDateTime().toString("dd.MM.yyyy_hh.mm.ss.zzz_") + "Log.txt");
         else
-            openFile(path +"/" + fileName);
+            openFile(path + "/" + fileName);
 
         return true;
     }
@@ -74,7 +73,7 @@ void Logger::writeLogParsedData(QStringList labelList, QList<double> dataList, b
 {
     QString text;
 
-    for (auto i = 0; i< labelList.count(); ++i)
+    for (auto i = 0; i < labelList.count(); ++i)
     {
         text.append(labelList[i] + " " + QString::number(dataList[i], 'f') + " :: ");
     }
@@ -94,4 +93,3 @@ void Logger::writeLogParsedData(QStringList labelList, QList<double> dataList, b
         out << text + "\r";
     }
 }
-

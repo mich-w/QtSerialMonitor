@@ -63,7 +63,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
                         }
                     }
 
-                    if (minimumTime != QTime(0,0,0) && maximumTime != QTime(0,0,0))
+                    if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
                     {
                         if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
                         {
@@ -131,7 +131,7 @@ QList<long> Parser::getListTimeStamp()
 
 void Parser::clearExternalClock()
 {
-    latestTimeStamp.setHMS(0,0,0,0);
+    latestTimeStamp.setHMS(0, 0, 0, 0);
 }
 
 void Parser::restartChartTimer()
@@ -145,12 +145,11 @@ void Parser::parserClockAddMSecs(int millis)
     // parserClock->start();
 }
 
-
 void Parser::appendSetToMemory(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, QString text)
 {
     labelStorage.append(newlabelList);
     dataStorage.append(newDataList);
-    timeStorage.append(newTimeList);
+    timeStampStorage.append(newTimeList);
 
     if (!text.isEmpty())
         textStorage.append(text);
@@ -168,7 +167,7 @@ QList<double> Parser::getDataStorage()
 
 QList<long> Parser::getTimeStorage()
 {
-    return timeStorage;
+    return timeStampStorage;
 }
 
 QStringList Parser::getTextList()
@@ -176,12 +175,19 @@ QStringList Parser::getTextList()
     return textStorage;
 }
 
-void Parser::clear()
+void Parser::clearStorage()
 {
     labelStorage.clear();
     dataStorage.clear();
-    timeStorage.clear();
+    timeStampStorage.clear();
     textStorage.clear();
+}
+
+void Parser::clear()
+{
+    stringListLabels.clear();
+    stringListNumericData.clear();
+    listTimeStamp.clear();
 }
 
 void Parser::setParsingTimeRange(QTime minTime, QTime maxTime)
@@ -205,4 +211,3 @@ void Parser::setReportProgress(bool isEnabled)
 {
     canReportProgress = isEnabled;
 }
-

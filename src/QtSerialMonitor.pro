@@ -30,7 +30,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-        dataratechart.cpp \
         filereader.cpp \
         logger.cpp \
         main.cpp \
@@ -43,7 +42,6 @@ SOURCES += \
 HEADERS += \
         ../../../../../../Downloads/QCustomPlot.tar/qcustomplot/qcustomplot.h \
         config.h \
-        dataratechart.h \
         filereader.h \
         logger.h \
         mainwindow.h \

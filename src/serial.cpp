@@ -15,19 +15,19 @@ void Serial::readString()
     switch (stringReadMode)
     {
     case canReadLine_ReadLine:
-        while(this->serialDevice->canReadLine())
+        while (this->serialDevice->canReadLine())
             serialInputString.append(serialDevice->readLine());
         break;
     case canReadLine_ReadAll:
-        while(this->serialDevice->canReadLine())
+        while (this->serialDevice->canReadLine())
             serialInputString.append(serialDevice->readAll());
         break;
     case bytesAvailable_ReadLine:
-        while(this->serialDevice->bytesAvailable())
+        while (this->serialDevice->bytesAvailable())
             serialInputString.append(serialDevice->readLine());
         break;
     case bytesAvailable_ReadAll:
-        while(this->serialDevice->bytesAvailable())
+        while (this->serialDevice->bytesAvailable())
             serialInputString.append(serialDevice->readAll());
         break;
     }
@@ -174,7 +174,7 @@ int Serial::getAvailiblePortsCount()
 
 bool Serial::begin(QString parsedPortName, int parsedBaudRate, int dataBits, int parity, int stopBits, int flowControl, bool dtrOn)
 {
-    if(QSerialPortInfo::availablePorts().count() < 1)
+    if (QSerialPortInfo::availablePorts().count() < 1)
     {
         // this->addLog(">>\t No devices available");
         return false;
@@ -182,9 +182,9 @@ bool Serial::begin(QString parsedPortName, int parsedBaudRate, int dataBits, int
 
     this->serialDevice->setPortName(parsedPortName);
 
-    if(!serialDevice->isOpen())
+    if (!serialDevice->isOpen())
     {
-        if(serialDevice->open(QSerialPort::ReadWrite))
+        if (serialDevice->open(QSerialPort::ReadWrite))
         {
             this->serialDevice->clear();
             this->serialDevice->setBaudRate(parsedBaudRate);
@@ -217,9 +217,9 @@ bool Serial::begin(QString parsedPortName, qint32 parsedBaudRate, QString dataBi
 
     this->serialDevice->setPortName(parsedPortName);
 
-    if(!serialDevice->isOpen())
+    if (!serialDevice->isOpen())
     {
-        if(serialDevice->open(QSerialPort::ReadWrite))
+        if (serialDevice->open(QSerialPort::ReadWrite))
         {
             this->serialDevice->clear();
             this->serialDevice->setBaudRate(parsedBaudRate);
@@ -290,7 +290,7 @@ bool Serial::end()
 
 bool Serial::send(QString message)
 {
-    if(this->serialDevice->isOpen() && this->serialDevice->isWritable())
+    if (this->serialDevice->isOpen() && this->serialDevice->isWritable())
     {
         this->serialDevice->write(message.toStdString().c_str());
         return true;
@@ -303,7 +303,7 @@ bool Serial::send(QString message)
 
 bool Serial::send(const QByteArray &message)
 {
-    if(this->serialDevice->isOpen() && this->serialDevice->isWritable())
+    if (this->serialDevice->isOpen() && this->serialDevice->isWritable())
     {
         this->serialDevice->write(message);
         return true;
@@ -313,6 +313,3 @@ bool Serial::send(const QByteArray &message)
         return false;
     }
 }
-
-
-

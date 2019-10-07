@@ -7,7 +7,7 @@ FileReader::FileReader(QObject *parent) : QObject(parent)
 
 void FileReader::readLineSendLine()
 {
-    int progressPercent = lineReadIterator * 100 / readFileSplitLines.count() ;
+    int progressPercent = lineReadIterator * 100 / readFileSplitLines.count();
     emit lineReady(&readFileSplitLines[lineReadIterator], &progressPercent);
     lineReadIterator++;
 
@@ -21,7 +21,7 @@ void FileReader::readLineSendLine()
 }
 
 bool FileReader::startRead(QFile *fileToRead)
-{    
+{
     if (fileToRead->open(QIODevice::ReadOnly))
     {
         QTextStream stream(fileToRead);
