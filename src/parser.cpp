@@ -38,7 +38,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
 
         QRegExp mainSymbols("[+-]?\\d*\\.?\\d+"); // float only   //  QRegExp mainSymbols("[-+]?[0-9]*\.?[0-9]+");
         QRegExp alphanumericSymbols("\\w+");
-        QRegExp sepSymbols("[=:,]");
+        QRegExp sepSymbols("[=,]");
 
         inputStringSplitArrayLines[l].replace(sepSymbols, " ");
         QStringList inputStringSplitArray = inputStringSplitArrayLines[l].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
