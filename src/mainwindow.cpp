@@ -37,7 +37,6 @@ void MainWindow::setupTable()
 void MainWindow::processTable(QStringList labels, QList<double> values)
 {
     static QList<int> tableMissingCount;
-    static QList<int> tableIntervalList;
 
     foreach (auto label, labels)
     {
@@ -473,7 +472,7 @@ void MainWindow::createChart()
     connect(ui->widgetChart, SIGNAL(mousePress(QMouseEvent *)), this, SLOT(chartMousePressHandler(QMouseEvent *)));
     connect(ui->widgetChart, SIGNAL(selectionChangedByUser()), this, SLOT(chartSelectionChanged()));
     connect(ui->widgetChart, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(chartContextMenuRequest(QPoint)));
-    connect(ui->widgetChart, SIGNAL(beforeReplot()), this, SLOT(chartRunAutoTrackSlot()));
+    connect(ui->widgetChart, SIGNAL(beforeReplot()), this, SLOT(chartBeforeReplotSlot()));
 
     //  ui->widgetChart->setNotAntialiasedElements(QCP::aeAll);
 
@@ -484,7 +483,8 @@ void MainWindow::createChart()
     }
 }
 
-void MainWindow::chartRunAutoTrackSlot()
+// Auto-scroll X and rescale Y
+void MainWindow::chartBeforeReplotSlot()
 {
     if (ui->checkBoxAutoTrack->isChecked() && ui->widgetChart->graphCount() > 0)
     {
@@ -496,15 +496,23 @@ void MainWindow::chartRunAutoTrackSlot()
 
         if (ui->checkBoxAutoRescaleY->isChecked())
         {
-            bool atLeastOneGraphVisible = false, onlyFlatGraphsVisible = false;
+            bool atLeastOneGraphVisible = false, atLeastOneNotFlat = false;
 
             for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
             {
                 if (ui->widgetChart->graph(i)->visible())
+                {
                     atLeastOneGraphVisible = true;
+
+                    bool foundRange = false;
+                    QCPRange valueRange = ui->widgetChart->graph(i)->data().data()->valueRange(foundRange);
+
+                    if (foundRange && abs(valueRange.upper - valueRange.lower) >= 0.1)
+                        atLeastOneNotFlat = true;
+                }
             }
 
-            if (atLeastOneGraphVisible == true) //*&& onlyFlatGraphsVisible == false*//
+            if (atLeastOneGraphVisible && atLeastOneNotFlat)
             {
                 ui->widgetChart->yAxis->rescale(true);
                 ui->widgetChart->yAxis->scaleRange(1.20);
@@ -715,9 +723,9 @@ void MainWindow::showPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                           .arg(graph->name())
-                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                           .arg(QString::number(temp.y(), 'f', 5)),
+                       .arg(graph->name())
+                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                       .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -866,9 +874,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
-            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1009,6 +1017,11 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         {
             ui->checkBoxShowLegend->toggle();
         }
+    }
+
+    if (event->key() == Qt::Key_F1)
+    {
+        QWhatsThis::enterWhatsThisMode();
     }
 }
 
@@ -2017,4 +2030,9 @@ void MainWindow::on_pushButtonSaveRAMBuffer_clicked()
         text.append(ui->textBrowserLogs->toPlainText());
 
     parser.appendSetToMemory(newlabelList, newDataList, newTimeList, text);
+}
+
+void MainWindow::on_actionUser_guide_triggered()
+{
+    QWhatsThis::enterWhatsThisMode();
 }

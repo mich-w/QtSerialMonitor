@@ -56,7 +56,7 @@ private slots:
     void chartContextMenuRequest(QPoint pos);
     void chartMouseDoubleClickHandler(QMouseEvent *event);
     void chartMousePressHandler(QMouseEvent *event);
-    void chartRunAutoTrackSlot();
+    void chartBeforeReplotSlot();
     void chartSelectionChanged();
     void comboBoxSendReturnPressedSlot();
     void hideAllGraphs();
@@ -131,6 +131,8 @@ private slots:
     void showSelectedGraph();
     void showSelectedGraphExclusively();
     void updateDeviceList();
+    void on_actionUser_guide_triggered();
+
 private:
     // QCompleter *completer;
     FileReader fileReader;

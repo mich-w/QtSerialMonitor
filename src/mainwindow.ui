@@ -1388,6 +1388,9 @@
                <pointsize>9</pointsize>
               </font>
              </property>
+             <property name="whatsThis">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the main text browser. Received messages and notification will be displayed here.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="lineWrapMode">
               <enum>QTextEdit::NoWrap</enum>
              </property>
@@ -2335,6 +2338,7 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionUser_guide"/>
     <addaction name="actionWhat_s_new"/>
     <addaction name="actionAbout_Qt"/>
    </widget>
@@ -2412,7 +2416,7 @@
   </action>
   <action name="actionWhat_s_new">
    <property name="text">
-    <string>What's new ?</string>
+    <string>Changelog</string>
    </property>
   </action>
   <action name="actionAbout_Qt">
@@ -2460,6 +2464,11 @@
   <action name="actionPrint_log">
    <property name="text">
     <string>Print Log...</string>
+   </property>
+  </action>
+  <action name="actionUser_guide">
+   <property name="text">
+    <string>Enter &quot;What's this ?&quot;</string>
    </property>
   </action>
  </widget>
