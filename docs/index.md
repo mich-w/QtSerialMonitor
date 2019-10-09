@@ -11,16 +11,21 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 - Printer support, ability to save graph as image,
 - Read/write ".txt" data logs,
 - many more...
----
-<a href="https://github.com/mich-w/QtSerialMonitor/releases/download/v1.0/QtSerialMonitor_1.1_win_x64.zip" download>Download QtSerialMonitor_v1.1_win_x64</a> 
+
+<a href="https://github.com/mich-w/QtSerialMonitor/releases/download/1.1/QtSerialMonitor_1.1_win_x64.zip" download>Download QtSerialMonitor_v1.1_win_x64</a> 
 -
 ---
 
 **Work in progress:**
 
-    - "What’s this ?" popups for less obvious widgets and an introduction text/html doc displayed in the main text browser on first run.
+    - "What’s this ?" popups for less obvious widgets and an introduction 
+      text/html doc displayed in the main text browser on first run.
     
-    - 3D Orientation Demo - for IMU testing (user will be able to toggle between chart view and a simple 3D scene containing an object rotating accordingly to received roll, pitch and yaw values, visualizing the sensor's orientation) 
+    - 3D Orientation Demo - for IMU testing (user will be able to toggle between chart view
+      and a simple 3D scene containing an object rotating accordingly to received roll,
+      pitch and yaw values, representing the sensor's orientation) 
+
+    - Improvements, fixes etc.
 
 ----
 
