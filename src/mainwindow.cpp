@@ -109,7 +109,7 @@ void MainWindow::settingsLoadAll()
 {
     QSettings appSettings(QSettings::Format::IniFormat,
                           QSettings::Scope::SystemScope,
-                          "mich-w", "QtSerialMonitor"); // Settings
+                          "QtSerialMonitor", "QtSerialMonitor"); // Settings
 
     // ----- Info ----- //
     {
@@ -119,7 +119,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() &&
-            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             return;
@@ -206,7 +206,7 @@ void MainWindow::settingsSaveAll()
 {
     QSettings appSettings(QSettings::Format::IniFormat,
                           QSettings::Scope::SystemScope,
-                          "mich-w", "QtSerialMonitor"); // Settings
+                          "QtSerialMonitor", "QtSerialMonitor"); // Settings
 
     // ----- Info ----- //
     {
@@ -406,6 +406,7 @@ void MainWindow::comboBoxSendReturnPressedSlot()
         sendDatagram(ui->comboBoxSend->currentText());
 
     ui->comboBoxSend->setCurrentText("");
+    ui->comboBoxSend->model()->sort(0, Qt::SortOrder::AscendingOrder); // sort alphabetically
 }
 
 void MainWindow::createTimers()
