@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "qcustomplot.h"
 #include "serial.h"
+#include "infodialog.h"
 
 #include <QCompleter>
 #include <QDateTime>
@@ -133,6 +134,8 @@ private slots:
     void updateDeviceList();
     void on_actionUser_guide_triggered();
 
+    void on_actionInfo_triggered();
+
 private:
     // QCompleter *completer;
     FileReader fileReader;
@@ -148,6 +151,7 @@ private:
     QTimer *udpStringProcessingTimer;
     Serial serial;
     Ui::MainWindow *ui;
+    InfoDialog infoDialog;
     void addLog(QString text);
     void chartPrintPreview();
     void clearGraphData(bool replot);

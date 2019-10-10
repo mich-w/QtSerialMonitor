@@ -792,6 +792,9 @@ void MainWindow::addLog(QString text)
             text = currentDateTime + text;
 
         ui->textBrowserLogs->append(text);
+
+        // ui->textBrowserLogs->insertPlainText(text);
+        // ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
         // ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
     }
 }
@@ -2036,4 +2039,10 @@ void MainWindow::on_pushButtonSaveRAMBuffer_clicked()
 void MainWindow::on_actionUser_guide_triggered()
 {
     QWhatsThis::enterWhatsThisMode();
+}
+
+void MainWindow::on_actionInfo_triggered()
+{
+    // infoDialog.setModal(true);
+    infoDialog.show();
 }

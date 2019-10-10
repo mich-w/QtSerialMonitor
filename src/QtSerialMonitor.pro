@@ -31,6 +31,7 @@ CONFIG += c++11
 
 SOURCES += \
         filereader.cpp \
+        infodialog.cpp \
         logger.cpp \
         main.cpp \
         mainwindow.cpp \
@@ -43,6 +44,7 @@ HEADERS += \
         ../../../../../../Downloads/QCustomPlot.tar/qcustomplot/qcustomplot.h \
         config.h \
         filereader.h \
+        infodialog.h \
         logger.h \
         mainwindow.h \
         networkudp.h \
@@ -51,6 +53,7 @@ HEADERS += \
         serial.h
 
 FORMS += \
+        infodialog.ui \
         mainwindow.ui
 
 win32:RC_ICONS += QtSM.ico

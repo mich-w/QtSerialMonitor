@@ -2309,7 +2309,7 @@
      <x>0</x>
      <y>0</y>
      <width>1675</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -2341,6 +2341,7 @@
     <addaction name="actionUser_guide"/>
     <addaction name="actionWhat_s_new"/>
     <addaction name="actionAbout_Qt"/>
+    <addaction name="actionInfo"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -2469,6 +2470,11 @@
   <action name="actionUser_guide">
    <property name="text">
     <string>Enter &quot;What's this ?&quot;</string>
+   </property>
+  </action>
+  <action name="actionInfo">
+   <property name="text">
+    <string>Info</string>
    </property>
   </action>
  </widget>
