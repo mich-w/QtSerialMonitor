@@ -133,9 +133,8 @@ private slots:
     void showSelectedGraphExclusively();
     void updateDeviceList();
     void on_actionUser_guide_triggered();
-
     void on_actionInfo_triggered();
-
+    void on_comboBoxLoggingMode_currentIndexChanged(int index);
 private:
     // QCompleter *completer;
     FileReader fileReader;

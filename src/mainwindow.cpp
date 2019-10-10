@@ -2046,3 +2046,11 @@ void MainWindow::on_actionInfo_triggered()
     // infoDialog.setModal(true);
     infoDialog.show();
 }
+
+void MainWindow::on_comboBoxLoggingMode_currentIndexChanged(int index)
+{
+    if (index == 0)
+        ui->checkBoxSimplifyLog->setEnabled(true);
+    else if (index == 1)
+        ui->checkBoxSimplifyLog->setEnabled(false);
+}
