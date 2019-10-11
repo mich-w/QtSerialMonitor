@@ -347,7 +347,7 @@ void MainWindow::setupGUI()
     ui->comboBoxSerialReadMode->addItem("bytesAvailable | readAll");
     ui->comboBoxSerialReadMode->setCurrentIndex(0);
 
-    updateDeviceList();
+    updateSerialDeviceList();
 
     emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
 
@@ -416,7 +416,7 @@ void MainWindow::createTimers()
     this->serialStringProcessingTimer = new QTimer(this);
     this->udpStringProcessingTimer = new QTimer(this);
 
-    connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(updateDeviceList()));
+    connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(updateSerialDeviceList()));
     connect(radioButtonTimer, &QTimer::timeout, this, [=]() { ui->radioButtonDeviceUpdate->setChecked(false); });
 }
 
@@ -480,7 +480,7 @@ void MainWindow::createChart()
     if (ui->checkBoxEnableTracer->isChecked())
     {
         createChartTracer();
-        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(showPointValue(QMouseEvent *)));
+        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
     }
 }
 
@@ -497,7 +497,7 @@ void MainWindow::chartBeforeReplotSlot()
 
         if (ui->checkBoxAutoRescaleY->isChecked())
         {
-            bool atLeastOneGraphVisible = false, atLeastOneNotFlat = false;
+            bool atLeastOneGraphVisible = false, atLeastOneGraphIsNotFlat = false;
 
             for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
             {
@@ -508,26 +508,25 @@ void MainWindow::chartBeforeReplotSlot()
                     bool foundRange = false;
                     QCPRange valueRange = ui->widgetChart->graph(i)->data().data()->valueRange(foundRange);
 
-                    if (foundRange && abs(valueRange.upper - valueRange.lower) >= 0.1)
-                        atLeastOneNotFlat = true;
+                    if (foundRange == true && abs(valueRange.upper - valueRange.lower) >= 0.1)
+                        atLeastOneGraphIsNotFlat = true;
                 }
             }
 
-            if (atLeastOneGraphVisible && atLeastOneNotFlat)
+            if (atLeastOneGraphVisible && atLeastOneGraphIsNotFlat)
             {
                 ui->widgetChart->yAxis->rescale(true);
-                ui->widgetChart->yAxis->scaleRange(1.20);
+                ui->widgetChart->yAxis->scaleRange(1.20); // leave some space at the top and buttom of the chart.
             }
         }
     }
     else
     {
-        //        if (ui->widgetChart->graph()->visible() == false)
-        //            ui->widgetChart->rescaleAxes();
+        // do nothing ?
     }
 }
 
-void MainWindow::chartContextMenuRequest(QPoint pos)
+void MainWindow::chartContextMenuRequest(QPoint pos) // right click on chart
 {
     QMenu *menu = new QMenu(this);
     menu->setAttribute(Qt::WA_DeleteOnClose);
@@ -579,6 +578,7 @@ void MainWindow::chartContextMenuRequest(QPoint pos)
 void MainWindow::showSelectedGraphExclusively()
 {
     hideAllGraphs();
+
     for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
     {
         if (ui->widgetChart->graph(i)->selected() || ui->widgetChart->legend->item(i)->selected())
@@ -687,7 +687,7 @@ void MainWindow::chartSelectionChanged()
     }
 }
 
-void MainWindow::showPointValue(QMouseEvent *event)
+void MainWindow::tracerShowPointValue(QMouseEvent *event)
 {
     if (ui->widgetChart->graphCount() < 1)
         return;
@@ -740,13 +740,11 @@ void MainWindow::chartMousePressHandler(QMouseEvent *event)
     ui->widgetChart->replot();
 }
 
-void MainWindow::updateDeviceList()
+void MainWindow::updateSerialDeviceList()
 {
-    QList<QSerialPortInfo> devices;
+    QList<QSerialPortInfo> devices = QSerialPortInfo::availablePorts();
     QList<QString> portNames;
     static QList<QString> portNamesOld;
-
-    devices = QSerialPortInfo::availablePorts();
 
     foreach (auto item, devices)
     {
@@ -777,9 +775,9 @@ void MainWindow::updateDeviceList()
 
 void MainWindow::on_pushButtonRefresh_clicked()
 {
-    qDebug() << "Szukam urządzeń COM...";
-    this->addLog(">>\t Searching for COM ports...");
-    this->updateDeviceList();
+    qDebug() << "Refreshing serial device list...";
+    this->addLog("App >>\t Searching for COM ports...");
+    this->updateSerialDeviceList();
 }
 
 void MainWindow::addLog(QString text)
@@ -822,6 +820,7 @@ void MainWindow::processSerial()
     }
 }
 
+// TODO
 void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
 {
     if (ui->pushButtonLogging->isChecked()) // Write log into file
@@ -908,15 +907,15 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         {
             if (labelList[j] == ui->widgetChart->graph(i)->name()) // If label matches the graphs name - we can start add points to it
             {
-                if (timeStampsList[j] > 0) // if == 0 then we assume taht no external clock was parsed propely
+                if (timeStampsList[j] > 0) // if == 0 then we assume that no external clock was parsed propely
                     ui->widgetChart->graph(i)->addData(timeStampsList[j] / 1000.0, numericDataList[j]);
 
-                // break; // we keep checking for duplicates so we can add multiple points at once
+                // break; // no break - slower but if we keep checking for duplicates, we can add multiple points at once
             }
         }
 
         if (ui->spinBoxMaxTimeRange->value() > 0)
-            ui->widgetChart->graph(i)->data().data()->removeBefore((timeStampsList.last() / 1000.0) - ui->spinBoxMaxTimeRange->value()); // Remove old samples
+            ui->widgetChart->graph(i)->data().data()->removeBefore((timeStampsList.last() / 1000.0) - ui->spinBoxMaxTimeRange->value()); // Remove old points
 
         if (ui->spinBoxRemoveOldLabels->value() > 0)
         {
@@ -928,7 +927,7 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
             if (missingCount[i] > ui->spinBoxRemoveOldLabels->value())
             {
                 ui->widgetChart->removeGraph(i);
-                missingCount.removeAt(i);
+                missingCount.removeAt(i); // Remove entry for this label
             }
         }
     }
@@ -1023,7 +1022,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
     }
 
-    if (event->key() == Qt::Key_F1)
+    if (event->key() == Qt::Key::Key_F1)
     {
         QWhatsThis::enterWhatsThisMode();
     }
@@ -1114,11 +1113,11 @@ void MainWindow::on_checkBoxEnableTracer_toggled(bool checked)
     if (checked)
     {
         createChartTracer();
-        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(showPointValue(QMouseEvent *)));
+        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
     }
     else
     {
-        disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(showPointValue(QMouseEvent *)));
+        disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
         delete phaseTracer;
         phaseTracer = nullptr;
     }
@@ -1286,13 +1285,13 @@ void MainWindow::on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1)
     {
         if (phaseTracer != nullptr)
         {
-            disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(showPointValue(QMouseEvent *)));
+            disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
             delete phaseTracer;
             phaseTracer = nullptr;
         }
 
         createChartTracer();
-        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(showPointValue(QMouseEvent *)));
+        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
 
         ui->widgetChart->replot();
     }
@@ -1304,8 +1303,8 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
     {
         if (serial.getAvailiblePortsCount() < 1)
         {
-            addLog(">>\t No devices available");
-            addLog(">>\t Unable to open serial port!");
+            addLog("App >>\t No devices available");
+            addLog("App >>\t Unable to open serial port!");
             ui->pushButtonSerialConnect->setChecked(false);
             return;
         }
@@ -1329,13 +1328,13 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 
             connect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(processSerial()));
 
-            addLog(">>\t Serial port opened. " + serial.getSerialInfo() + " DTR: " + QString::number(ui->checkBoxDTR->isChecked()));
+            addLog("App >>\t Serial port opened. " + serial.getSerialInfo() + " DTR: " + QString::number(ui->checkBoxDTR->isChecked()));
             ui->pushButtonSerialConnect->setText("Disconnect");
         }
         else
         {
             ui->pushButtonSerialConnect->setChecked(false);
-            addLog(">>\t Unable to open serial port!");
+            addLog("App >>\t Unable to open serial port!");
         }
     }
     else
@@ -1346,13 +1345,13 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 
         if (serial.end())
         {
-            addLog(">>\t Connection closed.");
+            addLog("App >>\t Connection closed.");
             ui->pushButtonSerialConnect->setText("Connect");
         }
         else
         {
             ui->pushButtonSerialConnect->setChecked(true);
-            addLog(">>\t ERROR: Unable to close cennection !");
+            addLog("App >>\t ERROR: Unable to close cennection !");
         }
 
         if (!ui->pushButtonSerialConnect->isChecked() && !ui->pushButtonUDPConnect->isChecked())
@@ -1367,6 +1366,7 @@ void MainWindow::on_actionSave_As_triggered()
 
     if (fileName.isEmpty())
     {
+        addLog("App >>\t Saving file aborted - filename not specified.");
         return;
     }
     else
@@ -1415,7 +1415,7 @@ void MainWindow::on_actionPlotter_triggered()
 
 void MainWindow::on_action3D_orientation_triggered()
 {
-    //  ui->stackedWidget->setCurrentIndex(1);
+    //  ui->stackedWidget->setCurrentIndex(1); // WIP
 }
 
 void MainWindow::printPlot(QPrinter *printer)
@@ -1511,13 +1511,13 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
 
             connect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(processUDP()));
 
-            addLog(">>\t UDP port opened.");
+            addLog("App >>\t UDP port opened.");
 
             ui->pushButtonUDPConnect->setText("Close Connection");
         }
         else
         {
-            addLog(">>\t UDP error. Unable to bind");
+            addLog("App >>\t UDP error. Unable to bind");
         }
     }
     else
@@ -1526,7 +1526,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
         {
             udpStringProcessingTimer->stop();
 
-            addLog(">>\t UDP port closed.");
+            addLog("App >>\t UDP port closed.");
 
             disconnect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(processUDP()));
 
@@ -1542,7 +1542,7 @@ void MainWindow::sendDatagram(QString message)
 {
     if (!networkUDP.isOpen())
     {
-        addLog("UDP\t Unable to send. Port closed.");
+        addLog("App >>\t Unable to send - port closed.");
         return;
     }
 
@@ -1559,7 +1559,7 @@ void MainWindow::sendDatagram(QString message)
         networkUDP.write(message, QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPTargetPort->value());
     }
 
-    addLog("UDP >>\t" + message);
+    addLog("App >>\t" + message);
 }
 
 void MainWindow::on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1)
@@ -1597,7 +1597,7 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
     {
         if (ui->checkBoxAutoLogging->isChecked() == false && ui->lineEditSaveFileName->text().isEmpty())
         {
-            addLog("Logger - Filename not specified !");
+            addLog("App >>\t logger error - filename not specified !");
             ui->pushButtonLogging->setChecked(false);
             return;
         }
@@ -1608,7 +1608,7 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
         {
             if (!fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text()))
             {
-                addLog("Logger - Unable to open File");
+                addLog("App >>\t logger error - unable to open File");
                 ui->pushButtonLogging->setChecked(false);
                 return;
             }

@@ -128,10 +128,10 @@ private slots:
     void processSerial();
     void processUDP();
     void showAllGraphs();
-    void showPointValue(QMouseEvent *event);
+    void tracerShowPointValue(QMouseEvent *event);
     void showSelectedGraph();
     void showSelectedGraphExclusively();
-    void updateDeviceList();
+    void updateSerialDeviceList();
     void on_actionUser_guide_triggered();
     void on_actionInfo_triggered();
     void on_comboBoxLoggingMode_currentIndexChanged(int index);
