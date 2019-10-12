@@ -1543,7 +1543,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QCheckBox" name="checkBoxTrim">
+              <widget class="QCheckBox" name="checkBoxSimplify">
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
@@ -1551,7 +1551,7 @@
                 </size>
                </property>
                <property name="text">
-                <string>Trim</string>
+                <string>Simplify</string>
                </property>
               </widget>
              </item>
@@ -1560,6 +1560,31 @@
                <property name="text">
                 <string>Wrap</string>
                </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="comboBoxFormat">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <item>
+                <property name="text">
+                 <string>TEXT</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>HEX</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>BIN</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item>
@@ -2489,7 +2514,7 @@
  </customwidgets>
  <tabstops>
   <tabstop>lineEditHighlight</tabstop>
-  <tabstop>checkBoxTrim</tabstop>
+  <tabstop>checkBoxSimplify</tabstop>
   <tabstop>pushButtonScrollToButtom</tabstop>
   <tabstop>pushButtonClear</tabstop>
   <tabstop>tabWidgetConnectivity</tabstop>

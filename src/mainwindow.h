@@ -54,10 +54,10 @@ public slots:
     void updateProgressBar(float *percent);
 private slots:
     void aboutToQuitSlot();
+    void chartBeforeReplotSlot();
     void chartContextMenuRequest(QPoint pos);
     void chartMouseDoubleClickHandler(QMouseEvent *event);
     void chartMousePressHandler(QMouseEvent *event);
-    void chartBeforeReplotSlot();
     void chartSelectionChanged();
     void comboBoxSendReturnPressedSlot();
     void hideAllGraphs();
@@ -68,12 +68,14 @@ private slots:
     void on_actionAbout_Qt_triggered();
     void on_actionFull_chart_triggered();
     void on_actionFull_text_view_triggered();
+    void on_actionInfo_triggered();
     void on_actionPlotter_triggered();
     void on_actionPrint_Graph_triggered();
     void on_actionPrint_log_triggered();
     void on_actionQuit_triggered();
     void on_actionSave_As_triggered();
     void on_actionSave_graph_as_triggered();
+    void on_actionUser_guide_triggered();
     void on_actionWhat_s_new_triggered();
     void on_checkBoxAutoLogging_toggled(bool checked);
     void on_checkBoxAutoRefresh_toggled(bool checked);
@@ -85,6 +87,7 @@ private slots:
     void on_checkBoxSyncSystemClock_toggled(bool checked);
     void on_checkBoxWrapText_toggled(bool checked);
     void on_comboBoxGraphDisplayMode_currentIndexChanged(const QString &arg1);
+    void on_comboBoxLoggingMode_currentIndexChanged(int index);
     void on_comboBoxSerialReadMode_currentIndexChanged(int index);
     void on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1);
     void on_comboBoxUDPReceiveMode_currentIndexChanged(const QString &arg1);
@@ -128,16 +131,14 @@ private slots:
     void processSerial();
     void processUDP();
     void showAllGraphs();
-    void tracerShowPointValue(QMouseEvent *event);
     void showSelectedGraph();
     void showSelectedGraphExclusively();
+    void tracerShowPointValue(QMouseEvent *event);
     void updateSerialDeviceList();
-    void on_actionUser_guide_triggered();
-    void on_actionInfo_triggered();
-    void on_comboBoxLoggingMode_currentIndexChanged(int index);
 private:
     // QCompleter *completer;
     FileReader fileReader;
+    InfoDialog infoDialog;
     Logger fileLogger;
     NetworkUDP networkUDP;
     Parser parser;
@@ -150,8 +151,8 @@ private:
     QTimer *udpStringProcessingTimer;
     Serial serial;
     Ui::MainWindow *ui;
-    InfoDialog infoDialog;
     void addLog(QString text);
+    void addLogBytes(QString prefix, QByteArray bytes, bool hexToBinary = false);
     void chartPrintPreview();
     void clearGraphData(bool replot);
     void clearGraphs(bool replot);
@@ -173,7 +174,6 @@ private:
     void setupGUI();
     void setupTable();
     void writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);
-
 protected:
     void keyPressEvent(QKeyEvent *event);
 };

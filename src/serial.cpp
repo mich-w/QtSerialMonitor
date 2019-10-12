@@ -16,19 +16,31 @@ void Serial::readString()
     {
     case canReadLine_ReadLine:
         while (this->serialDevice->canReadLine())
-            serialInputString.append(serialDevice->readLine());
+        {
+            serialByteArray.append(serialDevice->readLine());
+            serialInputString.append(serialByteArray);
+        }
         break;
     case canReadLine_ReadAll:
         while (this->serialDevice->canReadLine())
-            serialInputString.append(serialDevice->readAll());
+        {
+            serialByteArray.append(serialDevice->readAll());
+            serialInputString.append(serialByteArray);
+        }
         break;
     case bytesAvailable_ReadLine:
         while (this->serialDevice->bytesAvailable())
-            serialInputString.append(serialDevice->readLine());
+        {
+            serialByteArray.append(serialDevice->readLine());
+            serialInputString.append(serialByteArray);
+        }
         break;
     case bytesAvailable_ReadAll:
         while (this->serialDevice->bytesAvailable())
-            serialInputString.append(serialDevice->readAll());
+        {
+            serialByteArray.append(serialDevice->readAll());
+            serialInputString.append(serialByteArray);
+        }
         break;
     }
 }
@@ -66,17 +78,38 @@ QString Serial::getString(bool clearBuffer)
     QString output = serialInputString;
 
     if (clearBuffer)
-        clear();
+        clearString();
 
     return output;
 }
 
-void Serial::clear(bool clearHardwareBuffers)
+QByteArray Serial::getBytes(bool clearBuffer)
+{
+    QByteArray outputByteArray = serialByteArray;
+
+    if (clearBuffer)
+        clearBytes();
+
+    return outputByteArray;
+}
+
+void Serial::clearAll(bool clearHardwareBuffers)
 {
     serialInputString.clear();
+    serialByteArray.clear();
 
     if (clearHardwareBuffers)
         serialDevice->clear();
+}
+
+void Serial::clearBytes()
+{
+    serialByteArray.clear();
+}
+
+void Serial::clearString()
+{
+    serialInputString.clear();
 }
 
 QString Serial::getSerialInfo()

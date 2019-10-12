@@ -119,7 +119,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() &&
-                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             return;
@@ -168,7 +168,7 @@ void MainWindow::settingsLoadAll()
         ui->comboBoxRAMSaveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMSaveMode.currentIndex").value<int>());
 
         ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
-        ui->checkBoxTrim->setChecked(appSettings.value("GUI_Elements/checkBoxTrim.isChecked").value<bool>());
+        ui->checkBoxSimplify->setChecked(appSettings.value("GUI_Elements/checkBoxSimplify.isChecked").value<bool>());
         ui->checkBoxSendKey->setChecked(appSettings.value("GUI_Elements/checkBoxSendKey.isChecked").value<bool>());
         ui->checkBoxWrapText->setChecked(appSettings.value("GUI_Elements/checkBoxWrapText.isChecked").value<bool>());
         ui->checkBoxAutoTrack->setChecked(appSettings.value("GUI_Elements/checkBoxAutoTrack.isChecked").value<bool>());
@@ -249,7 +249,7 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/comboBoxRAMSaveMode.currentIndex", ui->comboBoxRAMSaveMode->currentIndex());
 
         appSettings.setValue("GUI_Elements/checkBoxDTR.isChecked", ui->checkBoxDTR->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxTrim.isChecked", ui->checkBoxTrim->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxSimplify.isChecked", ui->checkBoxSimplify->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxSendKey.isChecked", ui->checkBoxSendKey->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxWrapText.isChecked", ui->checkBoxWrapText->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxAutoTrack.isChecked", ui->checkBoxAutoTrack->isChecked());
@@ -724,9 +724,9 @@ void MainWindow::tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                       .arg(graph->name())
-                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                       .arg(QString::number(temp.y(), 'f', 5)),
+                           .arg(graph->name())
+                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                           .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -797,17 +797,55 @@ void MainWindow::addLog(QString text)
     }
 }
 
+void MainWindow::addLogBytes(QString prefix, QByteArray bytes, bool hexToBinary)
+{
+    if (ui->pushButtonTextLogToggle->isChecked() == false)
+    {
+        QString currentDateTime = QDateTime::currentDateTime().toString("hh:mm:ss:zzz ");
+
+        QString bytesText;
+
+        if (hexToBinary == false)
+            bytesText = prefix + bytes.toHex(' ');
+        else
+        {
+            bytesText.append(prefix);
+            for (auto i = 0; i < bytes.size(); ++i)
+            {
+                bytesText.append(QString::number(bytes[i], 2) + ' ');
+            }
+        }
+
+        if (ui->checkBoxShowTime->isChecked())
+            bytesText = currentDateTime + bytesText;
+
+        ui->textBrowserLogs->append(bytesText);
+    }
+}
+
 void MainWindow::processSerial()
 {
-    QString serialInput = serial.getString();
+    QString serialInput = serial.getString().trimmed();
+    QByteArray serialInputBytes = serial.getBytes();
+
+    if (ui->comboBoxFormat->currentIndex() == 0 && serialInput.isEmpty() == false)
+    {
+        if (ui->checkBoxSimplify->isChecked()) // Append text to textBrowser
+            addLog("Serial <<\t" + serialInput.simplified());
+        else
+            addLog("Serial <<\t" + serialInput);
+    }
+    else if (ui->comboBoxFormat->currentIndex() == 1 && serialInputBytes.length() > 0)
+    {
+        addLogBytes("Serial (HEX) <<\t", serialInputBytes);
+    }
+    else if (ui->comboBoxFormat->currentIndex() == 2 && serialInputBytes.length() > 0)
+    {
+        addLogBytes("Serial (BIN) <<\t", serialInputBytes, true);
+    }
 
     if (serialInput.isEmpty() == false)
     {
-        if (ui->checkBoxTrim->isChecked()) // Append text to textBrowser
-            addLog("Serial <<\t" + serialInput.trimmed());
-        else
-            addLog("Serial <<\t" + serialInput);
-
         parser.parse(serialInput, ui->checkBoxSyncSystemClock->isChecked(), ui->checkBoxExternalTimeReference->isChecked(), ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
         QStringList labelList = parser.getStringListLabels();
         QList<double> numericDataList = parser.getListNumericValues();
@@ -834,14 +872,27 @@ void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<do
 
 void MainWindow::processUDP()
 {
-    QString udpInput = networkUDP.readString();
-    if (udpInput.isEmpty() == false)
+    QString udpInput = networkUDP.readString().trimmed();
+    QByteArray udpInputBytes = networkUDP.readBytes();
+
+    if (ui->comboBoxFormat->currentIndex() == 0 && udpInput.isEmpty() == false)
     {
-        if (ui->checkBoxTrim->isChecked())
-            addLog("UDP <<\t" + udpInput.trimmed());
+        if (ui->checkBoxSimplify->isChecked())
+            addLog("UDP <<\t" + udpInput.simplified());
         else
             addLog("UDP <<\t" + udpInput);
+    }
+    else if (ui->comboBoxFormat->currentIndex() == 1 && udpInputBytes.length() > 0)
+    {
+        addLogBytes("UDP (HEX) <<\t", udpInputBytes);
+    }
+    else if (ui->comboBoxFormat->currentIndex() == 2 && udpInputBytes.length() > 0)
+    {
+        addLogBytes("UDP (BIN) <<\t", udpInputBytes, true);
+    }
 
+    if (udpInput.isEmpty() == false)
+    {
         parser.parse(udpInput, ui->checkBoxSyncSystemClock->isChecked(), ui->checkBoxExternalTimeReference->isChecked(), ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
         QStringList labelList = parser.getStringListLabels();
         QList<double> numericDataList = parser.getListNumericValues();
@@ -877,9 +928,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
-                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1031,9 +1082,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 void MainWindow::sendSerial(QString message)
 {
     if (serial.send(message))
-        this->addLog("S >>\t" + message);
+        this->addLog("Serial >>\t" + message);
     else
-        this->addLog("S >>\t Unable to send! Serial port closed !");
+        this->addLog("Serial >>\t Unable to send! Serial port closed !");
 }
 
 void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
@@ -1559,7 +1610,7 @@ void MainWindow::sendDatagram(QString message)
         networkUDP.write(message, QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPTargetPort->value());
     }
 
-    addLog("App >>\t" + message);
+    addLog("UDP >>\t" + message);
 }
 
 void MainWindow::on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1)
@@ -1925,7 +1976,7 @@ void MainWindow::loadFromRAM(bool loadText)
     {
         QStringList RAMText = parser.getTextList();
         foreach (auto line, RAMText)
-            addLog(line);
+            addLog("Mem >>\t" + line);
     }
 
     if (RAMLabels.isEmpty() || RAMData.isEmpty() || RAMTime.isEmpty())
@@ -1973,18 +2024,18 @@ void MainWindow::on_pushButtonLoadFile_clicked()
 
             if (fileReader.readAllAtOnce(&inputFile))
             {
-                addLog("Read file succesfully... ");
+                addLog("App >>\t Read file succesfully... ");
             }
             else
             {
-                addLog("invalid file !");
+                addLog("App >>\t invalid file !");
                 ui->pushButtonLoadFile->setText("Load File");
                 ui->progressBarLoadFile->setValue(0);
             }
         }
         else
         {
-            addLog("File Reader - Invalid file path !");
+            addLog("App >>\t file reader error - invalid file path !");
             ui->pushButtonLoadFile->setText("Load File");
             ui->progressBarLoadFile->setValue(0);
         }
