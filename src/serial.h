@@ -33,7 +33,6 @@ public:
     void clearAll(bool clearHardwareBuffers = false);
     void clearBytes();
     void clearString();
-    void processSerial();
 signals:
 
 public slots:

@@ -1,8 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QHostInfo>
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -15,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     settingsLoadAll();
 
-    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(aboutToQuitSlot()));
+    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(on_aboutToQuitSlot()));
 }
 
 MainWindow::~MainWindow()
@@ -23,64 +21,164 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::setupTable()
+void MainWindow::on_aboutToQuitSlot()
 {
-    ui->tableWidgetParsedData->clear();
-    ui->tableWidgetParsedData->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-    ui->tableWidgetParsedData->setColumnCount(2);
-    ui->tableWidgetParsedData->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
-    ui->tableWidgetParsedData->setHorizontalHeaderItem(1, new QTableWidgetItem("Current Value"));
-    //    ui->tableWidgetParsedData->setHorizontalHeaderItem(2, new QTableWidgetItem("Max"));
-    //    ui->tableWidgetParsedData->setHorizontalHeaderItem(3, new QTableWidgetItem("Min"));
+    settingsSaveAll();
 }
 
-void MainWindow::processTable(QStringList labels, QList<double> values)
+void MainWindow::createTimers()
 {
-    static QList<int> tableMissingCount;
+    this->serialDeviceCheckTimer = new QTimer(this);
+    this->radioButtonTimer = new QTimer(this);
+    this->serialStringProcessingTimer = new QTimer(this);
+    this->udpStringProcessingTimer = new QTimer(this);
 
-    foreach (auto label, labels)
+    connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(on_updateSerialDeviceList()));
+    connect(radioButtonTimer, &QTimer::timeout, this, [=]() { ui->radioButtonDeviceUpdate->setChecked(false); });
+}
+
+void MainWindow::setupGUI()
+{
+    qDebug() << QDateTime::currentDateTime().toString("yyyy.MM.dd hh:mm:ss:zzz");
+
+    this->setWindowTitle(this->windowTitle() + " " + VERSION);
+
+    ui->textBrowserLogs->document()->setMaximumBlockCount(ui->spinBoxMaxLines->value());
+
+    foreach (auto item, QSerialPortInfo::standardBaudRates())
+        ui->comboBoxBaudRates->addItem(QString::number(item));
+
+    ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() - 3); // TODO SETTINGS !
+
+    ui->comboBoxTracerStyle->addItem("Crosshair");
+    ui->comboBoxTracerStyle->addItem("Circle");
+    ui->comboBoxTracerStyle->setCurrentIndex(0);
+
+    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
+
+    ui->comboBoxGraphDisplayMode->addItem("Auto");
+    ui->comboBoxGraphDisplayMode->addItem("Custom");
+    ui->comboBoxGraphDisplayMode->setCurrentIndex(0);
+
+    ui->comboBoxDataBits->addItem("Data5");
+    ui->comboBoxDataBits->addItem("Data6");
+    ui->comboBoxDataBits->addItem("Data7");
+    ui->comboBoxDataBits->addItem("Data8");
+    ui->comboBoxDataBits->setCurrentIndex(3);
+
+    ui->comboBoxParity->addItem("NoParity");
+    ui->comboBoxParity->addItem("EvenParity");
+    ui->comboBoxParity->addItem("OddParity");
+    ui->comboBoxParity->addItem("SpaceParity");
+    ui->comboBoxParity->addItem("MarkParity");
+    ui->comboBoxParity->setCurrentIndex(0);
+
+    ui->comboBoxStopBits->addItem("OneStop");
+    ui->comboBoxStopBits->addItem("OneAndHalfStop");
+    ui->comboBoxStopBits->addItem("TwoStop");
+    ui->comboBoxStopBits->setCurrentIndex(0);
+
+    ui->comboBoxFlowControl->addItem("NoFlowControl");
+    ui->comboBoxFlowControl->addItem("HardwareControl");
+    ui->comboBoxFlowControl->addItem("SoftwareControl");
+    ui->comboBoxFlowControl->setCurrentIndex(0);
+
+    ui->comboBoxSerialReadMode->addItem("canReadLine | readLine");
+    ui->comboBoxSerialReadMode->addItem("canReadLine | readAll");
+    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readLine");
+    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readAll");
+    ui->comboBoxSerialReadMode->setCurrentIndex(0);
+
+    on_updateSerialDeviceList();
+
+    emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
+
+    ui->comboBoxUDPReceiveMode->addItem("Any");
+    ui->comboBoxUDPReceiveMode->addItem("LocalHost");
+    ui->comboBoxUDPReceiveMode->addItem("SpecialAddress");
+    ui->comboBoxUDPReceiveMode->setCurrentIndex(0);
+
+    ui->comboBoxUDPSendMode->addItem("Broadcast");
+    ui->comboBoxUDPSendMode->addItem("LocalHost");
+    ui->comboBoxUDPSendMode->addItem("SpecialAddress");
+    ui->comboBoxUDPSendMode->setCurrentIndex(0);
+
+    // ui->lineEditUDPTargetIP->setInputMask( "000.000.000.000" );
+
+    if (ui->checkBoxAutoRefresh->isChecked())
     {
-        if (ui->tableWidgetParsedData->findItems(label, Qt::MatchFlag::MatchExactly).count() < 1)
-        {
-            ui->tableWidgetParsedData->insertRow(ui->tableWidgetParsedData->rowCount());
-
-            QTableWidgetItem *newLabel = new QTableWidgetItem(label);
-            ui->tableWidgetParsedData->setItem(ui->tableWidgetParsedData->rowCount() - 1, 0, newLabel);
-            tableMissingCount.append(0);
-        }
-
-        for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
-        {
-            if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
-            {
-                QTableWidgetItem *newValue = new QTableWidgetItem(QString::number(values[labels.indexOf(label)]));
-                ui->tableWidgetParsedData->setItem(i, 1, newValue);
-                break;
-            }
-        }
-
-        if (ui->spinBoxRemoveOldLabels->value() > 0)
-        {
-            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
-            {
-                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
-                    tableMissingCount[i] = 0;
-                else
-                    tableMissingCount[i]++;
-
-                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
-                {
-                    ui->tableWidgetParsedData->removeRow(i);
-                    tableMissingCount.removeAt(i);
-                }
-            }
-        }
+        serialDeviceCheckTimer->start(500);
+        ui->pushButtonRefresh->setEnabled(false);
+    }
+    else
+    {
+        ui->pushButtonRefresh->setEnabled(true);
     }
 
-    if (ui->checkBoxTableAutoResize->isChecked())
+    ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
+    ui->lineEditSaveFileName->setText("Log.txt");
+
+    ui->splitterGraphTable->setSizes({this->height(), 0});
+
+    ui->comboBoxExternalTimeFormat->addItem("[ms]");
+    ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
+
+    emit on_checkBoxExternalTimeReference_toggled(ui->checkBoxExternalTimeReference->isChecked());
+
+    ui->comboBoxLoggingMode->addItem("Log Text");
+    ui->comboBoxLoggingMode->addItem("Log Parsed Data");
+    ui->comboBoxLoggingMode->setCurrentIndex(0);
+
+    ui->comboBoxRAMSaveMode->addItem("Save Data Only");
+    ui->comboBoxRAMSaveMode->addItem("Save Data & Text");
+    ui->comboBoxRAMSaveMode->setCurrentIndex(0);
+
+    ui->comboBoxRAMLoadMode->addItem("Load Data Only");
+    ui->comboBoxRAMLoadMode->addItem("Load Data & Text");
+    ui->comboBoxRAMLoadMode->setCurrentIndex(0);
+
+    ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+}
+
+void MainWindow::createChart()
+{
+    // ui->widgetChart->setOpenGl(false);
+    ui->splitterReceivedData->setSizes(QList<int>({200, 400})); // default
+    ui->widgetChart->setInteractions(QCP::iRangeZoom |
+                                     QCP::iRangeDrag |
+                                     QCP::iSelectPlottables |
+                                     QCP::iSelectLegend);
+
+    QSharedPointer<QCPAxisTickerTime> xTicker(new QCPAxisTickerTime);
+    QSharedPointer<QCPAxisTicker> yTicker(new QCPAxisTicker);
+    xTicker->setTimeFormat("%h:%m:%s:%z");
+    xTicker->setTickCount(5);
+    yTicker->setTickCount(10);
+    yTicker->setTickStepStrategy(QCPAxisTicker::TickStepStrategy::tssReadability);
+    ui->widgetChart->xAxis->setTicker(xTicker);
+    ui->widgetChart->yAxis->setTicker(yTicker);
+    ui->widgetChart->axisRect()->setupFullAxesBox(true);
+    ui->widgetChart->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignBottom | Qt::AlignLeft);
+    ui->widgetChart->legend->setVisible(true);
+    ui->widgetChart->legend->setFont(QFont("MS Shell Dlg 2", 8, QFont::Thin, false));
+    ui->widgetChart->legend->setIconSize(15, 10);
+    ui->widgetChart->legend->setSelectableParts(QCPLegend::SelectablePart::spItems); // legend box shall not be selectable, only legend items
+    ui->widgetChart->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    ui->widgetChart->xAxis->setRange(-1.0, ui->spinBoxScrollingTimeRange->value());
+    ui->widgetChart->yAxis->setRange(-1.0, 1.0);
+
+    connect(ui->widgetChart, SIGNAL(mouseDoubleClick(QMouseEvent *)), this, SLOT(on_chartMouseDoubleClickHandler(QMouseEvent *)));
+    connect(ui->widgetChart, SIGNAL(mousePress(QMouseEvent *)), this, SLOT(on_chartMousePressHandler(QMouseEvent *)));
+    connect(ui->widgetChart, SIGNAL(selectionChangedByUser()), this, SLOT(on_chartSelectionChanged()));
+    connect(ui->widgetChart, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_chartContextMenuRequest(QPoint)));
+    connect(ui->widgetChart, SIGNAL(beforeReplot()), this, SLOT(on_chartBeforeReplotSlot()));
+
+    //  ui->widgetChart->setNotAntialiasedElements(QCP::aeAll);
+
+    if (ui->checkBoxEnableTracer->isChecked())
     {
-        ui->tableWidgetParsedData->resizeColumnsToContents();
-        ui->tableWidgetParsedData->resizeRowsToContents();
+        createChartTracer();
+        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
     }
 }
 
@@ -99,10 +197,15 @@ void MainWindow::create3DView()
     //   }
 }
 
-void MainWindow::printChangeLog() // TODO
+void MainWindow::setupTable()
 {
-    //    ui->textBrowserLogs->append(CHANGELOG_TEXT);
-    //    ui->textBrowserLogs->horizontalScrollBar()->setValue(0);
+    ui->tableWidgetParsedData->clear();
+    ui->tableWidgetParsedData->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    ui->tableWidgetParsedData->setColumnCount(2);
+    ui->tableWidgetParsedData->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
+    ui->tableWidgetParsedData->setHorizontalHeaderItem(1, new QTableWidgetItem("Current Value"));
+    //    ui->tableWidgetParsedData->setHorizontalHeaderItem(2, new QTableWidgetItem("Max"));
+    //    ui->tableWidgetParsedData->setHorizontalHeaderItem(3, new QTableWidgetItem("Min"));
 }
 
 void MainWindow::settingsLoadAll()
@@ -115,13 +218,14 @@ void MainWindow::settingsLoadAll()
     {
         if (appSettings.value("Info/version").value<QString>() != VERSION)
         {
-            printChangeLog();
+            on_printIntroChangelog();
         }
 
-        if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() &&
+        if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
             appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
+            addLog("App >>\t Error loading settings. Config file incorrect !");
             return;
         }
     }
@@ -290,202 +394,77 @@ void MainWindow::settingsSaveAll()
     qDebug() << "Save all settings";
 }
 
-void MainWindow::aboutToQuitSlot()
+void MainWindow::processTable(QStringList labels, QList<double> values)
 {
-    settingsSaveAll();
-}
+    static QList<int> tableMissingCount;
 
-void MainWindow::setupGUI()
-{
-    qDebug() << QDateTime::currentDateTime().toString("yyyy.MM.dd hh:mm:ss:zzz");
-
-    this->setWindowTitle(this->windowTitle() + " " + VERSION);
-
-    ui->textBrowserLogs->document()->setMaximumBlockCount(ui->spinBoxMaxLines->value());
-
-    foreach (auto item, QSerialPortInfo::standardBaudRates())
-        ui->comboBoxBaudRates->addItem(QString::number(item));
-
-    ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() - 3); // TODO SETTINGS !
-
-    ui->comboBoxTracerStyle->addItem("Crosshair");
-    ui->comboBoxTracerStyle->addItem("Circle");
-    ui->comboBoxTracerStyle->setCurrentIndex(0);
-
-    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(comboBoxSendReturnPressedSlot()));
-
-    ui->comboBoxGraphDisplayMode->addItem("Auto");
-    ui->comboBoxGraphDisplayMode->addItem("Custom");
-    ui->comboBoxGraphDisplayMode->setCurrentIndex(0);
-
-    ui->comboBoxDataBits->addItem("Data5");
-    ui->comboBoxDataBits->addItem("Data6");
-    ui->comboBoxDataBits->addItem("Data7");
-    ui->comboBoxDataBits->addItem("Data8");
-    ui->comboBoxDataBits->setCurrentIndex(3);
-
-    ui->comboBoxParity->addItem("NoParity");
-    ui->comboBoxParity->addItem("EvenParity");
-    ui->comboBoxParity->addItem("OddParity");
-    ui->comboBoxParity->addItem("SpaceParity");
-    ui->comboBoxParity->addItem("MarkParity");
-    ui->comboBoxParity->setCurrentIndex(0);
-
-    ui->comboBoxStopBits->addItem("OneStop");
-    ui->comboBoxStopBits->addItem("OneAndHalfStop");
-    ui->comboBoxStopBits->addItem("TwoStop");
-    ui->comboBoxStopBits->setCurrentIndex(0);
-
-    ui->comboBoxFlowControl->addItem("NoFlowControl");
-    ui->comboBoxFlowControl->addItem("HardwareControl");
-    ui->comboBoxFlowControl->addItem("SoftwareControl");
-    ui->comboBoxFlowControl->setCurrentIndex(0);
-
-    ui->comboBoxSerialReadMode->addItem("canReadLine | readLine");
-    ui->comboBoxSerialReadMode->addItem("canReadLine | readAll");
-    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readLine");
-    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readAll");
-    ui->comboBoxSerialReadMode->setCurrentIndex(0);
-
-    updateSerialDeviceList();
-
-    emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
-
-    ui->comboBoxUDPReceiveMode->addItem("Any");
-    ui->comboBoxUDPReceiveMode->addItem("LocalHost");
-    ui->comboBoxUDPReceiveMode->addItem("SpecialAddress");
-    ui->comboBoxUDPReceiveMode->setCurrentIndex(0);
-
-    ui->comboBoxUDPSendMode->addItem("Broadcast");
-    ui->comboBoxUDPSendMode->addItem("LocalHost");
-    ui->comboBoxUDPSendMode->addItem("SpecialAddress");
-    ui->comboBoxUDPSendMode->setCurrentIndex(0);
-
-    // ui->lineEditUDPTargetIP->setInputMask( "000.000.000.000" );
-
-    if (ui->checkBoxAutoRefresh->isChecked())
+    foreach (auto label, labels)
     {
-        serialDeviceCheckTimer->start(500);
-        ui->pushButtonRefresh->setEnabled(false);
-    }
-    else
-    {
-        ui->pushButtonRefresh->setEnabled(true);
+        if (ui->tableWidgetParsedData->findItems(label, Qt::MatchFlag::MatchExactly).count() < 1)
+        {
+            ui->tableWidgetParsedData->insertRow(ui->tableWidgetParsedData->rowCount());
+
+            QTableWidgetItem *newLabel = new QTableWidgetItem(label);
+            ui->tableWidgetParsedData->setItem(ui->tableWidgetParsedData->rowCount() - 1, 0, newLabel);
+            tableMissingCount.append(0);
+        }
+
+        for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
+        {
+            if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
+            {
+                QTableWidgetItem *newValue = new QTableWidgetItem(QString::number(values[labels.indexOf(label)]));
+                ui->tableWidgetParsedData->setItem(i, 1, newValue);
+                break;
+            }
+        }
+
+        if (ui->spinBoxRemoveOldLabels->value() > 0)
+        {
+            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
+            {
+                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
+                    tableMissingCount[i] = 0;
+                else
+                    tableMissingCount[i]++;
+
+                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
+                {
+                    ui->tableWidgetParsedData->removeRow(i);
+                    tableMissingCount.removeAt(i);
+                }
+            }
+        }
     }
 
-    ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
-    ui->lineEditSaveFileName->setText("Log.txt");
-
-    ui->splitterGraphTable->setSizes({this->height(), 0});
-
-    ui->comboBoxExternalTimeFormat->addItem("[ms]");
-    ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
-
-    emit on_checkBoxExternalTimeReference_toggled(ui->checkBoxExternalTimeReference->isChecked());
-
-    ui->comboBoxLoggingMode->addItem("Log Text");
-    ui->comboBoxLoggingMode->addItem("Log Parsed Data");
-    ui->comboBoxLoggingMode->setCurrentIndex(0);
-
-    ui->comboBoxRAMSaveMode->addItem("Save Data Only");
-    ui->comboBoxRAMSaveMode->addItem("Save Data & Text");
-    ui->comboBoxRAMSaveMode->setCurrentIndex(0);
-
-    ui->comboBoxRAMLoadMode->addItem("Load Data Only");
-    ui->comboBoxRAMLoadMode->addItem("Load Data & Text");
-    ui->comboBoxRAMLoadMode->setCurrentIndex(0);
-
-    ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    if (ui->checkBoxTableAutoResize->isChecked())
+    {
+        ui->tableWidgetParsedData->resizeColumnsToContents();
+        ui->tableWidgetParsedData->resizeRowsToContents();
+    }
 }
 
-void MainWindow::comboBoxSendReturnPressedSlot()
+void MainWindow::on_printIntroChangelog() // TODO
+{
+    ui->textBrowserLogs->append(INTRO_TEXT);
+    ui->textBrowserLogs->append("\n" CHANGELOG_TEXT);
+
+    //    ui->textBrowserLogs->horizontalScrollBar()->setValue(0);
+}
+
+void MainWindow::on_comboBoxSendReturnPressedSlot()
 {
     if (ui->pushButtonSerialConnect->isChecked())
         sendSerial(ui->comboBoxSend->currentText());
     if (ui->pushButtonUDPConnect->isChecked())
-        sendDatagram(ui->comboBoxSend->currentText());
+        sendUDPDatagram(ui->comboBoxSend->currentText());
 
     ui->comboBoxSend->setCurrentText("");
     ui->comboBoxSend->model()->sort(0, Qt::SortOrder::AscendingOrder); // sort alphabetically
 }
 
-void MainWindow::createTimers()
-{
-    this->serialDeviceCheckTimer = new QTimer(this);
-    this->radioButtonTimer = new QTimer(this);
-    this->serialStringProcessingTimer = new QTimer(this);
-    this->udpStringProcessingTimer = new QTimer(this);
-
-    connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(updateSerialDeviceList()));
-    connect(radioButtonTimer, &QTimer::timeout, this, [=]() { ui->radioButtonDeviceUpdate->setChecked(false); });
-}
-
-//void MainWindow::getHostList()
-//{
-//    ui->comboBoxTargetIP->clear();
-
-//    foreach (QNetworkInterface netInterface, QNetworkInterface::allInterfaces())
-//    {
-//        foreach (QNetworkAddressEntry address, netInterface.addressEntries())
-//        {
-//            if(address.ip().protocol() == QAbstractSocket::IPv4Protocol)
-//                ui->comboBoxTargetIP->addItem(QHostAddress(address.ip()).toString());
-//        }
-//    }
-
-//    foreach (const QHostAddress& address, QHostInfo::fromName(QHostInfo::localHostName()).addresses())
-//    {
-//        if (address.protocol() == QAbstractSocket::IPv4Protocol && address.isLoopback() == false)
-//        {
-//            //   ui->lineEditLocalIP->setText(QHostAddress(QHostAddress::LocalHost).toString());
-//        }
-//    }
-//}
-
-void MainWindow::createChart()
-{
-    // ui->widgetChart->setOpenGl(false);
-    ui->splitterReceivedData->setSizes(QList<int>({200, 400})); // default
-    ui->widgetChart->setInteractions(QCP::iRangeZoom |
-                                     QCP::iRangeDrag |
-                                     QCP::iSelectPlottables |
-                                     QCP::iSelectLegend);
-
-    QSharedPointer<QCPAxisTickerTime> xTicker(new QCPAxisTickerTime);
-    QSharedPointer<QCPAxisTicker> yTicker(new QCPAxisTicker);
-    xTicker->setTimeFormat("%h:%m:%s:%z");
-    xTicker->setTickCount(5);
-    yTicker->setTickCount(10);
-    yTicker->setTickStepStrategy(QCPAxisTicker::TickStepStrategy::tssReadability);
-    ui->widgetChart->xAxis->setTicker(xTicker);
-    ui->widgetChart->yAxis->setTicker(yTicker);
-    ui->widgetChart->axisRect()->setupFullAxesBox(true);
-    ui->widgetChart->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignBottom | Qt::AlignLeft);
-    ui->widgetChart->legend->setVisible(true);
-    ui->widgetChart->legend->setFont(QFont("MS Shell Dlg 2", 8, QFont::Thin, false));
-    ui->widgetChart->legend->setIconSize(15, 10);
-    ui->widgetChart->legend->setSelectableParts(QCPLegend::SelectablePart::spItems); // legend box shall not be selectable, only legend items
-    ui->widgetChart->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-    ui->widgetChart->xAxis->setRange(-1.0, ui->spinBoxScrollingTimeRange->value());
-    ui->widgetChart->yAxis->setRange(-1.0, 1.0);
-
-    connect(ui->widgetChart, SIGNAL(mouseDoubleClick(QMouseEvent *)), this, SLOT(chartMouseDoubleClickHandler(QMouseEvent *)));
-    connect(ui->widgetChart, SIGNAL(mousePress(QMouseEvent *)), this, SLOT(chartMousePressHandler(QMouseEvent *)));
-    connect(ui->widgetChart, SIGNAL(selectionChangedByUser()), this, SLOT(chartSelectionChanged()));
-    connect(ui->widgetChart, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(chartContextMenuRequest(QPoint)));
-    connect(ui->widgetChart, SIGNAL(beforeReplot()), this, SLOT(chartBeforeReplotSlot()));
-
-    //  ui->widgetChart->setNotAntialiasedElements(QCP::aeAll);
-
-    if (ui->checkBoxEnableTracer->isChecked())
-    {
-        createChartTracer();
-        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
-    }
-}
-
 // Auto-scroll X and rescale Y
-void MainWindow::chartBeforeReplotSlot()
+void MainWindow::on_chartBeforeReplotSlot()
 {
     if (ui->checkBoxAutoTrack->isChecked() && ui->widgetChart->graphCount() > 0)
     {
@@ -526,26 +505,26 @@ void MainWindow::chartBeforeReplotSlot()
     }
 }
 
-void MainWindow::chartContextMenuRequest(QPoint pos) // right click on chart
+void MainWindow::on_chartContextMenuRequest(QPoint pos) // right click on chart
 {
     QMenu *menu = new QMenu(this);
     menu->setAttribute(Qt::WA_DeleteOnClose);
 
     if (ui->widgetChart->legend->selectTest(pos, false) >= 0) // context menu on legend requested
     {
-        clearGraphSelection();
+        on_clearGraphSelection();
 
         for (auto i = 0; i < ui->widgetChart->legend->itemCount(); ++i)
         {
             if (ui->widgetChart->legend->item(i)->selectTest(pos, false) >= 0)
             {
                 ui->widgetChart->legend->item(i)->setSelected(true);
-                menu->addAction("Show excusively", this, SLOT(showSelectedGraphExclusively()));
+                menu->addAction("Show excusively", this, SLOT(on_showSelectedGraphExclusively()));
 
                 if (ui->widgetChart->graph(i)->visible())
-                    menu->addAction("Hide graph", this, SLOT(hideSelectedGraph()));
+                    menu->addAction("Hide graph", this, SLOT(on_hideSelectedGraph()));
                 else
-                    menu->addAction("Show graph", this, SLOT(showSelectedGraph()));
+                    menu->addAction("Show graph", this, SLOT(on_showSelectedGraph()));
             }
         }
     }
@@ -555,29 +534,29 @@ void MainWindow::chartContextMenuRequest(QPoint pos) // right click on chart
         {
             if (ui->widgetChart->legend->item(i)->selected())
             {
-                menu->addAction("Show excusively", this, SLOT(showSelectedGraphExclusively()));
+                menu->addAction("Show excusively", this, SLOT(on_showSelectedGraphExclusively()));
 
                 if (ui->widgetChart->graph(i)->visible())
-                    menu->addAction("Hide graph", this, SLOT(hideSelectedGraph()));
+                    menu->addAction("Hide graph", this, SLOT(on_hideSelectedGraph()));
                 else
-                    menu->addAction("Show graph", this, SLOT(showSelectedGraph()));
+                    menu->addAction("Show graph", this, SLOT(on_showSelectedGraph()));
             }
         }
     }
 
     if (ui->widgetChart->graphCount() > 0)
     {
-        menu->addAction("Show all graphs", this, SLOT(showAllGraphs()));
-        menu->addAction("Hide all graphs", this, SLOT(hideAllGraphs()));
+        menu->addAction("Show all graphs", this, SLOT(on_showAllGraphs()));
+        menu->addAction("Hide all graphs", this, SLOT(on_hideAllGraphs()));
     }
 
     menu->popup(ui->widgetChart->mapToGlobal(pos));
     ui->widgetChart->replot();
 }
 
-void MainWindow::showSelectedGraphExclusively()
+void MainWindow::on_showSelectedGraphExclusively()
 {
-    hideAllGraphs();
+    on_hideAllGraphs();
 
     for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
     {
@@ -592,7 +571,7 @@ void MainWindow::showSelectedGraphExclusively()
     }
 }
 
-void MainWindow::showAllGraphs()
+void MainWindow::on_showAllGraphs()
 {
     for (auto i = 0; i < ui->widgetChart->legend->itemCount(); ++i)
     {
@@ -603,7 +582,7 @@ void MainWindow::showAllGraphs()
     ui->widgetChart->replot();
 }
 
-void MainWindow::clearGraphSelection()
+void MainWindow::on_clearGraphSelection()
 {
     for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
     {
@@ -611,7 +590,7 @@ void MainWindow::clearGraphSelection()
     }
 }
 
-void MainWindow::hideSelectedGraph()
+void MainWindow::on_hideSelectedGraph()
 {
     for (auto i = 0; i < ui->widgetChart->legend->itemCount(); ++i)
     {
@@ -622,11 +601,11 @@ void MainWindow::hideSelectedGraph()
         }
     }
 
-    clearGraphSelection();
+    on_clearGraphSelection();
     ui->widgetChart->replot();
 }
 
-void MainWindow::showSelectedGraph()
+void MainWindow::on_showSelectedGraph()
 {
     for (auto i = 0; i < ui->widgetChart->legend->itemCount(); ++i)
     {
@@ -637,11 +616,11 @@ void MainWindow::showSelectedGraph()
         }
     }
 
-    clearGraphSelection();
+    on_clearGraphSelection();
     ui->widgetChart->replot();
 }
 
-void MainWindow::hideAllGraphs()
+void MainWindow::on_hideAllGraphs()
 {
     if (ui->widgetChart->graphCount() > 0)
     {
@@ -655,7 +634,7 @@ void MainWindow::hideAllGraphs()
     }
 }
 
-void MainWindow::chartMouseDoubleClickHandler(QMouseEvent *event)
+void MainWindow::on_chartMouseDoubleClickHandler(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
     {
@@ -670,7 +649,7 @@ void MainWindow::chartMouseDoubleClickHandler(QMouseEvent *event)
     ui->widgetChart->replot();
 }
 
-void MainWindow::chartSelectionChanged()
+void MainWindow::on_chartSelectionChanged()
 {
     // synchronize selection of graphs with selection of corresponding legend items:
     for (int i = 0; i < ui->widgetChart->graphCount(); ++i)
@@ -687,7 +666,7 @@ void MainWindow::chartSelectionChanged()
     }
 }
 
-void MainWindow::tracerShowPointValue(QMouseEvent *event)
+void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
 {
     if (ui->widgetChart->graphCount() < 1)
         return;
@@ -730,7 +709,7 @@ void MainWindow::tracerShowPointValue(QMouseEvent *event)
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
-void MainWindow::chartMousePressHandler(QMouseEvent *event)
+void MainWindow::on_chartMousePressHandler(QMouseEvent *event)
 {
     if (event->button() == Qt::MiddleButton)
         ui->widgetChart->setSelectionRectMode(QCP::srmZoom);
@@ -740,7 +719,7 @@ void MainWindow::chartMousePressHandler(QMouseEvent *event)
     ui->widgetChart->replot();
 }
 
-void MainWindow::updateSerialDeviceList()
+void MainWindow::on_updateSerialDeviceList()
 {
     QList<QSerialPortInfo> devices = QSerialPortInfo::availablePorts();
     QList<QString> portNames;
@@ -777,7 +756,7 @@ void MainWindow::on_pushButtonRefresh_clicked()
 {
     qDebug() << "Refreshing serial device list...";
     this->addLog("App >>\t Searching for COM ports...");
-    this->updateSerialDeviceList();
+    this->on_updateSerialDeviceList();
 }
 
 void MainWindow::addLog(QString text)
@@ -823,7 +802,19 @@ void MainWindow::addLogBytes(QString prefix, QByteArray bytes, bool hexToBinary)
     }
 }
 
-void MainWindow::processSerial()
+// TODO
+void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
+{
+    if (ui->pushButtonLogging->isChecked()) // Write log into file
+    {
+        if (ui->comboBoxLoggingMode->currentIndex() == 0)
+            fileLogger.writeLogLine(rawLine, ui->checkBoxSimplifyLog->isChecked(), ui->checkBoxAppendDate->isChecked());
+        else if (ui->comboBoxLoggingMode->currentIndex() == 1)
+            fileLogger.writeLogParsedData(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+    }
+}
+
+void MainWindow::on_processSerial()
 {
     QString serialInput = serial.getString().trimmed();
     QByteArray serialInputBytes = serial.getBytes();
@@ -858,19 +849,19 @@ void MainWindow::processSerial()
     }
 }
 
-// TODO
-void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
+void MainWindow::clearGraphData(bool replot)
 {
-    if (ui->pushButtonLogging->isChecked()) // Write log into file
+    qDebug() << "clear graph data!";
+    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
     {
-        if (ui->comboBoxLoggingMode->currentIndex() == 0)
-            fileLogger.writeLogLine(rawLine, ui->checkBoxSimplifyLog->isChecked(), ui->checkBoxAppendDate->isChecked());
-        else if (ui->comboBoxLoggingMode->currentIndex() == 1)
-            fileLogger.writeLogParsedData(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+        ui->widgetChart->graph(i)->data().data()->clear();
     }
+
+    if (replot)
+        ui->widgetChart->replot();
 }
 
-void MainWindow::processUDP()
+void MainWindow::on_processUDP()
 {
     QString udpInput = networkUDP.readString().trimmed();
     QByteArray udpInputBytes = networkUDP.readBytes();
@@ -903,6 +894,30 @@ void MainWindow::processUDP()
         this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), udpInput);
         this->processTable(labelList, numericDataList); // Fill tableWidget
     }
+}
+
+void MainWindow::sendUDPDatagram(QString message)
+{
+    if (!networkUDP.isOpen())
+    {
+        addLog("App >>\t Unable to send - port closed.");
+        return;
+    }
+
+    if (ui->comboBoxUDPSendMode->currentText().contains("Broadcast", Qt::CaseSensitivity::CaseInsensitive))
+    {
+        networkUDP.write(message, QHostAddress::Broadcast, ui->spinBoxUDPTargetPort->value());
+    }
+    else if (ui->comboBoxUDPSendMode->currentText().contains("LocalHost", Qt::CaseSensitivity::CaseInsensitive))
+    {
+        networkUDP.write(message, QHostAddress::LocalHost, ui->spinBoxUDPTargetPort->value());
+    }
+    else
+    {
+        networkUDP.write(message, QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPTargetPort->value());
+    }
+
+    addLog("UDP >>\t" + message);
 }
 
 void MainWindow::processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList)
@@ -986,20 +1001,20 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
     ui->widgetChart->replot();
 }
 
-void MainWindow::setSelectedLabels(QList<QString> *labels, bool customRules)
+void MainWindow::on_setSelectedLabels(QList<QString> *labels, bool customRules)
 {
-    qDebug() << "setSelectedLabels";
+    qDebug() << "on_setSelectedLabels";
 
     if (!customRules)
     {
         if (labels->count() < 1)
         {
-            showAllGraphs();
+            on_showAllGraphs();
             ui->lineEditCustomParsingRules->clear();
         }
         else
         {
-            hideAllGraphs();
+            on_hideAllGraphs();
 
             if (ui->widgetChart->graphCount() > 0)
             {
@@ -1008,7 +1023,7 @@ void MainWindow::setSelectedLabels(QList<QString> *labels, bool customRules)
                     if (labels->contains(ui->widgetChart->graph(i)->name()))
                     {
                         ui->widgetChart->legend->item(i)->setSelected(true);
-                        showSelectedGraph();
+                        on_showSelectedGraph();
                     }
                 }
             }
@@ -1050,7 +1065,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             if (ui->pushButtonSerialConnect->isChecked())
                 sendSerial(event->text());
             if (ui->pushButtonUDPConnect->isChecked())
-                sendDatagram(event->text());
+                sendUDPDatagram(event->text());
         }
     }
     else if (ui->widgetChart->hasFocus())
@@ -1087,6 +1102,92 @@ void MainWindow::sendSerial(QString message)
         this->addLog("Serial >>\t Unable to send! Serial port closed !");
 }
 
+void MainWindow::saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText, QString text)
+{
+    if (ui->checkBoxEnableRAMBuffer->isChecked() == false)
+        return;
+
+    if (text.isEmpty() == false && saveText == true)
+        parser.appendSetToMemory(newlabelList, newDataList, newTimeList, text);
+    else
+        parser.appendSetToMemory(newlabelList, newDataList, newTimeList);
+}
+
+void MainWindow::loadFromRAM(bool loadText)
+{
+    QStringList RAMLabels = parser.getLabelStorage();
+    QList<double> RAMData = parser.getDataStorage();
+    QList<long> RAMTime = parser.getTimeStorage();
+
+    if (loadText)
+    {
+        QStringList RAMText = parser.getTextList();
+        foreach (auto line, RAMText)
+            addLog("Mem >>\t" + line);
+    }
+
+    if (RAMLabels.isEmpty() || RAMData.isEmpty() || RAMTime.isEmpty())
+        return;
+
+    processChart(RAMLabels, RAMData, RAMTime);
+}
+
+void MainWindow::getFileTimeRange(QFile *file)
+{
+    if (file->open(QIODevice::ReadOnly))
+    {
+        QString allData = file->readAll();
+        file->close();
+
+        QStringList readFileSplitLines = allData.split(QRegExp("[\n\r]"), QString::SplitBehavior::SkipEmptyParts);
+
+        for (auto i = 0; i < readFileSplitLines.count(); ++i)
+        {
+            QStringList inputStringSplitArrayTopLine = readFileSplitLines[i].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);                                     // rozdzielamy traktująac spacje jako separator
+            QStringList inputStringSplitArrayButtomLine = readFileSplitLines[readFileSplitLines.count() - 1 - i].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
+            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z"};
+
+            bool foundTime[2] = {false};
+
+            for (auto j = 0; j < inputStringSplitArrayTopLine.count(); ++j)
+            {
+                foreach (auto timeFormat, searchTimeFormatList)
+                {
+                    if (QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat).isValid())
+                    {
+                        ui->timeEditMinParsingTime->setTime(QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat));
+                        foundTime[0] = true;
+                        break;
+                    }
+                }
+            }
+
+            for (auto j = 0; j < inputStringSplitArrayButtomLine.count(); ++j)
+            {
+                foreach (auto timeFormat, searchTimeFormatList)
+                {
+                    if (QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat).isValid())
+                    {
+                        ui->timeEditMaxParsingTime->setTime(QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat));
+                        foundTime[1] = true;
+
+                        break;
+                    }
+                }
+            }
+
+            if (foundTime[0] && foundTime[1])
+                return;
+        }
+    }
+    else
+    {
+        qDebug() << "Get file time range - invalid file ?";
+        ui->timeEditMaxParsingTime->setTime(QTime());
+        ui->timeEditMinParsingTime->setTime(QTime());
+    }
+}
+
 void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
 {
     if (checked == true)
@@ -1113,10 +1214,10 @@ void MainWindow::on_pushButtonClear_clicked()
 
 void MainWindow::on_lineEditHighlight_returnPressed()
 {
-    highlighLog(ui->lineEditHighlight->text());
+    on_highlighLog(ui->lineEditHighlight->text());
 }
 
-void MainWindow::highlighLog(QString searchString)
+void MainWindow::on_highlighLog(QString searchString)
 {
     QTextDocument *document = ui->textBrowserLogs->document();
     QTextCursor highlightCursor(document);
@@ -1164,11 +1265,11 @@ void MainWindow::on_checkBoxEnableTracer_toggled(bool checked)
     if (checked)
     {
         createChartTracer();
-        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
+        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
     }
     else
     {
-        disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
+        disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
         delete phaseTracer;
         phaseTracer = nullptr;
     }
@@ -1218,7 +1319,7 @@ void MainWindow::on_pushButtonEnablePlot_toggled(bool checked)
 void MainWindow::on_pushButtonSend_clicked()
 {
     ui->comboBoxSend->addItem(ui->comboBoxSend->currentText()); // dodajemy do historii (bez tego nie dodaje)
-    comboBoxSendReturnPressedSlot();
+    on_comboBoxSendReturnPressedSlot();
 }
 
 void MainWindow::on_pushButtonClearHistory_clicked()
@@ -1253,18 +1354,6 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(const QString &
 void MainWindow::on_pushButtonClearGraphs_clicked()
 {
     clearGraphData(true);
-}
-
-void MainWindow::clearGraphData(bool replot)
-{
-    qDebug() << "clear graph data!";
-    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
-    {
-        ui->widgetChart->graph(i)->data().data()->clear();
-    }
-
-    if (replot)
-        ui->widgetChart->replot();
 }
 
 void MainWindow::on_lineEditCustomParsingRules_editingFinished()
@@ -1336,13 +1425,13 @@ void MainWindow::on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1)
     {
         if (phaseTracer != nullptr)
         {
-            disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
+            disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
             delete phaseTracer;
             phaseTracer = nullptr;
         }
 
         createChartTracer();
-        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(tracerShowPointValue(QMouseEvent *)));
+        connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
 
         ui->widgetChart->replot();
     }
@@ -1377,7 +1466,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
             if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false) // logger on standby ?
                 fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text());
 
-            connect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(processSerial()));
+            connect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processSerial()));
 
             addLog("App >>\t Serial port opened. " + serial.getSerialInfo() + " DTR: " + QString::number(ui->checkBoxDTR->isChecked()));
             ui->pushButtonSerialConnect->setText("Disconnect");
@@ -1392,7 +1481,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
     {
         serialStringProcessingTimer->stop();
 
-        disconnect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(processSerial()));
+        disconnect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processSerial()));
 
         if (serial.end())
         {
@@ -1451,7 +1540,7 @@ void MainWindow::on_action50_50_view_triggered()
 
 void MainWindow::on_actionWhat_s_new_triggered()
 {
-    printChangeLog();
+    on_printIntroChangelog();
 }
 
 void MainWindow::on_actionQuit_triggered()
@@ -1469,7 +1558,7 @@ void MainWindow::on_action3D_orientation_triggered()
     //  ui->stackedWidget->setCurrentIndex(1); // WIP
 }
 
-void MainWindow::printPlot(QPrinter *printer)
+void MainWindow::on_printPlot(QPrinter *printer)
 {
     printer->setPageSize(QPrinter::PageSize::A4);
     QCPPainter painter(printer);
@@ -1484,7 +1573,7 @@ void MainWindow::printPlot(QPrinter *printer)
     ui->widgetChart->toPainter(&painter, plotWidth, plotHeight);
 }
 
-void MainWindow::printLog(QPrinter *printer)
+void MainWindow::on_printLog(QPrinter *printer)
 {
     ui->textBrowserLogs->print(printer);
 }
@@ -1519,7 +1608,7 @@ void MainWindow::on_actionPrint_Graph_triggered()
     QPrintPreviewDialog previewDialog(&chartPrinter);
     previewDialog.setWindowFlags(Qt::Window);
 
-    connect(&previewDialog, SIGNAL(paintRequested(QPrinter *)), SLOT(printPlot(QPrinter *)));
+    connect(&previewDialog, SIGNAL(paintRequested(QPrinter *)), SLOT(on_printPlot(QPrinter *)));
     previewDialog.exec();
 }
 
@@ -1530,7 +1619,7 @@ void MainWindow::on_actionPrint_log_triggered()
     QPrintPreviewDialog previewLogDialog(&logPrinter);
     previewLogDialog.setWindowFlags(Qt::Window);
 
-    connect(&previewLogDialog, SIGNAL(paintRequested(QPrinter *)), SLOT(printLog(QPrinter *)));
+    connect(&previewLogDialog, SIGNAL(paintRequested(QPrinter *)), SLOT(on_printLog(QPrinter *)));
     previewLogDialog.exec();
 }
 
@@ -1560,7 +1649,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
             if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false)
                 fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text());
 
-            connect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(processUDP()));
+            connect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
             addLog("App >>\t UDP port opened.");
 
@@ -1579,7 +1668,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
 
             addLog("App >>\t UDP port closed.");
 
-            disconnect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(processUDP()));
+            disconnect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
             if (!ui->pushButtonSerialConnect->isChecked() && !ui->pushButtonUDPConnect->isChecked())
                 fileLogger.closeFile();
@@ -1587,30 +1676,6 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
             ui->pushButtonUDPConnect->setText("Open Connection");
         }
     }
-}
-
-void MainWindow::sendDatagram(QString message)
-{
-    if (!networkUDP.isOpen())
-    {
-        addLog("App >>\t Unable to send - port closed.");
-        return;
-    }
-
-    if (ui->comboBoxUDPSendMode->currentText().contains("Broadcast", Qt::CaseSensitivity::CaseInsensitive))
-    {
-        networkUDP.write(message, QHostAddress::Broadcast, ui->spinBoxUDPTargetPort->value());
-    }
-    else if (ui->comboBoxUDPSendMode->currentText().contains("LocalHost", Qt::CaseSensitivity::CaseInsensitive))
-    {
-        networkUDP.write(message, QHostAddress::LocalHost, ui->spinBoxUDPTargetPort->value());
-    }
-    else
-    {
-        networkUDP.write(message, QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPTargetPort->value());
-    }
-
-    addLog("UDP >>\t" + message);
 }
 
 void MainWindow::on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1)
@@ -1768,7 +1833,7 @@ void MainWindow::on_pushButtonSetSelectedToGraph_clicked()
     if (ui->spinBoxMaxGraphs->value() < tableLabels.count())
         ui->spinBoxMaxGraphs->setValue(tableLabels.count());
 
-    setSelectedLabels(&tableLabels);
+    on_setSelectedLabels(&tableLabels);
 }
 
 void MainWindow::on_toolButtonAdvancedGraphMenu_clicked()
@@ -1841,69 +1906,13 @@ void MainWindow::on_pushButtonLoadPath_clicked()
     ui->lineEditFileInfo->setText(info);
 }
 
-void MainWindow::getFileTimeRange(QFile *file)
-{
-    if (file->open(QIODevice::ReadOnly))
-    {
-        QString allData = file->readAll();
-        file->close();
-
-        QStringList readFileSplitLines = allData.split(QRegExp("[\n\r]"), QString::SplitBehavior::SkipEmptyParts);
-
-        for (auto i = 0; i < readFileSplitLines.count(); ++i)
-        {
-            QStringList inputStringSplitArrayTopLine = readFileSplitLines[i].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);                                     // rozdzielamy traktująac spacje jako separator
-            QStringList inputStringSplitArrayButtomLine = readFileSplitLines[readFileSplitLines.count() - 1 - i].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
-            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z"};
-
-            bool foundTime[2] = {false};
-
-            for (auto j = 0; j < inputStringSplitArrayTopLine.count(); ++j)
-            {
-                foreach (auto timeFormat, searchTimeFormatList)
-                {
-                    if (QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat).isValid())
-                    {
-                        ui->timeEditMinParsingTime->setTime(QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat));
-                        foundTime[0] = true;
-                        break;
-                    }
-                }
-            }
-
-            for (auto j = 0; j < inputStringSplitArrayButtomLine.count(); ++j)
-            {
-                foreach (auto timeFormat, searchTimeFormatList)
-                {
-                    if (QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat).isValid())
-                    {
-                        ui->timeEditMaxParsingTime->setTime(QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat));
-                        foundTime[1] = true;
-
-                        break;
-                    }
-                }
-            }
-
-            if (foundTime[0] && foundTime[1])
-                return;
-        }
-    }
-    else
-    {
-        qDebug() << "Get file time range - invalid file ?";
-        ui->timeEditMaxParsingTime->setTime(QTime());
-        ui->timeEditMinParsingTime->setTime(QTime());
-    }
-}
-
 void MainWindow::on_pushButtonFitToContents_clicked()
 {
     ui->widgetChart->rescaleAxes(true);
     ui->widgetChart->yAxis->scaleRange(1.20);
 }
 
-void MainWindow::processLoadedFileLine(QString *line, int *progressPercent)
+void MainWindow::on_processLoadedFileLine(QString *line, int *progressPercent)
 {
     parser.parse(*line, true, true, ""); // Parse string - split into labels + numeric data
     QStringList labelList = parser.getStringListLabels();
@@ -1918,14 +1927,14 @@ void MainWindow::processLoadedFileLine(QString *line, int *progressPercent)
     ui->progressBarLoadFile->setValue(*progressPercent);
 }
 
-void MainWindow::updateProgressBar(float *percent)
+void MainWindow::on_updateProgressBar(float *percent)
 {
     ui->progressBarLoadFile->setValue(*percent);
 }
 
-void MainWindow::processLoadedFile(QString *text)
+void MainWindow::on_processLoadedFile(QString *text)
 {
-    connect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(updateProgressBar(float *)));
+    connect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
     parser.setReportProgress(true);
 
     parser.clearStorage();
@@ -1934,7 +1943,7 @@ void MainWindow::processLoadedFile(QString *text)
     parser.resetTimeRange();
 
     parser.setReportProgress(false);
-    disconnect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(updateProgressBar(float *)));
+    disconnect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
 
     QStringList labelList = parser.getStringListLabels();
     QList<double> numericDataList = parser.getListNumericValues();
@@ -1944,7 +1953,7 @@ void MainWindow::processLoadedFile(QString *text)
     this->processTable(labelList, numericDataList);
     this->saveToRAM(labelList, numericDataList, timeStampList);
 
-    disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(processLoadedFile(QString *)));
+    disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
 }
 
 void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
@@ -1953,36 +1962,6 @@ void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
         this->clearGraphData(false);
 
     loadFromRAM((bool)ui->comboBoxRAMLoadMode->currentIndex());
-}
-
-void MainWindow::saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText, QString text)
-{
-    if (ui->checkBoxEnableRAMBuffer->isChecked() == false)
-        return;
-
-    if (text.isEmpty() == false && saveText == true)
-        parser.appendSetToMemory(newlabelList, newDataList, newTimeList, text);
-    else
-        parser.appendSetToMemory(newlabelList, newDataList, newTimeList);
-}
-
-void MainWindow::loadFromRAM(bool loadText)
-{
-    QStringList RAMLabels = parser.getLabelStorage();
-    QList<double> RAMData = parser.getDataStorage();
-    QList<long> RAMTime = parser.getTimeStorage();
-
-    if (loadText)
-    {
-        QStringList RAMText = parser.getTextList();
-        foreach (auto line, RAMText)
-            addLog("Mem >>\t" + line);
-    }
-
-    if (RAMLabels.isEmpty() || RAMData.isEmpty() || RAMTime.isEmpty())
-        return;
-
-    processChart(RAMLabels, RAMData, RAMTime);
 }
 
 void MainWindow::on_pushButtonRAMClear_clicked()
@@ -2015,7 +1994,7 @@ void MainWindow::on_pushButtonLoadFile_clicked()
         if (QDir(ui->lineEditLoadFilePath->text().trimmed()).isReadable())
         {
             QFile inputFile(ui->lineEditLoadFilePath->text().trimmed());
-            connect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(processLoadedFile(QString *)));
+            connect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
 
             connect(&fileReader, &FileReader::fileReadFinished, this, [=]() {
                 ui->pushButtonLoadFile->setText("Load File");
@@ -2043,7 +2022,7 @@ void MainWindow::on_pushButtonLoadFile_clicked()
     else
     {
         parser.abort();
-        disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(processLoadedFile(QString *)));
+        disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
         ui->pushButtonLoadFile->setText("Load File");
         ui->progressBarLoadFile->setValue(0);
     }
@@ -2087,11 +2066,6 @@ void MainWindow::on_pushButtonSaveRAMBuffer_clicked()
     parser.appendSetToMemory(newlabelList, newDataList, newTimeList, text);
 }
 
-void MainWindow::on_actionUser_guide_triggered()
-{
-    QWhatsThis::enterWhatsThisMode();
-}
-
 void MainWindow::on_actionInfo_triggered()
 {
     // infoDialog.setModal(true);
@@ -2104,4 +2078,9 @@ void MainWindow::on_comboBoxLoggingMode_currentIndexChanged(int index)
         ui->checkBoxSimplifyLog->setEnabled(true);
     else if (index == 1)
         ui->checkBoxSimplifyLog->setEnabled(false);
+}
+
+void MainWindow::on_actionWhats_this_triggered()
+{
+    QWhatsThis::enterWhatsThisMode();
 }
