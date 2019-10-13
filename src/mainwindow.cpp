@@ -270,6 +270,8 @@ void MainWindow::settingsLoadAll()
         ui->comboBoxExternalTimeFormat->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxExternalTimeFormat.currentIndex").value<int>());
         ui->comboBoxRAMLoadMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMLoadMode.currentIndex").value<int>());
         ui->comboBoxRAMSaveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMSaveMode.currentIndex").value<int>());
+        ui->comboBoxLoggingMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLoggingMode.currentIndex").value<int>());
+
 
         ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
         ui->checkBoxSimplify->setChecked(appSettings.value("GUI_Elements/checkBoxSimplify.isChecked").value<bool>());
@@ -351,6 +353,7 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/comboBoxExternalTimeFormat.currentIndex", ui->comboBoxExternalTimeFormat->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxRAMLoadMode.currentIndex", ui->comboBoxRAMLoadMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxRAMSaveMode.currentIndex", ui->comboBoxRAMSaveMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxLoggingMode.currentIndex", ui->comboBoxLoggingMode->currentIndex());
 
         appSettings.setValue("GUI_Elements/checkBoxDTR.isChecked", ui->checkBoxDTR->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxSimplify.isChecked", ui->checkBoxSimplify->isChecked());
@@ -446,6 +449,7 @@ void MainWindow::processTable(QStringList labels, QList<double> values)
 
 void MainWindow::on_printIntroChangelog() // TODO
 {
+    ui->pushButtonTextLogToggle->setChecked(false);
     ui->textBrowserLogs->append(INTRO_TEXT);
     ui->textBrowserLogs->append("\n" CHANGELOG_TEXT);
 
@@ -1745,9 +1749,9 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->lineEditSaveFileName->setEnabled(false);
         ui->pushButtonAddDateTime->setEnabled(false);
 
-        ui->pushButtonLogging->setText("Auto");
         ui->lineEditSaveFileName->setText("%DateTime%_Log.txt");
         ui->pushButtonLogging->setChecked(true); // Trigger begin log
+        ui->pushButtonLogging->setText("Auto");
     }
     else
     {
@@ -1756,7 +1760,7 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->pushButtonAddDateTime->setEnabled(true);
 
         ui->pushButtonLogging->setChecked(false);
-        ui->pushButtonLogging->setText("Start Logging");
+        ui->pushButtonLogging->setText("Enable Logging");
 
         ui->lineEditSaveFileName->clear();
     }

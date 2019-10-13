@@ -60,7 +60,7 @@
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideMiddle</enum>
@@ -93,6 +93,9 @@
                <width>0</width>
                <height>30</height>
               </size>
+             </property>
+             <property name="whatsThis">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Refresh availible COM ports list&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Refresh</string>
@@ -140,6 +143,9 @@
                <width>200</width>
                <height>30</height>
               </size>
+             </property>
+             <property name="whatsThis">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable/disable serial communication&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Connect</string>
@@ -250,6 +256,9 @@
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;quot;Data Terminal Ready&amp;quot; - required by some devices such as Arduino Due for proper UART initialisation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;quot;Data Terminal Ready&amp;quot; - required by some devices such as Arduino Due for proper UART initialisation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>DTR</string>
                </property>
@@ -333,6 +342,9 @@
                  <width>16777215</width>
                  <height>16777215</height>
                 </size>
+               </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Automatically refresh the availible COM ports list every 500 ms.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Auto update</string>
@@ -1651,6 +1663,9 @@
                  <height>25</height>
                 </size>
                </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Clear text window&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Clear</string>
                </property>
@@ -1670,6 +1685,9 @@
                  <width>0</width>
                  <height>0</height>
                 </size>
+               </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the interval of reading Serial/UDP. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1714,6 +1732,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Highlights the words in the main text window that matches the contents of this textbox&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="placeholderText">
                 <string>Text to highlight...</string>
@@ -1862,6 +1883,22 @@
                    </widget>
                   </item>
                   <item>
+                   <spacer name="horizontalSpacer_3">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                     <enum>QSizePolicy::MinimumExpanding</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>13</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
                    <widget class="QCheckBox" name="checkBoxAutoTrack">
                     <property name="text">
                      <string>Scroll X</string>
@@ -1919,22 +1956,6 @@
                    </widget>
                   </item>
                   <item>
-                   <spacer name="horizontalSpacer_3">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                     <enum>QSizePolicy::MinimumExpanding</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>13</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                  <item>
                    <widget class="QPushButton" name="pushButtonFitToContents">
                     <property name="text">
                      <string>&lt;--  Fit  --&gt;</string>
@@ -1953,7 +1974,7 @@
                      </size>
                     </property>
                     <property name="text">
-                     <string>Clear data</string>
+                     <string>Clear plot</string>
                     </property>
                    </widget>
                   </item>
@@ -2517,7 +2538,7 @@
   </action>
   <action name="actionInfo">
    <property name="text">
-    <string>Author info</string>
+    <string>Application Info</string>
    </property>
   </action>
  </widget>

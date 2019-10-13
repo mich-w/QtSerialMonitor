@@ -39,8 +39,11 @@ bool Logger::beginLog(QString path, bool autoLogging, QString fileName)
 
         return true;
     }
-    qDebug() << "Invalid Dir";
-    return false;
+    else
+    {
+        qDebug() << "Invalid Dir";
+        return false;
+    }
 }
 
 bool Logger::isOpen()
