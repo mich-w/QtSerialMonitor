@@ -47,7 +47,6 @@ void Serial::readString()
 
 bool Serial::setReadMode(int mode)
 {
-
     //    ui->comboBoxSerialReadMode->addItem("canReadLine | readLine");
     //    ui->comboBoxSerialReadMode->addItem("canReadLine | readAll");
     //    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readLine");

@@ -7,5 +7,6 @@
 
 #define INTRO_TEXT  "" \
                     "Welcome to QtSerialMonitor, \n" \
-                    "Press F1 to activate \"What's this\" mode. In this mode, clicked widget will display an explanation about its function. \n"
+                    "Press F1 to activate \"What's this\" mode. In this mode, clicked widget \r" \
+                    "will display an explanation about its function. \n"
 #endif // CONFIG_H

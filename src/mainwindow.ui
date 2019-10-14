@@ -46,7 +46,7 @@
         <number>0</number>
        </property>
        <item row="2" column="0" colspan="2">
-        <widget class="QTabWidget" name="tabWidgetConnectivity">
+        <widget class="QTabWidget" name="tabWidgetControlSection">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -643,7 +643,7 @@
                 <number>99999</number>
                </property>
                <property name="value">
-                <number>44444</number>
+                <number>0</number>
                </property>
               </widget>
              </item>
@@ -696,7 +696,7 @@
                 <number>1</number>
                </property>
                <property name="value">
-                <number>55555</number>
+                <number>0</number>
                </property>
                <property name="displayIntegerBase">
                 <number>10</number>
@@ -1321,7 +1321,7 @@
             </spacer>
            </item>
            <item row="2" column="0">
-            <widget class="QCheckBox" name="checkBoxEnableRAMBuffer">
+            <widget class="QCheckBox" name="checkBoxAutoSaveBuffer">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -2146,7 +2146,7 @@
                  <item>
                   <widget class="QPushButton" name="pushButtonSetSelectedToGraph">
                    <property name="text">
-                    <string>Apply selected to plot rules</string>
+                    <string>Apply selected to plot</string>
                    </property>
                   </widget>
                  </item>
@@ -2556,7 +2556,7 @@
   <tabstop>checkBoxSimplify</tabstop>
   <tabstop>pushButtonScrollToButtom</tabstop>
   <tabstop>pushButtonClear</tabstop>
-  <tabstop>tabWidgetConnectivity</tabstop>
+  <tabstop>tabWidgetControlSection</tabstop>
   <tabstop>pushButtonSend</tabstop>
  </tabstops>
  <resources/>

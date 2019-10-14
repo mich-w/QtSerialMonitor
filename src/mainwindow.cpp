@@ -272,7 +272,6 @@ void MainWindow::settingsLoadAll()
         ui->comboBoxRAMSaveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMSaveMode.currentIndex").value<int>());
         ui->comboBoxLoggingMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLoggingMode.currentIndex").value<int>());
 
-
         ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
         ui->checkBoxSimplify->setChecked(appSettings.value("GUI_Elements/checkBoxSimplify.isChecked").value<bool>());
         ui->checkBoxSendKey->setChecked(appSettings.value("GUI_Elements/checkBoxSendKey.isChecked").value<bool>());
@@ -285,11 +284,12 @@ void MainWindow::settingsLoadAll()
         ui->checkBoxAppendDate->setChecked(appSettings.value("GUI_Elements/checkBoxAppendDate.isChecked").value<bool>());
         ui->checkBoxSimplifyLog->setChecked(appSettings.value("GUI_Elements/checkBoxSimplifyLog.isChecked").value<bool>());
         ui->checkBoxRAMClearChart->setChecked(appSettings.value("GUI_Elements/checkBoxRAMClearChart.isChecked").value<bool>());
-        ui->checkBoxEnableRAMBuffer->setChecked(appSettings.value("GUI_Elements/checkBoxEnableRAMBuffer.isChecked", true).value<bool>()); // default value set to true !
+        ui->checkBoxAutoSaveBuffer->setChecked(appSettings.value("GUI_Elements/checkBoxAutoSaveBuffer.isChecked", true).value<bool>());
+        ui->checkBoxTableAutoResize->setChecked(appSettings.value("GUI_Elements/checkBoxTableAutoResize.isChecked", true).value<bool>()); // default value set to true !
 
-        ui->pushButtonEnablePlot->setChecked(appSettings.value("GUI_Elements/pushButtonEnablePlot.isChecked").value<bool>());
+        ui->pushButtonEnablePlot->setChecked(appSettings.value("GUI_Elements/pushButtonEnablePlot.isChecked", false).value<bool>());
 
-        ui->tabWidgetConnectivity->setCurrentIndex(appSettings.value("GUI_Elements/tabWidgetConnectivity.currentIndex").value<int>());
+        ui->tabWidgetControlSection->setCurrentIndex(appSettings.value("GUI_Elements/tabWidgetControlSection.currentIndex").value<int>());
 
         ui->lineEditCustomParsingRules->setText(appSettings.value("data/lineEditCustomParsingRules.text").value<QString>());
         ui->lineEditUDPTargetIP->setText(appSettings.value("data/lineEditUDPTargetIP.text").value<QString>());
@@ -367,11 +367,12 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/checkBoxAppendDate.isChecked", ui->checkBoxAppendDate->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxSimplifyLog.isChecked", ui->checkBoxSimplifyLog->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxRAMClearChart.isChecked", ui->checkBoxRAMClearChart->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxEnableRAMBuffer.isChecked", ui->checkBoxEnableRAMBuffer->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoSaveBuffer.isChecked", ui->checkBoxAutoSaveBuffer->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxTableAutoResize.isChecked", ui->checkBoxTableAutoResize->isChecked());
 
         appSettings.setValue("GUI_Elements/pushButtonEnablePlot.isChecked", ui->pushButtonEnablePlot->isChecked());
 
-        appSettings.setValue("GUI_Elements/tabWidgetConnectivity.currentIndex", ui->tabWidgetConnectivity->currentIndex());
+        appSettings.setValue("GUI_Elements/tabWidgetControlSection.currentIndex", ui->tabWidgetControlSection->currentIndex());
 
         appSettings.setValue("data/lineEditCustomParsingRules.text", ui->lineEditCustomParsingRules->text());
         appSettings.setValue("data/lineEditUDPTargetIP.text", ui->lineEditUDPTargetIP->text());
@@ -1108,7 +1109,7 @@ void MainWindow::sendSerial(QString message)
 
 void MainWindow::saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText, QString text)
 {
-    if (ui->checkBoxEnableRAMBuffer->isChecked() == false)
+    if (ui->checkBoxAutoSaveBuffer->isChecked() == false)
         return;
 
     if (text.isEmpty() == false && saveText == true)
@@ -1938,6 +1939,8 @@ void MainWindow::on_updateProgressBar(float *percent)
 
 void MainWindow::on_processLoadedFile(QString *text)
 {
+    disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
+
     connect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
     parser.setReportProgress(true);
 
@@ -1956,8 +1959,6 @@ void MainWindow::on_processLoadedFile(QString *text)
     this->processChart(labelList, numericDataList, timeStampList);
     this->processTable(labelList, numericDataList);
     this->saveToRAM(labelList, numericDataList, timeStampList);
-
-    disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
 }
 
 void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
