@@ -2089,3 +2089,9 @@ void MainWindow::on_actionWhats_this_triggered()
 {
     QWhatsThis::enterWhatsThisMode();
 }
+
+void MainWindow::on_lineEditSaveFileName_editingFinished()
+{
+    if (ui->lineEditSaveFileName->text().endsWith(".txt") == false)
+        ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().append(".txt")); // auto-complete filename with .txt extension
+}

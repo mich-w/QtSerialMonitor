@@ -97,6 +97,7 @@ private slots:
     void on_lineEditExternalClockLabel_editingFinished();
     void on_lineEditHighlight_returnPressed();
     void on_lineEditLoadFilePath_customContextMenuRequested(const QPoint &pos);
+    void on_lineEditSaveFileName_editingFinished();
     void on_printIntroChangelog();
     void on_printLog(QPrinter *printer);
     void on_printPlot(QPrinter *printer);
