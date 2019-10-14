@@ -1974,12 +1974,6 @@ void MainWindow::on_pushButtonRAMClear_clicked()
     parser.clearStorage();
 }
 
-void MainWindow::on_checkBoxEnableRAMBuffer_toggled(bool checked)
-{
-    parser.clearStorage();
-    ui->pushButtonSaveParserMemory->setEnabled(!checked);
-}
-
 void MainWindow::on_checkBoxSyncSystemClock_toggled(bool checked)
 {
     // clearGraphs(true);
@@ -2094,4 +2088,10 @@ void MainWindow::on_lineEditSaveFileName_editingFinished()
 {
     if (ui->lineEditSaveFileName->text().endsWith(".txt") == false)
         ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().append(".txt")); // auto-complete filename with .txt extension
+}
+
+void MainWindow::on_checkBoxAutoSaveBuffer_toggled(bool checked)
+{
+    parser.clearStorage();
+    ui->pushButtonSaveParserMemory->setEnabled(!checked);
 }

@@ -76,7 +76,6 @@ private slots:
     void on_checkBoxAutoLogging_toggled(bool checked);
     void on_checkBoxAutoRefresh_toggled(bool checked);
     void on_checkBoxAutoTrack_toggled(bool checked);
-    void on_checkBoxEnableRAMBuffer_toggled(bool checked);
     void on_checkBoxEnableTracer_toggled(bool checked);
     void on_checkBoxExternalTimeReference_toggled(bool checked);
     void on_checkBoxShowLegend_toggled(bool checked);
@@ -137,6 +136,8 @@ private slots:
     void on_toolButtonAdvancedGraphMenu_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
+    void on_checkBoxAutoSaveBuffer_toggled(bool checked);
+
 private:
     // QCompleter *completer;
     FileReader fileReader;
