@@ -48,13 +48,13 @@ void MainWindow::setupGUI()
     foreach (auto item, QSerialPortInfo::standardBaudRates())
         ui->comboBoxBaudRates->addItem(QString::number(item));
 
+    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
+
     ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() - 3); // TODO SETTINGS !
 
     ui->comboBoxTracerStyle->addItem("Crosshair");
     ui->comboBoxTracerStyle->addItem("Circle");
     ui->comboBoxTracerStyle->setCurrentIndex(0);
-
-    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
 
     ui->comboBoxGraphDisplayMode->addItem("Auto");
     ui->comboBoxGraphDisplayMode->addItem("Custom");
@@ -91,8 +91,6 @@ void MainWindow::setupGUI()
 
     on_updateSerialDeviceList();
 
-    emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
-
     ui->comboBoxUDPReceiveMode->addItem("Any");
     ui->comboBoxUDPReceiveMode->addItem("LocalHost");
     ui->comboBoxUDPReceiveMode->addItem("SpecialAddress");
@@ -123,8 +121,6 @@ void MainWindow::setupGUI()
     ui->comboBoxExternalTimeFormat->addItem("[ms]");
     ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
 
-    emit on_checkBoxExternalTimeReference_toggled(ui->checkBoxExternalTimeReference->isChecked());
-
     ui->comboBoxLoggingMode->addItem("Log Text");
     ui->comboBoxLoggingMode->addItem("Log Parsed Data");
     ui->comboBoxLoggingMode->setCurrentIndex(0);
@@ -138,6 +134,10 @@ void MainWindow::setupGUI()
     ui->comboBoxRAMLoadMode->setCurrentIndex(0);
 
     ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+
+    emit on_checkBoxAutoLogging_toggled(ui->checkBoxAutoLogging->isChecked());
+    emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
+    emit on_checkBoxExternalTimeReference_toggled(ui->checkBoxExternalTimeReference->isChecked());
 }
 
 void MainWindow::createChart()
@@ -1104,7 +1104,7 @@ void MainWindow::sendSerial(QString message)
     if (serial.send(message))
         this->addLog("Serial >>\t" + message);
     else
-        this->addLog("Serial >>\t Unable to send! Serial port closed !");
+        this->addLog("App >>\t Unable to send! Serial port closed !");
 }
 
 void MainWindow::saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText, QString text)
@@ -1693,17 +1693,20 @@ void MainWindow::on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1)
 
 void MainWindow::on_comboBoxUDPReceiveMode_currentIndexChanged(const QString &arg1)
 {
-    if (ui->comboBoxUDPReceiveMode->currentText().contains("LocalHost"))
+    if (ui->pushButtonUDPConnect->isChecked() == true)
     {
-        networkUDP.bind(QHostAddress::LocalHost, ui->spinBoxUDPReceivePort->value());
-    }
-    else if (ui->comboBoxUDPReceiveMode->currentText().contains("Any"))
-    {
-        networkUDP.bind(QHostAddress::Any, ui->spinBoxUDPReceivePort->value());
-    }
-    else if (ui->comboBoxUDPReceiveMode->currentText().contains("SpecialAddress"))
-    {
-        networkUDP.bind(QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPReceivePort->value());
+        if (ui->comboBoxUDPReceiveMode->currentText().contains("LocalHost"))
+        {
+            networkUDP.bind(QHostAddress::LocalHost, ui->spinBoxUDPReceivePort->value());
+        }
+        else if (ui->comboBoxUDPReceiveMode->currentText().contains("Any"))
+        {
+            networkUDP.bind(QHostAddress::Any, ui->spinBoxUDPReceivePort->value());
+        }
+        else if (ui->comboBoxUDPReceiveMode->currentText().contains("SpecialAddress"))
+        {
+            networkUDP.bind(QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPReceivePort->value());
+        }
     }
 
     if (arg1.contains("SpecialAddress") || ui->comboBoxUDPSendMode->currentText().contains("SpecialAddress"))
