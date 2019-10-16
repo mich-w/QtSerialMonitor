@@ -1327,7 +1327,9 @@ void MainWindow::on_pushButtonEnablePlot_toggled(bool checked)
 
 void MainWindow::on_pushButtonSend_clicked()
 {
-    ui->comboBoxSend->addItem(ui->comboBoxSend->currentText()); // dodajemy do historii (bez tego nie dodaje)
+    if (ui->comboBoxSend->findText(ui->comboBoxSend->currentText()) < 0)
+        ui->comboBoxSend->addItem(ui->comboBoxSend->currentText()); // add to history (here we have to do it manually)
+
     on_comboBoxSendReturnPressedSlot();
 }
 
