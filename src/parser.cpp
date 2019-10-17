@@ -52,7 +52,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
                 {
                     latestTimeStamp = QTime::fromMSecsSinceStartOfDay(inputStringSplitArray[i + 1].toInt());
                 }
-                else
+                else if (externalClockLabel.isEmpty() == true)
                 {
                     foreach (auto timeFormat, searchTimeFormatList)
                     {
@@ -67,7 +67,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
                     {
                         if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
                         {
-                           // continue;
+                            continue;
                         }
                     }
                 }

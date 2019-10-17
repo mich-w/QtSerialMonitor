@@ -78,28 +78,12 @@ QString Serial::getString(bool clearBuffer)
     return output;
 }
 
-QByteArray Serial::getBytes(bool clearBuffer)
-{
-    QByteArray outputByteArray = serialByteArray;
-
-    if (clearBuffer)
-        clearBytes();
-
-    return outputByteArray;
-}
-
 void Serial::clearAll(bool clearHardwareBuffers)
 {
     serialInputString.clear();
-    serialByteArray.clear();
 
     if (clearHardwareBuffers)
         serialDevice->clear();
-}
-
-void Serial::clearBytes()
-{
-    serialByteArray.clear();
 }
 
 void Serial::clearString()

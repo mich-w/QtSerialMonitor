@@ -13,10 +13,8 @@ public:
     bool bind(QHostAddress ip, qint16 port);
     bool end();
     bool isOpen();
-    QByteArray readBytes(bool clearBuffer = true);
     QString readString(bool clearBuffer = true);
     void clearAll();
-    void clearBytesBuffer();
     void clearStringBuffer();
     void write(QString message, QHostAddress ip, qint16 port);
 signals:
@@ -27,7 +25,6 @@ private slots:
 
 private:
     bool isBinded = false;
-    QByteArray udpReceiveBytes;
     QString udpReceiveStringBuffer;
     QUdpSocket *udpSocket;
 };
