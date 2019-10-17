@@ -1866,8 +1866,6 @@ void MainWindow::on_toolButtonAdvancedGraphMenu_clicked()
 
 void MainWindow::on_splitterGraphTable_splitterMoved(int pos, int index)
 {
-    qDebug() << "pos: " + QString::number(pos);
-
     if (pos < ui->splitterGraphTable->height() - 30)
         ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::DownArrow);
     else
