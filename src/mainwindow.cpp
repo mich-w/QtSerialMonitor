@@ -822,6 +822,7 @@ void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<do
 void MainWindow::on_processSerial()
 {
     QString serialInput = serial.getString();
+    serial.clearAll();
 
     if (ui->comboBoxTextProcessing->currentIndex() == 1) // Append text to textBrowser
         serialInput = serialInput.trimmed();
@@ -870,6 +871,7 @@ void MainWindow::clearGraphData(bool replot)
 void MainWindow::on_processUDP()
 {
     QString udpInput = networkUDP.readString();
+    networkUDP.clearAll();
 
     if (ui->comboBoxTextProcessing->currentIndex() == 1)
         udpInput = udpInput.trimmed();
