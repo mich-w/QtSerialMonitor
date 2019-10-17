@@ -222,7 +222,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !");
@@ -271,9 +271,9 @@ void MainWindow::settingsLoadAll()
         ui->comboBoxRAMLoadMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMLoadMode.currentIndex").value<int>());
         ui->comboBoxRAMSaveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMSaveMode.currentIndex").value<int>());
         ui->comboBoxLoggingMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLoggingMode.currentIndex").value<int>());
+        ui->comboBoxTextProcessing->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTextProcessing.currentIndex").value<int>());
 
         ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
-        ui->checkBoxSimplify->setChecked(appSettings.value("GUI_Elements/checkBoxSimplify.isChecked").value<bool>());
         ui->checkBoxSendKey->setChecked(appSettings.value("GUI_Elements/checkBoxSendKey.isChecked").value<bool>());
         ui->checkBoxWrapText->setChecked(appSettings.value("GUI_Elements/checkBoxWrapText.isChecked").value<bool>());
         ui->checkBoxAutoTrack->setChecked(appSettings.value("GUI_Elements/checkBoxAutoTrack.isChecked").value<bool>());
@@ -354,9 +354,9 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/comboBoxRAMLoadMode.currentIndex", ui->comboBoxRAMLoadMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxRAMSaveMode.currentIndex", ui->comboBoxRAMSaveMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxLoggingMode.currentIndex", ui->comboBoxLoggingMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxTextProcessing.currentIndex", ui->comboBoxTextProcessing->currentIndex());
 
         appSettings.setValue("GUI_Elements/checkBoxDTR.isChecked", ui->checkBoxDTR->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxSimplify.isChecked", ui->checkBoxSimplify->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxSendKey.isChecked", ui->checkBoxSendKey->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxWrapText.isChecked", ui->checkBoxWrapText->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxAutoTrack.isChecked", ui->checkBoxAutoTrack->isChecked());
@@ -708,9 +708,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                           .arg(graph->name())
-                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                           .arg(QString::number(temp.y(), 'f', 5)),
+                       .arg(graph->name())
+                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                       .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -821,23 +821,24 @@ void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<do
 
 void MainWindow::on_processSerial()
 {
-    QString serialInput = serial.getString().trimmed();
-    QByteArray serialInputBytes = serial.getBytes();
+    QString serialInput = serial.getString();
+
+    if (ui->comboBoxTextProcessing->currentIndex() == 1) // Append text to textBrowser
+        serialInput = serialInput.trimmed();
+    else if (ui->comboBoxTextProcessing->currentIndex() == 2) // Append text to textBrowser
+        serialInput = serialInput.simplified();
 
     if (ui->comboBoxFormat->currentIndex() == 0 && serialInput.isEmpty() == false)
     {
-        if (ui->checkBoxSimplify->isChecked()) // Append text to textBrowser
-            addLog("Serial <<\t" + serialInput.simplified());
-        else
-            addLog("Serial <<\t" + serialInput);
+        addLog("Serial <<\t" + serialInput);
     }
-    else if (ui->comboBoxFormat->currentIndex() == 1 && serialInputBytes.length() > 0)
+    else if (ui->comboBoxFormat->currentIndex() == 1 && serialInput.length() > 0)
     {
-        addLogBytes("Serial (HEX) <<\t", serialInputBytes);
+        addLogBytes("Serial (HEX) <<\t", serialInput.toUtf8());
     }
-    else if (ui->comboBoxFormat->currentIndex() == 2 && serialInputBytes.length() > 0)
+    else if (ui->comboBoxFormat->currentIndex() == 2 && serialInput.length() > 0)
     {
-        addLogBytes("Serial (BIN) <<\t", serialInputBytes, true);
+        addLogBytes("Serial (BIN) <<\t", serialInput.toUtf8(), true);
     }
 
     if (serialInput.isEmpty() == false)
@@ -868,23 +869,24 @@ void MainWindow::clearGraphData(bool replot)
 
 void MainWindow::on_processUDP()
 {
-    QString udpInput = networkUDP.readString().trimmed();
-    QByteArray udpInputBytes = networkUDP.readBytes();
+    QString udpInput = networkUDP.readString();
+
+    if (ui->comboBoxTextProcessing->currentIndex() == 1)
+        udpInput = udpInput.trimmed();
+    else if (ui->comboBoxTextProcessing->currentIndex() == 2)
+        udpInput = udpInput.simplified();
 
     if (ui->comboBoxFormat->currentIndex() == 0 && udpInput.isEmpty() == false)
     {
-        if (ui->checkBoxSimplify->isChecked())
-            addLog("UDP <<\t" + udpInput.simplified());
-        else
-            addLog("UDP <<\t" + udpInput);
+        addLog("UDP <<\t" + udpInput);
     }
-    else if (ui->comboBoxFormat->currentIndex() == 1 && udpInputBytes.length() > 0)
+    else if (ui->comboBoxFormat->currentIndex() == 1 && udpInput.length() > 0)
     {
-        addLogBytes("UDP (HEX) <<\t", udpInputBytes);
+        addLogBytes("UDP (HEX) <<\t", udpInput.toUtf8());
     }
-    else if (ui->comboBoxFormat->currentIndex() == 2 && udpInputBytes.length() > 0)
+    else if (ui->comboBoxFormat->currentIndex() == 2 && udpInput.length() > 0)
     {
-        addLogBytes("UDP (BIN) <<\t", udpInputBytes, true);
+        addLogBytes("UDP (BIN) <<\t", udpInput.toUtf8(), true);
     }
 
     if (udpInput.isEmpty() == false)
@@ -948,9 +950,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
-            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
