@@ -1416,6 +1416,10 @@ void MainWindow::on_checkBoxAutoTrack_toggled(bool checked)
 
 void MainWindow::on_spinBoxProcessingDelay_valueChanged(int arg1)
 {
+    int newInterval = arg1;
+    if (newInterval < 1)
+        newInterval = 1; // Never 0 ! Couses CPU run like crazy !
+
     serialStringProcessingTimer->setInterval(arg1);
     udpStringProcessingTimer->setInterval(arg1);
 
