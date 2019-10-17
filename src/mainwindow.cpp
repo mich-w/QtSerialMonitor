@@ -735,7 +735,7 @@ void MainWindow::on_updateSerialDeviceList()
         portNames.append(item.portName());
     }
 
-    if ((devices.count() >= 1) && !(portNames.toSet().intersects(portNamesOld.toSet())))
+    if ((devices.count() >= 1) && (!(portNames.toSet().intersects(portNamesOld.toSet())) || (portNames.count() != portNamesOld.count())))
     {
         ui->comboBoxDevices->clear();
 
