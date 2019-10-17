@@ -67,7 +67,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
                     {
                         if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
                         {
-                            continue;
+                           // continue;
                         }
                     }
                 }
