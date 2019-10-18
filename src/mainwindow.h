@@ -73,15 +73,18 @@ private slots:
     void on_chartBeforeReplotSlot();
     void on_chartContextMenuRequest(QPoint pos);
     void on_chartMouseDoubleClickHandler(QMouseEvent *event);
+    void on_chartMouseMoveHandler(QMouseEvent *event);
     void on_chartMousePressHandler(QMouseEvent *event);
     void on_chartSelectionChanged();
     void on_checkBoxAutoLogging_toggled(bool checked);
     void on_checkBoxAutoRefresh_toggled(bool checked);
+    void on_checkBoxAutoSaveBuffer_toggled(bool checked);    
     void on_checkBoxAutoTrack_toggled(bool checked);
     void on_checkBoxEnableTracer_toggled(bool checked);
     void on_checkBoxShowLegend_toggled(bool checked);
     void on_checkBoxWrapText_toggled(bool checked);
     void on_clearGraphSelection();
+    void on_comboBoxClockSource_currentIndexChanged(int index);
     void on_comboBoxGraphDisplayMode_currentIndexChanged(const QString &arg1);
     void on_comboBoxLoggingMode_currentIndexChanged(int index);
     void on_comboBoxSendReturnPressedSlot();
@@ -135,9 +138,6 @@ private slots:
     void on_toolButtonAdvancedGraphMenu_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
-    void on_checkBoxAutoSaveBuffer_toggled(bool checked);    
-    void on_comboBoxClockSource_currentIndexChanged(int index);
-
 private:
     // QCompleter *completer;
     FileReader fileReader;

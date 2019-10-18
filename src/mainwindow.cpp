@@ -169,6 +169,8 @@ void MainWindow::createChart()
 
     connect(ui->widgetChart, SIGNAL(mouseDoubleClick(QMouseEvent *)), this, SLOT(on_chartMouseDoubleClickHandler(QMouseEvent *)));
     connect(ui->widgetChart, SIGNAL(mousePress(QMouseEvent *)), this, SLOT(on_chartMousePressHandler(QMouseEvent *)));
+    connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_chartMouseMoveHandler(QMouseEvent *)));
+
     connect(ui->widgetChart, SIGNAL(selectionChangedByUser()), this, SLOT(on_chartSelectionChanged()));
     connect(ui->widgetChart, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_chartContextMenuRequest(QPoint)));
     connect(ui->widgetChart, SIGNAL(beforeReplot()), this, SLOT(on_chartBeforeReplotSlot()));
@@ -753,6 +755,28 @@ void MainWindow::on_chartMousePressHandler(QMouseEvent *event)
         ui->widgetChart->setSelectionRectMode(QCP::srmNone);
 
     ui->widgetChart->replot();
+}
+
+void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
+{
+    static int distance = 0, lastPos = 0;
+
+    if (event->buttons() & Qt::LeftButton)
+    {
+        distance += event->pos().x() - lastPos;
+        lastPos = event->pos().x();
+
+        //    qDebug() << "distance: " + QString::number(distance);
+
+        if (abs(distance) > 200)
+        {
+            ui->checkBoxAutoTrack->setChecked(false);
+        }
+    }
+    else
+    {
+        distance = 0;
+    }
 }
 
 void MainWindow::on_updateSerialDeviceList()

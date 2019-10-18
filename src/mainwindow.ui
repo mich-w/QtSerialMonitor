@@ -2600,6 +2600,9 @@ p, li { white-space: pre-wrap; }
    </property>
   </action>
   <action name="actionWhat_s_new">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Changelog</string>
    </property>
@@ -2653,7 +2656,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionWhats_this">
    <property name="text">
-    <string>Enter &quot;What's this ?&quot;</string>
+    <string>&quot;What's this ?&quot; Mode</string>
    </property>
    <property name="shortcut">
     <string>F1</string>
