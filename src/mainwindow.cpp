@@ -2138,7 +2138,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (serial.isOpen() || networkUDP.isOpen())
     {
         QMessageBox::StandardButton resBtn = QMessageBox::question(this, "About to exit...", tr("Connection open. Are you sure ? \n"),
-                                                                   QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+                                                                   QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
         if (resBtn == QMessageBox::No)
             event->ignore();
         else
