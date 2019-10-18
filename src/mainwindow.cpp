@@ -1408,9 +1408,6 @@ void MainWindow::on_lineEditCustomParsingRules_editingFinished()
 
 void MainWindow::on_spinBoxMaxGraphs_valueChanged(int arg1)
 {
-    while (ui->widgetChart->graphCount() > arg1)
-        ui->widgetChart->removeGraph(ui->widgetChart->graph());
-
     QPalette *paletteRed = new QPalette();
     QPalette *paletteBlack = new QPalette();
     paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
@@ -1421,7 +1418,8 @@ void MainWindow::on_spinBoxMaxGraphs_valueChanged(int arg1)
     else
         ui->spinBoxMaxGraphs->setPalette(*paletteBlack);
 
-    loadFromRAM(false);
+    this->clearGraphs(false);
+    this->loadFromRAM(false);
 
     ui->widgetChart->replot();
 }
