@@ -109,7 +109,6 @@ private slots:
     void on_pushButtonClearHistory_clicked();
     void on_pushButtonClearTable_clicked();
     void on_pushButtonEnablePlot_toggled(bool checked);
-    void on_pushButtonFitToContents_clicked();
     void on_pushButtonLoadFile_clicked();
     void on_pushButtonLoadPath_clicked();
     void on_pushButtonLoadRAMBuffer_clicked();

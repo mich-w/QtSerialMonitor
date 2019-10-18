@@ -1939,12 +1939,6 @@ void MainWindow::on_pushButtonLoadPath_clicked()
     ui->lineEditFileInfo->setText(info);
 }
 
-void MainWindow::on_pushButtonFitToContents_clicked()
-{
-    ui->widgetChart->rescaleAxes(true);
-    ui->widgetChart->yAxis->scaleRange(1.20);
-}
-
 void MainWindow::on_processLoadedFileLine(QString *line, int *progressPercent)
 {
     parser.parse(*line, true, true, ""); // Parse string - split into labels + numeric data
