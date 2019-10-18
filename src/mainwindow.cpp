@@ -48,13 +48,13 @@ void MainWindow::setupGUI()
     foreach (auto item, QSerialPortInfo::standardBaudRates())
         ui->comboBoxBaudRates->addItem(QString::number(item));
 
+    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
+
     ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() - 3); // TODO SETTINGS !
 
     ui->comboBoxTracerStyle->addItem("Crosshair");
     ui->comboBoxTracerStyle->addItem("Circle");
     ui->comboBoxTracerStyle->setCurrentIndex(0);
-
-    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
 
     ui->comboBoxGraphDisplayMode->addItem("Auto");
     ui->comboBoxGraphDisplayMode->addItem("Custom");
@@ -91,8 +91,6 @@ void MainWindow::setupGUI()
 
     on_updateSerialDeviceList();
 
-    emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
-
     ui->comboBoxUDPReceiveMode->addItem("Any");
     ui->comboBoxUDPReceiveMode->addItem("LocalHost");
     ui->comboBoxUDPReceiveMode->addItem("SpecialAddress");
@@ -123,8 +121,6 @@ void MainWindow::setupGUI()
     ui->comboBoxExternalTimeFormat->addItem("[ms]");
     ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
 
-    emit on_checkBoxExternalTimeReference_toggled(ui->checkBoxExternalTimeReference->isChecked());
-
     ui->comboBoxLoggingMode->addItem("Log Text");
     ui->comboBoxLoggingMode->addItem("Log Parsed Data");
     ui->comboBoxLoggingMode->setCurrentIndex(0);
@@ -138,6 +134,10 @@ void MainWindow::setupGUI()
     ui->comboBoxRAMLoadMode->setCurrentIndex(0);
 
     ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+
+    emit on_checkBoxAutoLogging_toggled(ui->checkBoxAutoLogging->isChecked());
+    emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
+    emit on_comboBoxClockSource_currentIndexChanged(ui->comboBoxClockSource->currentIndex());
 }
 
 void MainWindow::createChart()
@@ -169,6 +169,8 @@ void MainWindow::createChart()
 
     connect(ui->widgetChart, SIGNAL(mouseDoubleClick(QMouseEvent *)), this, SLOT(on_chartMouseDoubleClickHandler(QMouseEvent *)));
     connect(ui->widgetChart, SIGNAL(mousePress(QMouseEvent *)), this, SLOT(on_chartMousePressHandler(QMouseEvent *)));
+    connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_chartMouseMoveHandler(QMouseEvent *)));
+
     connect(ui->widgetChart, SIGNAL(selectionChangedByUser()), this, SLOT(on_chartSelectionChanged()));
     connect(ui->widgetChart, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_chartContextMenuRequest(QPoint)));
     connect(ui->widgetChart, SIGNAL(beforeReplot()), this, SLOT(on_chartBeforeReplotSlot()));
@@ -231,11 +233,27 @@ void MainWindow::settingsLoadAll()
     }
     // ------------------------- //
 
+    // ----- Window size ----- //
+    {
+        //        QStringList windowSize;
+        //        windowSize = appSettings.value("layout/windowSize.size").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+
+        //        if (!windowSize.isEmpty())
+        //            this->resize(windowSize.first().trimmed().toInt(), windowSize.last().trimmed().toInt());
+    }
+    // ------------------------- //
+
     // ----- splitterSizes ----- //
     {
-        QStringList splitterSizes = appSettings.value("layout/splitterSizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+        QStringList splitterSizes;
+
+        splitterSizes = appSettings.value("layout/splitterReceivedData.sizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
         if (!splitterSizes.isEmpty())
             ui->splitterReceivedData->setSizes(QList<int>({splitterSizes.first().trimmed().toInt(), splitterSizes.last().trimmed().toInt()}));
+
+        splitterSizes = appSettings.value("layout/splitterGraphTable.sizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+        if (!splitterSizes.isEmpty())
+            ui->splitterGraphTable->setSizes(QList<int>({splitterSizes.first().trimmed().toInt(), splitterSizes.last().trimmed().toInt()}));
     }
     // ------------------------- //
 
@@ -271,9 +289,10 @@ void MainWindow::settingsLoadAll()
         ui->comboBoxRAMLoadMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMLoadMode.currentIndex").value<int>());
         ui->comboBoxRAMSaveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMSaveMode.currentIndex").value<int>());
         ui->comboBoxLoggingMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLoggingMode.currentIndex").value<int>());
+        ui->comboBoxTextProcessing->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTextProcessing.currentIndex").value<int>());
+        ui->comboBoxClockSource->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxClockSource.currentIndex").value<int>());
 
         ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
-        ui->checkBoxSimplify->setChecked(appSettings.value("GUI_Elements/checkBoxSimplify.isChecked").value<bool>());
         ui->checkBoxSendKey->setChecked(appSettings.value("GUI_Elements/checkBoxSendKey.isChecked").value<bool>());
         ui->checkBoxWrapText->setChecked(appSettings.value("GUI_Elements/checkBoxWrapText.isChecked").value<bool>());
         ui->checkBoxAutoTrack->setChecked(appSettings.value("GUI_Elements/checkBoxAutoTrack.isChecked").value<bool>());
@@ -322,10 +341,23 @@ void MainWindow::settingsSaveAll()
     }
     // ------------------------- //
 
+    // ----- Window size ----- //
+    {
+        //        QString windowSize;
+        //        windowSize = QString::number(this->size().width()) + " " + QString::number(this->size().height());
+        //        appSettings.setValue("layout/windowSize.size", windowSize);
+    }
+    // ------------------------- //
+
     // ----- splitterSizes ----- //
     {
-        QString splitterSizes = QString::number(ui->splitterReceivedData->sizes().first()) + " " + QString::number(ui->splitterReceivedData->sizes().last());
-        appSettings.setValue("layout/splitterSizes", splitterSizes);
+        QString splitterSizes;
+
+        splitterSizes = QString::number(ui->splitterReceivedData->sizes().first()) + " " + QString::number(ui->splitterReceivedData->sizes().last());
+        appSettings.setValue("layout/splitterReceivedData.sizes", splitterSizes);
+
+        splitterSizes = QString::number(ui->splitterGraphTable->sizes().first()) + " " + QString::number(ui->splitterGraphTable->sizes().last());
+        appSettings.setValue("layout/splitterGraphTable.sizes", splitterSizes);
     }
     // ------------------------- //
 
@@ -354,9 +386,10 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/comboBoxRAMLoadMode.currentIndex", ui->comboBoxRAMLoadMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxRAMSaveMode.currentIndex", ui->comboBoxRAMSaveMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxLoggingMode.currentIndex", ui->comboBoxLoggingMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxTextProcessing.currentIndex", ui->comboBoxTextProcessing->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxClockSource.currentIndex", ui->comboBoxClockSource->currentIndex());
 
         appSettings.setValue("GUI_Elements/checkBoxDTR.isChecked", ui->checkBoxDTR->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxSimplify.isChecked", ui->checkBoxSimplify->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxSendKey.isChecked", ui->checkBoxSendKey->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxWrapText.isChecked", ui->checkBoxWrapText->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxAutoTrack.isChecked", ui->checkBoxAutoTrack->isChecked());
@@ -724,6 +757,28 @@ void MainWindow::on_chartMousePressHandler(QMouseEvent *event)
     ui->widgetChart->replot();
 }
 
+void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
+{
+    static int distance = 0, lastPos = 0;
+
+    if (event->buttons() & Qt::LeftButton)
+    {
+        distance += event->pos().x() - lastPos;
+        lastPos = event->pos().x();
+
+        //    qDebug() << "distance: " + QString::number(distance);
+
+        if (abs(distance) > 200)
+        {
+            ui->checkBoxAutoTrack->setChecked(false);
+        }
+    }
+    else
+    {
+        distance = 0;
+    }
+}
+
 void MainWindow::on_updateSerialDeviceList()
 {
     QList<QSerialPortInfo> devices = QSerialPortInfo::availablePorts();
@@ -735,7 +790,7 @@ void MainWindow::on_updateSerialDeviceList()
         portNames.append(item.portName());
     }
 
-    if ((devices.count() >= 1) && !(portNames.toSet().intersects(portNamesOld.toSet())))
+    if ((devices.count() >= 1) && (!(portNames.toSet().intersects(portNamesOld.toSet())) || (portNames.count() != portNamesOld.count())))
     {
         ui->comboBoxDevices->clear();
 
@@ -821,28 +876,30 @@ void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<do
 
 void MainWindow::on_processSerial()
 {
-    QString serialInput = serial.getString().trimmed();
-    QByteArray serialInputBytes = serial.getBytes();
+    QString serialInput = serial.getString();
+    serial.clearAll();
+
+    if (ui->comboBoxTextProcessing->currentIndex() == 1) // Append text to textBrowser
+        serialInput = serialInput.trimmed();
+    else if (ui->comboBoxTextProcessing->currentIndex() == 2) // Append text to textBrowser
+        serialInput = serialInput.simplified();
 
     if (ui->comboBoxFormat->currentIndex() == 0 && serialInput.isEmpty() == false)
     {
-        if (ui->checkBoxSimplify->isChecked()) // Append text to textBrowser
-            addLog("Serial <<\t" + serialInput.simplified());
-        else
-            addLog("Serial <<\t" + serialInput);
+        addLog("Serial <<\t" + serialInput);
     }
-    else if (ui->comboBoxFormat->currentIndex() == 1 && serialInputBytes.length() > 0)
+    else if (ui->comboBoxFormat->currentIndex() == 1 && serialInput.length() > 0)
     {
-        addLogBytes("Serial (HEX) <<\t", serialInputBytes);
+        addLogBytes("Serial (HEX) <<\t", serialInput.toUtf8());
     }
-    else if (ui->comboBoxFormat->currentIndex() == 2 && serialInputBytes.length() > 0)
+    else if (ui->comboBoxFormat->currentIndex() == 2 && serialInput.length() > 0)
     {
-        addLogBytes("Serial (BIN) <<\t", serialInputBytes, true);
+        addLogBytes("Serial (BIN) <<\t", serialInput.toUtf8(), true);
     }
 
     if (serialInput.isEmpty() == false)
     {
-        parser.parse(serialInput, ui->checkBoxSyncSystemClock->isChecked(), ui->checkBoxExternalTimeReference->isChecked(), ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
+        parser.parse(serialInput, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
         QStringList labelList = parser.getStringListLabels();
         QList<double> numericDataList = parser.getListNumericValues();
         QList<long> timeStamps = parser.getListTimeStamp();
@@ -868,28 +925,30 @@ void MainWindow::clearGraphData(bool replot)
 
 void MainWindow::on_processUDP()
 {
-    QString udpInput = networkUDP.readString().trimmed();
-    QByteArray udpInputBytes = networkUDP.readBytes();
+    QString udpInput = networkUDP.readString();
+    networkUDP.clearAll();
+
+    if (ui->comboBoxTextProcessing->currentIndex() == 1)
+        udpInput = udpInput.trimmed();
+    else if (ui->comboBoxTextProcessing->currentIndex() == 2)
+        udpInput = udpInput.simplified();
 
     if (ui->comboBoxFormat->currentIndex() == 0 && udpInput.isEmpty() == false)
     {
-        if (ui->checkBoxSimplify->isChecked())
-            addLog("UDP <<\t" + udpInput.simplified());
-        else
-            addLog("UDP <<\t" + udpInput);
+        addLog("UDP <<\t" + udpInput);
     }
-    else if (ui->comboBoxFormat->currentIndex() == 1 && udpInputBytes.length() > 0)
+    else if (ui->comboBoxFormat->currentIndex() == 1 && udpInput.length() > 0)
     {
-        addLogBytes("UDP (HEX) <<\t", udpInputBytes);
+        addLogBytes("UDP (HEX) <<\t", udpInput.toUtf8());
     }
-    else if (ui->comboBoxFormat->currentIndex() == 2 && udpInputBytes.length() > 0)
+    else if (ui->comboBoxFormat->currentIndex() == 2 && udpInput.length() > 0)
     {
-        addLogBytes("UDP (BIN) <<\t", udpInputBytes, true);
+        addLogBytes("UDP (BIN) <<\t", udpInput.toUtf8(), true);
     }
 
     if (udpInput.isEmpty() == false)
     {
-        parser.parse(udpInput, ui->checkBoxSyncSystemClock->isChecked(), ui->checkBoxExternalTimeReference->isChecked(), ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
+        parser.parse(udpInput, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
         QStringList labelList = parser.getStringListLabels();
         QList<double> numericDataList = parser.getListNumericValues();
         QList<long> timeStamps = parser.getListTimeStamp();
@@ -1104,7 +1163,7 @@ void MainWindow::sendSerial(QString message)
     if (serial.send(message))
         this->addLog("Serial >>\t" + message);
     else
-        this->addLog("Serial >>\t Unable to send! Serial port closed !");
+        this->addLog("App >>\t Unable to send! Serial port closed !");
 }
 
 void MainWindow::saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText, QString text)
@@ -1323,7 +1382,9 @@ void MainWindow::on_pushButtonEnablePlot_toggled(bool checked)
 
 void MainWindow::on_pushButtonSend_clicked()
 {
-    ui->comboBoxSend->addItem(ui->comboBoxSend->currentText()); // dodajemy do historii (bez tego nie dodaje)
+    if (ui->comboBoxSend->findText(ui->comboBoxSend->currentText()) < 0)
+        ui->comboBoxSend->addItem(ui->comboBoxSend->currentText()); // add to history (here we have to do it manually)
+
     on_comboBoxSendReturnPressedSlot();
 }
 
@@ -1371,9 +1432,6 @@ void MainWindow::on_lineEditCustomParsingRules_editingFinished()
 
 void MainWindow::on_spinBoxMaxGraphs_valueChanged(int arg1)
 {
-    while (ui->widgetChart->graphCount() > arg1)
-        ui->widgetChart->removeGraph(ui->widgetChart->graph());
-
     QPalette *paletteRed = new QPalette();
     QPalette *paletteBlack = new QPalette();
     paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
@@ -1384,7 +1442,8 @@ void MainWindow::on_spinBoxMaxGraphs_valueChanged(int arg1)
     else
         ui->spinBoxMaxGraphs->setPalette(*paletteBlack);
 
-    loadFromRAM(false);
+    this->clearGraphs(false);
+    this->loadFromRAM(false);
 
     ui->widgetChart->replot();
 }
@@ -1410,6 +1469,10 @@ void MainWindow::on_checkBoxAutoTrack_toggled(bool checked)
 
 void MainWindow::on_spinBoxProcessingDelay_valueChanged(int arg1)
 {
+    int newInterval = arg1;
+    if (newInterval < 1)
+        newInterval = 1; // Never 0 ! Couses CPU run like crazy !
+
     serialStringProcessingTimer->setInterval(arg1);
     udpStringProcessingTimer->setInterval(arg1);
 
@@ -1693,17 +1756,20 @@ void MainWindow::on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1)
 
 void MainWindow::on_comboBoxUDPReceiveMode_currentIndexChanged(const QString &arg1)
 {
-    if (ui->comboBoxUDPReceiveMode->currentText().contains("LocalHost"))
+    if (ui->pushButtonUDPConnect->isChecked() == true)
     {
-        networkUDP.bind(QHostAddress::LocalHost, ui->spinBoxUDPReceivePort->value());
-    }
-    else if (ui->comboBoxUDPReceiveMode->currentText().contains("Any"))
-    {
-        networkUDP.bind(QHostAddress::Any, ui->spinBoxUDPReceivePort->value());
-    }
-    else if (ui->comboBoxUDPReceiveMode->currentText().contains("SpecialAddress"))
-    {
-        networkUDP.bind(QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPReceivePort->value());
+        if (ui->comboBoxUDPReceiveMode->currentText().contains("LocalHost"))
+        {
+            networkUDP.bind(QHostAddress::LocalHost, ui->spinBoxUDPReceivePort->value());
+        }
+        else if (ui->comboBoxUDPReceiveMode->currentText().contains("Any"))
+        {
+            networkUDP.bind(QHostAddress::Any, ui->spinBoxUDPReceivePort->value());
+        }
+        else if (ui->comboBoxUDPReceiveMode->currentText().contains("SpecialAddress"))
+        {
+            networkUDP.bind(QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPReceivePort->value());
+        }
     }
 
     if (arg1.contains("SpecialAddress") || ui->comboBoxUDPSendMode->currentText().contains("SpecialAddress"))
@@ -1857,8 +1923,6 @@ void MainWindow::on_toolButtonAdvancedGraphMenu_clicked()
 
 void MainWindow::on_splitterGraphTable_splitterMoved(int pos, int index)
 {
-    qDebug() << "pos: " + QString::number(pos);
-
     if (pos < ui->splitterGraphTable->height() - 30)
         ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::DownArrow);
     else
@@ -1874,20 +1938,6 @@ void MainWindow::on_pushButtonTextLogToggle_toggled(bool checked)
     else
     {
         ui->pushButtonTextLogToggle->setText("Disable");
-    }
-}
-
-void MainWindow::on_checkBoxExternalTimeReference_toggled(bool checked)
-{
-    if (checked)
-    {
-        ui->lineEditExternalClockLabel->setEnabled(true);
-        ui->comboBoxExternalTimeFormat->setEnabled(true);
-    }
-    else
-    {
-        ui->lineEditExternalClockLabel->setEnabled(false);
-        ui->comboBoxExternalTimeFormat->setEnabled(false);
     }
 }
 
@@ -1909,12 +1959,6 @@ void MainWindow::on_pushButtonLoadPath_clicked()
 
     QString info = "Size: " + QString::number(file.size());
     ui->lineEditFileInfo->setText(info);
-}
-
-void MainWindow::on_pushButtonFitToContents_clicked()
-{
-    ui->widgetChart->rescaleAxes(true);
-    ui->widgetChart->yAxis->scaleRange(1.20);
 }
 
 void MainWindow::on_processLoadedFileLine(QString *line, int *progressPercent)
@@ -1972,13 +2016,6 @@ void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
 void MainWindow::on_pushButtonRAMClear_clicked()
 {
     parser.clearStorage();
-}
-
-void MainWindow::on_checkBoxSyncSystemClock_toggled(bool checked)
-{
-    // clearGraphs(true);
-    ui->checkBoxExternalTimeReference->setChecked(false);
-    ui->checkBoxExternalTimeReference->setEnabled(!checked);
 }
 
 void MainWindow::on_pushButtonLoadFile_clicked()
@@ -2094,4 +2131,33 @@ void MainWindow::on_checkBoxAutoSaveBuffer_toggled(bool checked)
 {
     parser.clearStorage();
     ui->pushButtonSaveParserMemory->setEnabled(!checked);
+}
+
+void MainWindow::on_comboBoxClockSource_currentIndexChanged(int index)
+{
+    if (index == 1)
+    {
+        ui->lineEditExternalClockLabel->setEnabled(true);
+        ui->comboBoxExternalTimeFormat->setEnabled(true);
+    }
+    else
+    {
+        ui->lineEditExternalClockLabel->setEnabled(false);
+        ui->comboBoxExternalTimeFormat->setEnabled(false);
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
+
+    if (serial.isOpen() || networkUDP.isOpen())
+    {
+        QMessageBox::StandardButton resBtn = QMessageBox::question(this, "About to exit...", tr("Connection open. Are you sure ? \n"),
+                                                                   QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+        if (resBtn == QMessageBox::No)
+            event->ignore();
+        else
+            event->accept();
+    }
 }

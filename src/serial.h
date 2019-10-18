@@ -27,11 +27,9 @@ public:
     bool send(QString message);
     bool setReadMode(int mode);
     int getAvailiblePortsCount();
-    QByteArray getBytes(bool clearBuffer = true);
     QString getSerialInfo();
     QString getString(bool clearBuffer = true);
     void clearAll(bool clearHardwareBuffers = false);
-    void clearBytes();
     void clearString();
 signals:
 
@@ -39,7 +37,6 @@ public slots:
     void readString();
 
 private:
-    QByteArray serialByteArray;
     QSerialPort *serialDevice = nullptr;
     QString serialInputString;
     SERIAL_READ_MODE stringReadMode = canReadLine_ReadLine;

@@ -56,7 +56,6 @@ void NetworkUDP::readDatagram()
     {
         datagram.resize(int(udpSocket->pendingDatagramSize()));
         udpSocket->readDatagram(datagram.data(), datagram.size());
-        udpReceiveBytes.append(datagram);
         udpReceiveStringBuffer.append(datagram.toStdString().c_str());
     }
 }
@@ -71,29 +70,13 @@ QString NetworkUDP::readString(bool clearBuffer)
     return output;
 }
 
-QByteArray NetworkUDP::readBytes(bool clearBuffer)
-{
-    QByteArray output = udpReceiveBytes;
-
-    if (clearBuffer)
-        udpReceiveBytes.clear();
-
-    return output;
-}
-
 void NetworkUDP::clearStringBuffer()
 {
     udpReceiveStringBuffer.clear();
 }
 
-void NetworkUDP::clearBytesBuffer()
-{
-    udpReceiveBytes.clear();
-}
-
 void NetworkUDP::clearAll()
 {
-    udpReceiveBytes.clear();
     udpReceiveStringBuffer.clear();
 }
 

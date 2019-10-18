@@ -3,7 +3,7 @@
 
 #define VERSION "1.2"
 
-#define CHANGELOG_TEXT "Changelog - version " VERSION ": \n"
+#define CHANGELOG_TEXT "" //"Changelog - version " VERSION ": \n"
 
 #define INTRO_TEXT  "" \
                     "Welcome to QtSerialMonitor, \n" \

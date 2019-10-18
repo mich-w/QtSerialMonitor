@@ -17,29 +17,25 @@ void Serial::readString()
     case canReadLine_ReadLine:
         while (this->serialDevice->canReadLine())
         {
-            serialByteArray.append(serialDevice->readLine());
-            serialInputString.append(serialByteArray);
+            serialInputString.append(serialDevice->readLine());
         }
         break;
     case canReadLine_ReadAll:
         while (this->serialDevice->canReadLine())
         {
-            serialByteArray.append(serialDevice->readAll());
-            serialInputString.append(serialByteArray);
+            serialInputString.append(serialDevice->readAll());
         }
         break;
     case bytesAvailable_ReadLine:
         while (this->serialDevice->bytesAvailable())
         {
-            serialByteArray.append(serialDevice->readLine());
-            serialInputString.append(serialByteArray);
+            serialInputString.append(serialDevice->readLine());
         }
         break;
     case bytesAvailable_ReadAll:
         while (this->serialDevice->bytesAvailable())
         {
-            serialByteArray.append(serialDevice->readAll());
-            serialInputString.append(serialByteArray);
+            serialInputString.append(serialDevice->readAll());
         }
         break;
     }
@@ -82,28 +78,12 @@ QString Serial::getString(bool clearBuffer)
     return output;
 }
 
-QByteArray Serial::getBytes(bool clearBuffer)
-{
-    QByteArray outputByteArray = serialByteArray;
-
-    if (clearBuffer)
-        clearBytes();
-
-    return outputByteArray;
-}
-
 void Serial::clearAll(bool clearHardwareBuffers)
 {
     serialInputString.clear();
-    serialByteArray.clear();
 
     if (clearHardwareBuffers)
         serialDevice->clear();
-}
-
-void Serial::clearBytes()
-{
-    serialByteArray.clear();
 }
 
 void Serial::clearString()

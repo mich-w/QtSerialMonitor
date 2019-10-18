@@ -30,6 +30,7 @@
 #include <QTextStream>
 #include <QTime>
 #include <QTimer>
+#include <QCloseEvent>
 
 //#include <q3dsruntimeglobal.h>
 //#include <Q3DSWidget>
@@ -52,6 +53,7 @@ public slots:
     void on_processLoadedFileLine(QString *line, int *progressPercent);
     void on_setSelectedLabels(QList<QString> *labels, bool customRules = true);
     void on_updateProgressBar(float *percent);
+    void closeEvent(QCloseEvent *event);
 private slots:
     void on_aboutToQuitSlot();
     void on_action3D_orientation_triggered();
@@ -71,17 +73,18 @@ private slots:
     void on_chartBeforeReplotSlot();
     void on_chartContextMenuRequest(QPoint pos);
     void on_chartMouseDoubleClickHandler(QMouseEvent *event);
+    void on_chartMouseMoveHandler(QMouseEvent *event);
     void on_chartMousePressHandler(QMouseEvent *event);
     void on_chartSelectionChanged();
     void on_checkBoxAutoLogging_toggled(bool checked);
     void on_checkBoxAutoRefresh_toggled(bool checked);
+    void on_checkBoxAutoSaveBuffer_toggled(bool checked);    
     void on_checkBoxAutoTrack_toggled(bool checked);
     void on_checkBoxEnableTracer_toggled(bool checked);
-    void on_checkBoxExternalTimeReference_toggled(bool checked);
     void on_checkBoxShowLegend_toggled(bool checked);
-    void on_checkBoxSyncSystemClock_toggled(bool checked);
     void on_checkBoxWrapText_toggled(bool checked);
     void on_clearGraphSelection();
+    void on_comboBoxClockSource_currentIndexChanged(int index);
     void on_comboBoxGraphDisplayMode_currentIndexChanged(const QString &arg1);
     void on_comboBoxLoggingMode_currentIndexChanged(int index);
     void on_comboBoxSendReturnPressedSlot();
@@ -109,7 +112,6 @@ private slots:
     void on_pushButtonClearHistory_clicked();
     void on_pushButtonClearTable_clicked();
     void on_pushButtonEnablePlot_toggled(bool checked);
-    void on_pushButtonFitToContents_clicked();
     void on_pushButtonLoadFile_clicked();
     void on_pushButtonLoadPath_clicked();
     void on_pushButtonLoadRAMBuffer_clicked();
@@ -136,8 +138,6 @@ private slots:
     void on_toolButtonAdvancedGraphMenu_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
-    void on_checkBoxAutoSaveBuffer_toggled(bool checked);
-
 private:
     // QCompleter *completer;
     FileReader fileReader;
