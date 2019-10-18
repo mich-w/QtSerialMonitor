@@ -137,7 +137,7 @@ void MainWindow::setupGUI()
 
     emit on_checkBoxAutoLogging_toggled(ui->checkBoxAutoLogging->isChecked());
     emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
-    emit on_checkBoxExternalTimeReference_toggled(ui->checkBoxExternalTimeReference->isChecked());
+    emit on_comboBoxClockSource_currentIndexChanged(ui->comboBoxClockSource->currentIndex());
 }
 
 void MainWindow::createChart()
@@ -222,7 +222,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !");
@@ -231,11 +231,27 @@ void MainWindow::settingsLoadAll()
     }
     // ------------------------- //
 
+    // ----- Window size ----- //
+    {
+        //        QStringList windowSize;
+        //        windowSize = appSettings.value("layout/windowSize.size").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+
+        //        if (!windowSize.isEmpty())
+        //            this->resize(windowSize.first().trimmed().toInt(), windowSize.last().trimmed().toInt());
+    }
+    // ------------------------- //
+
     // ----- splitterSizes ----- //
     {
-        QStringList splitterSizes = appSettings.value("layout/splitterSizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+        QStringList splitterSizes;
+
+        splitterSizes = appSettings.value("layout/splitterReceivedData.sizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
         if (!splitterSizes.isEmpty())
             ui->splitterReceivedData->setSizes(QList<int>({splitterSizes.first().trimmed().toInt(), splitterSizes.last().trimmed().toInt()}));
+
+        splitterSizes = appSettings.value("layout/splitterGraphTable.sizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+        if (!splitterSizes.isEmpty())
+            ui->splitterGraphTable->setSizes(QList<int>({splitterSizes.first().trimmed().toInt(), splitterSizes.last().trimmed().toInt()}));
     }
     // ------------------------- //
 
@@ -272,6 +288,7 @@ void MainWindow::settingsLoadAll()
         ui->comboBoxRAMSaveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMSaveMode.currentIndex").value<int>());
         ui->comboBoxLoggingMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLoggingMode.currentIndex").value<int>());
         ui->comboBoxTextProcessing->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTextProcessing.currentIndex").value<int>());
+        ui->comboBoxClockSource->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxClockSource.currentIndex").value<int>());
 
         ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
         ui->checkBoxSendKey->setChecked(appSettings.value("GUI_Elements/checkBoxSendKey.isChecked").value<bool>());
@@ -322,10 +339,23 @@ void MainWindow::settingsSaveAll()
     }
     // ------------------------- //
 
+    // ----- Window size ----- //
+    {
+        //        QString windowSize;
+        //        windowSize = QString::number(this->size().width()) + " " + QString::number(this->size().height());
+        //        appSettings.setValue("layout/windowSize.size", windowSize);
+    }
+    // ------------------------- //
+
     // ----- splitterSizes ----- //
     {
-        QString splitterSizes = QString::number(ui->splitterReceivedData->sizes().first()) + " " + QString::number(ui->splitterReceivedData->sizes().last());
-        appSettings.setValue("layout/splitterSizes", splitterSizes);
+        QString splitterSizes;
+
+        splitterSizes = QString::number(ui->splitterReceivedData->sizes().first()) + " " + QString::number(ui->splitterReceivedData->sizes().last());
+        appSettings.setValue("layout/splitterReceivedData.sizes", splitterSizes);
+
+        splitterSizes = QString::number(ui->splitterGraphTable->sizes().first()) + " " + QString::number(ui->splitterGraphTable->sizes().last());
+        appSettings.setValue("layout/splitterGraphTable.sizes", splitterSizes);
     }
     // ------------------------- //
 
@@ -355,6 +385,7 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/comboBoxRAMSaveMode.currentIndex", ui->comboBoxRAMSaveMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxLoggingMode.currentIndex", ui->comboBoxLoggingMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxTextProcessing.currentIndex", ui->comboBoxTextProcessing->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxClockSource.currentIndex", ui->comboBoxClockSource->currentIndex());
 
         appSettings.setValue("GUI_Elements/checkBoxDTR.isChecked", ui->checkBoxDTR->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxSendKey.isChecked", ui->checkBoxSendKey->isChecked());
@@ -708,9 +739,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                       .arg(graph->name())
-                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                       .arg(QString::number(temp.y(), 'f', 5)),
+                           .arg(graph->name())
+                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                           .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -844,7 +875,7 @@ void MainWindow::on_processSerial()
 
     if (serialInput.isEmpty() == false)
     {
-        parser.parse(serialInput, ui->checkBoxSyncSystemClock->isChecked(), ui->checkBoxExternalTimeReference->isChecked(), ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
+        parser.parse(serialInput, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
         QStringList labelList = parser.getStringListLabels();
         QList<double> numericDataList = parser.getListNumericValues();
         QList<long> timeStamps = parser.getListTimeStamp();
@@ -893,7 +924,7 @@ void MainWindow::on_processUDP()
 
     if (udpInput.isEmpty() == false)
     {
-        parser.parse(udpInput, ui->checkBoxSyncSystemClock->isChecked(), ui->checkBoxExternalTimeReference->isChecked(), ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
+        parser.parse(udpInput, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
         QStringList labelList = parser.getStringListLabels();
         QList<double> numericDataList = parser.getListNumericValues();
         QList<long> timeStamps = parser.getListTimeStamp();
@@ -952,9 +983,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
-                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1888,20 +1919,6 @@ void MainWindow::on_pushButtonTextLogToggle_toggled(bool checked)
     }
 }
 
-void MainWindow::on_checkBoxExternalTimeReference_toggled(bool checked)
-{
-    if (checked)
-    {
-        ui->lineEditExternalClockLabel->setEnabled(true);
-        ui->comboBoxExternalTimeFormat->setEnabled(true);
-    }
-    else
-    {
-        ui->lineEditExternalClockLabel->setEnabled(false);
-        ui->comboBoxExternalTimeFormat->setEnabled(false);
-    }
-}
-
 void MainWindow::on_lineEditExternalClockLabel_editingFinished()
 {
     ui->lineEditExternalClockLabel->setText(ui->lineEditExternalClockLabel->text().simplified());
@@ -1983,13 +2000,6 @@ void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
 void MainWindow::on_pushButtonRAMClear_clicked()
 {
     parser.clearStorage();
-}
-
-void MainWindow::on_checkBoxSyncSystemClock_toggled(bool checked)
-{
-    // clearGraphs(true);
-    ui->checkBoxExternalTimeReference->setChecked(false);
-    ui->checkBoxExternalTimeReference->setEnabled(!checked);
 }
 
 void MainWindow::on_pushButtonLoadFile_clicked()
@@ -2105,4 +2115,33 @@ void MainWindow::on_checkBoxAutoSaveBuffer_toggled(bool checked)
 {
     parser.clearStorage();
     ui->pushButtonSaveParserMemory->setEnabled(!checked);
+}
+
+void MainWindow::on_comboBoxClockSource_currentIndexChanged(int index)
+{
+    if (index == 1)
+    {
+        ui->lineEditExternalClockLabel->setEnabled(true);
+        ui->comboBoxExternalTimeFormat->setEnabled(true);
+    }
+    else
+    {
+        ui->lineEditExternalClockLabel->setEnabled(false);
+        ui->comboBoxExternalTimeFormat->setEnabled(false);
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
+
+    if (serial.isOpen() || networkUDP.isOpen())
+    {
+        QMessageBox::StandardButton resBtn = QMessageBox::question(this, "About to exit...", tr("Connection open. Are you sure ? \n"),
+                                                                   QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+        if (resBtn == QMessageBox::No)
+            event->ignore();
+        else
+            event->accept();
+    }
 }
