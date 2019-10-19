@@ -1,4 +1,12 @@
-# QtSerialMonitor
+<p align="center">
+  <h1 align="left">QtSerialMonitor </h1>
+  <p align="left">
+   <a> <img alt="license" src="https://img.shields.io/github/license/mich-w/QtSerialMonitor">   </a>
+   <a> <img alt="downloads" src="https://img.shields.io/github/downloads/mich-w/QtSerialMonitor/total"></a>
+   <a> <img alt="latest release" src="https://img.shields.io/github/v/release/mich-w/QtSerialMonitor"></a>
+  </p>
+</p>
+
 Universal serial monitor with data plotting capabilities, based on [Qt](https://www.qt.io/). Designed with all sorts of [Arduino](https://www.arduino.cc/) projects in mind, as a handy tool for debugging and experimentation :) 
 
 <img src="https://raw.githubusercontent.com/mich-w/QtSerialMonitor/master/docs/_screenshots/Sines3.gif">
