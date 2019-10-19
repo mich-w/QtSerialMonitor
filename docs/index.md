@@ -1,9 +1,9 @@
 <p align="center">
   <h1 align="left">QtSerialMonitor </h1>
   <p align="left">
-   <a> <img alt="license" src="https://img.shields.io/github/license/mich-w/QtSerialMonitor">   </a>
-   <a> <img alt="downloads" src="https://img.shields.io/github/downloads/mich-w/QtSerialMonitor/total"></a>
-   <a> <img alt="latest release" src="https://img.shields.io/github/v/release/mich-w/QtSerialMonitor"></a>
+   <a href="https://github.com/mich-w/QtSerialMonitor/blob/master/LICENSE"> <img alt="license" src="https://img.shields.io/github/license/mich-w/QtSerialMonitor">   </a>
+   <a href="https://github.com/mich-w/QtSerialMonitor/releases"> <img alt="downloads" src="https://img.shields.io/github/downloads/mich-w/QtSerialMonitor/total"></a>
+   <a href="https://github.com/mich-w/QtSerialMonitor/releases"> <img alt="latest release" src="https://img.shields.io/github/v/release/mich-w/QtSerialMonitor"></a>
   </p>
 </p>
 
