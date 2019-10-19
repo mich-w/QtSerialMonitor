@@ -60,7 +60,7 @@
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideMiddle</enum>
@@ -252,9 +252,6 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;quot;Data Terminal Ready&amp;quot; - required by some devices such as Arduino Due for proper UART initialisation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="whatsThis">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;quot;Data Terminal Ready&amp;quot; - required by some devices such as Arduino Due for proper UART initialisation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -2286,7 +2283,7 @@ p, li { white-space: pre-wrap; }
                         <height>0</height>
                        </size>
                       </property>
-                      <property name="toolTip">
+                      <property name="whatsThis">
                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the missing samples threshold value. If process string doesnt contain related data n times in a row it is then automatically deleted.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="alignment">
