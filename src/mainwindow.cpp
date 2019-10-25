@@ -504,6 +504,17 @@ void MainWindow::on_comboBoxSendReturnPressedSlot()
 // Auto-scroll X and rescale Y
 void MainWindow::on_chartBeforeReplotSlot()
 {
+    static bool isChartEmpty = false;
+    if (ui->widgetChart->graphCount() > 0 && isChartEmpty == true)
+    {
+        isChartEmpty = false;
+        ui->widgetChart->rescaleAxes(); // center plot if new graphs added to empty chart
+    }
+    else if (ui->widgetChart->graphCount() == 0)
+    {
+        isChartEmpty = true;
+    }
+
     if (ui->checkBoxAutoTrack->isChecked() && ui->widgetChart->graphCount() > 0)
     {
         if (parser.getListTimeStamp().count() > 0)
