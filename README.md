@@ -9,7 +9,7 @@
 
 Universal serial monitor with data plotting capabilities, based on [Qt](https://www.qt.io/). Designed with all sorts of [Arduino](https://www.arduino.cc/) projects in mind, as a handy tool for debugging and experimentation :) 
 
-![mainwindow](/docs/_screenshots/mainwindow.png)
+<img src="https://raw.githubusercontent.com/mich-w/QtSerialMonitor/master/docs/_screenshots/Sines3.gif">
 
 **Features:**
 
@@ -19,10 +19,24 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 - Printer support, ability to save graph as image,
 - Read/write ".txt" data logs,
 - many more...
----
+
 <a href="https://github.com/mich-w/QtSerialMonitor/releases/download/v1.2/QtSerialMonitor_1.2_win_x64.zip" download>Download QtSerialMonitor_v1.2_win_x64</a> 
 -
 ---
+
+**Work in progress:**
+
+
+    
+    - 3D Orientation Demo - for IMU testing (user will be able to toggle between chart view
+      and a simple 3D scene containing an object rotating accordingly to received roll,
+      pitch and yaw values, representing the sensor's orientation),
+
+    - "What’s this ?" popups for less obvious widgets,
+
+    - Improvements, fixes etc.
+
+----
 
 ***Notes:***
 
