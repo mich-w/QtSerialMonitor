@@ -85,6 +85,7 @@ private slots:
     void on_checkBoxWrapText_toggled(bool checked);
     void on_clearGraphSelection();
     void on_comboBoxClockSource_currentIndexChanged(int index);
+    void on_comboBoxFormat_currentIndexChanged(int index);
     void on_comboBoxGraphDisplayMode_currentIndexChanged(const QString &arg1);
     void on_comboBoxLoggingMode_currentIndexChanged(int index);
     void on_comboBoxSendReturnPressedSlot();

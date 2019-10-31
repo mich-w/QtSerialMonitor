@@ -30,6 +30,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+        codeeditor.cpp \
         filereader.cpp \
         infodialog.cpp \
         logger.cpp \
@@ -42,6 +43,7 @@ SOURCES += \
 
 HEADERS += \
         ../../../../../../Downloads/QCustomPlot.tar/qcustomplot/qcustomplot.h \
+        codeeditor.h \
         config.h \
         filereader.h \
         infodialog.h \

@@ -484,8 +484,8 @@ void MainWindow::processTable(QStringList labels, QList<double> values)
 void MainWindow::on_printIntroChangelog() // TODO
 {
     ui->pushButtonTextLogToggle->setChecked(false);
-    ui->textBrowserLogs->append(INTRO_TEXT);
-    ui->textBrowserLogs->append("\n" CHANGELOG_TEXT);
+    ui->textBrowserLogs->appendPlainText(INTRO_TEXT);
+    ui->textBrowserLogs->appendPlainText("\n" CHANGELOG_TEXT);
 
     //    ui->textBrowserLogs->horizontalScrollBar()->setValue(0);
 }
@@ -839,7 +839,7 @@ void MainWindow::addLog(QString text)
         if (ui->checkBoxShowTime->isChecked())
             text = currentDateTime + text;
 
-        ui->textBrowserLogs->append(text);
+        ui->textBrowserLogs->appendPlainText(text);
 
         // ui->textBrowserLogs->insertPlainText(text);
         // ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
@@ -869,7 +869,7 @@ void MainWindow::addLogBytes(QString prefix, QByteArray bytes, bool hexToBinary)
         if (ui->checkBoxShowTime->isChecked())
             bytesText = currentDateTime + bytesText;
 
-        ui->textBrowserLogs->append(bytesText);
+        ui->textBrowserLogs->appendPlainText(bytesText);
     }
 }
 
@@ -1330,9 +1330,9 @@ void MainWindow::on_highlighLog(QString searchString)
 void MainWindow::on_checkBoxWrapText_toggled(bool checked)
 {
     if (checked)
-        ui->textBrowserLogs->setLineWrapMode(QTextBrowser::LineWrapMode::WidgetWidth);
+        ui->textBrowserLogs->setLineWrapMode(QPlainTextEdit::LineWrapMode::WidgetWidth);
     else
-        ui->textBrowserLogs->setLineWrapMode(QTextBrowser::LineWrapMode::NoWrap);
+        ui->textBrowserLogs->setLineWrapMode(QPlainTextEdit::LineWrapMode::NoWrap);
 }
 
 void MainWindow::on_checkBoxEnableTracer_toggled(bool checked)
@@ -2171,4 +2171,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
         else
             event->accept();
     }
+}
+
+void MainWindow::on_comboBoxFormat_currentIndexChanged(int index)
+{
+    if (index == 0)
+        ui->comboBoxTextProcessing->setEnabled(true);
+    else
+        ui->comboBoxTextProcessing->setEnabled(false);
 }
