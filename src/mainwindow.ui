@@ -1526,17 +1526,8 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="font">
-              <font>
-               <family>Consolas</family>
-               <pointsize>9</pointsize>
-              </font>
-             </property>
              <property name="whatsThis">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the main text browser. Received messages and notification will be displayed here.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="lineWrapMode">
-              <enum>QTextEdit::NoWrap</enum>
              </property>
              <property name="readOnly">
               <bool>true</bool>
@@ -1701,7 +1692,7 @@
                   </sizepolicy>
                  </property>
                  <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose message display format:&lt;/p&gt;&lt;p&gt;- text&lt;/p&gt;&lt;p&gt;- hex (base 16)&lt;/p&gt;&lt;p&gt;- binary (base 2)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose message display format:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- text&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- hex (base 16)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- binary (base 2)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <item>
                   <property name="text">
@@ -1729,7 +1720,7 @@
                   </sizepolicy>
                  </property>
                  <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose text post-processing:&lt;/p&gt;&lt;p&gt;- None&lt;/p&gt;&lt;p&gt;- Trim - Remove whitespace form the start and the end of each line.&lt;/p&gt;&lt;p&gt;- Simplify - removes whitespace form the start and the end, and that has each sequence of internal whitespace replaced with a single space.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose text post-processing:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- None&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Trim - remove whitespace form the start and the end of each line.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Simplify - removes whitespace form the start and the end, and that has each sequence of internal whitespace replaced with a single space.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <item>
                   <property name="text">

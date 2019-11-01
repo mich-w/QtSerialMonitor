@@ -10,7 +10,6 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     connect(this, &CodeEditor::cursorPositionChanged, this, &CodeEditor::highlightCurrentLine);
 
     updateLineNumberAreaWidth(0);
-  //  highlightCurrentLine();
 }
 
 int CodeEditor::lineNumberAreaWidth()
@@ -24,7 +23,7 @@ int CodeEditor::lineNumberAreaWidth()
         ++digits;
     }
 
-    int space = 3 + fontMetrics().horizontalAdvance("  ") * digits;
+    int space = 10 + fontMetrics().horizontalAdvance("  ") * digits;
 
     return space;
 }
@@ -56,21 +55,19 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
 void CodeEditor::highlightCurrentLine()
 {
     QList<QTextEdit::ExtraSelection> extraSelections;
+    QTextEdit::ExtraSelection selection;
+    QColor lineColor = QColor(Qt::yellow).lighter(160);
 
-    if (!isReadOnly())
-    {
-        QTextEdit::ExtraSelection selection;
-
-        QColor lineColor = QColor(Qt::yellow).lighter(160);
-
-        selection.format.setBackground(lineColor);
-        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-        selection.cursor = textCursor();
-        selection.cursor.clearSelection();
-        extraSelections.append(selection);
-    }
+    selection.format.setBackground(lineColor);
+    selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+    selection.cursor = textCursor();
+    selection.cursor.clearSelection();
+    extraSelections.append(selection);
 
     setExtraSelections(extraSelections);
+
+    selection.cursor.clearSelection();
+
 }
 
 void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)

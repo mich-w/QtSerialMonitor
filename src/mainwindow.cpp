@@ -21,6 +21,21 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
+
+    if (serial.isOpen() || networkUDP.isOpen())
+    {
+        QMessageBox::StandardButton resBtn = QMessageBox::question(this, "About to exit...", tr("Connection open. Are you sure ? \n"),
+                                                                   QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+        if (resBtn == QMessageBox::No)
+            event->ignore();
+        else
+            event->accept();
+    }
+}
+
 void MainWindow::on_aboutToQuitSlot()
 {
     settingsSaveAll();
@@ -43,14 +58,28 @@ void MainWindow::setupGUI()
 
     this->setWindowTitle(this->windowTitle() + " " + VERSION);
 
-    ui->textBrowserLogs->document()->setMaximumBlockCount(ui->spinBoxMaxLines->value());
+    // ui->textBrowserLogs
+    {
+        ui->textBrowserLogs->document()->setMaximumBlockCount(ui->spinBoxMaxLines->value());
 
-    foreach (auto item, QSerialPortInfo::standardBaudRates())
-        ui->comboBoxBaudRates->addItem(QString::number(item));
+        if (ui->checkBoxWrapText->isChecked() == true)
+            ui->textBrowserLogs->setLineWrapMode(QPlainTextEdit::LineWrapMode::WidgetWidth);
+        else
+            ui->textBrowserLogs->setLineWrapMode(QPlainTextEdit::LineWrapMode::NoWrap);
+
+     //   highlighter = new Highlighter(ui->textBrowserLogs->document());
+    }
+
+    // ui->comboBoxBaudRates
+    {
+        foreach (auto item, QSerialPortInfo::standardBaudRates())
+            ui->comboBoxBaudRates->addItem(QString::number(item));
+
+        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() - 3); // TODO SETTINGS !
+    }
 
     connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
 
-    ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() - 3); // TODO SETTINGS !
 
     ui->comboBoxTracerStyle->addItem("Crosshair");
     ui->comboBoxTracerStyle->addItem("Circle");
@@ -224,7 +253,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !");
@@ -752,9 +781,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                           .arg(graph->name())
-                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                           .arg(QString::number(temp.y(), 'f', 5)),
+                       .arg(graph->name())
+                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                       .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -847,7 +876,7 @@ void MainWindow::addLog(QString text)
     }
 }
 
-void MainWindow::addLogBytes(QString prefix, QByteArray bytes, bool hexToBinary)
+void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary)
 {
     if (ui->pushButtonTextLogToggle->isChecked() == false)
     {
@@ -856,10 +885,9 @@ void MainWindow::addLogBytes(QString prefix, QByteArray bytes, bool hexToBinary)
         QString bytesText;
 
         if (hexToBinary == false)
-            bytesText = prefix + bytes.toHex(' ');
+            bytesText = bytes.toHex(' ');
         else
         {
-            bytesText.append(prefix);
             for (auto i = 0; i < bytes.size(); ++i)
             {
                 bytesText.append(QString::number(bytes[i], 2) + ' ');
@@ -897,15 +925,15 @@ void MainWindow::on_processSerial()
 
     if (ui->comboBoxFormat->currentIndex() == 0 && serialInput.isEmpty() == false)
     {
-        addLog("Serial <<\t" + serialInput);
+        addLog(serialInput);
     }
     else if (ui->comboBoxFormat->currentIndex() == 1 && serialInput.length() > 0)
     {
-        addLogBytes("Serial (HEX) <<\t", serialInput.toUtf8());
+        addLogBytes(serialInput.toUtf8());
     }
     else if (ui->comboBoxFormat->currentIndex() == 2 && serialInput.length() > 0)
     {
-        addLogBytes("Serial (BIN) <<\t", serialInput.toUtf8(), true);
+        addLogBytes(serialInput.toUtf8(), true);
     }
 
     if (serialInput.isEmpty() == false)
@@ -946,15 +974,15 @@ void MainWindow::on_processUDP()
 
     if (ui->comboBoxFormat->currentIndex() == 0 && udpInput.isEmpty() == false)
     {
-        addLog("UDP <<\t" + udpInput);
+        addLog(udpInput);
     }
     else if (ui->comboBoxFormat->currentIndex() == 1 && udpInput.length() > 0)
     {
-        addLogBytes("UDP (HEX) <<\t", udpInput.toUtf8());
+        addLogBytes(udpInput.toUtf8());
     }
     else if (ui->comboBoxFormat->currentIndex() == 2 && udpInput.length() > 0)
     {
-        addLogBytes("UDP (BIN) <<\t", udpInput.toUtf8(), true);
+        addLogBytes(udpInput.toUtf8(), true);
     }
 
     if (udpInput.isEmpty() == false)
@@ -992,7 +1020,7 @@ void MainWindow::sendUDPDatagram(QString message)
         networkUDP.write(message, QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPTargetPort->value());
     }
 
-    addLog("UDP >>\t" + message);
+   // addLog("UDP >>\t" + message);
 }
 
 void MainWindow::processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList)
@@ -1018,9 +1046,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
-            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1171,9 +1199,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::sendSerial(QString message)
 {
-    if (serial.send(message))
-        this->addLog("Serial >>\t" + message);
-    else
+    if (!serial.send(message))
         this->addLog("App >>\t Unable to send! Serial port closed !");
 }
 
@@ -2155,21 +2181,6 @@ void MainWindow::on_comboBoxClockSource_currentIndexChanged(int index)
     {
         ui->lineEditExternalClockLabel->setEnabled(false);
         ui->comboBoxExternalTimeFormat->setEnabled(false);
-    }
-}
-
-void MainWindow::closeEvent(QCloseEvent *event)
-{
-    // if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
-
-    if (serial.isOpen() || networkUDP.isOpen())
-    {
-        QMessageBox::StandardButton resBtn = QMessageBox::question(this, "About to exit...", tr("Connection open. Are you sure ? \n"),
-                                                                   QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-        if (resBtn == QMessageBox::No)
-            event->ignore();
-        else
-            event->accept();
     }
 }
 
