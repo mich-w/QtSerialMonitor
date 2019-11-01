@@ -1,9 +1,9 @@
 <p align="center">
   <h1 align="left">QtSerialMonitor </h1>
   <p align="left">
-   <a href="https://github.com/mich-w/QtSerialMonitor/blob/master/LICENSE"> <img alt="license" src="https://img.shields.io/github/license/mich-w/QtSerialMonitor">   </a>
-   <a href="https://github.com/mich-w/QtSerialMonitor/releases"> <img alt="downloads" src="https://img.shields.io/github/downloads/mich-w/QtSerialMonitor/total"></a>
-   <a href="https://github.com/mich-w/QtSerialMonitor/releases"> <img alt="latest release" src="https://img.shields.io/github/v/release/mich-w/QtSerialMonitor"></a>
+   <a href="https://github.com/mich-w/QtSerialMonitor/blob/master/LICENSE"> <img alt="license" src="https://img.shields.io/github/license/mich-w/QtSerialMonitor?style=flat-square">   </a>
+   <a href="https://github.com/mich-w/QtSerialMonitor/releases"> <img alt="downloads" src="https://img.shields.io/github/downloads/mich-w/QtSerialMonitor/total?style=flat-square"></a>
+   <a href="https://github.com/mich-w/QtSerialMonitor/releases"> <img alt="latest release" src="https://img.shields.io/github/v/release/mich-w/QtSerialMonitor?style=flat-square"></a>
   </p>
 </p>
 
@@ -12,10 +12,10 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 <img src="https://raw.githubusercontent.com/mich-w/QtSerialMonitor/master/docs/_screenshots/Sines3.gif">
 
 **Features:**
-
 - In/out serial data terminal with command history,
 - UDP network protocol support,
-- Advanced data plotter with multiple graphs support and basic data filtering - uses [QCustomPlot](https://www.qcustomplot.com/),
+- Resizable UI widgets,
+- Data plotter with multiple graphs support and basic data filtering - uses [QCustomPlot](https://www.qcustomplot.com/),
 - Printer support, ability to save graph as image,
 - Read/write ".txt" data logs,
 - many more...
@@ -26,13 +26,11 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 
 **Work in progress:**
 
-
+    - Linux compatibility
     
     - 3D Orientation Demo - for IMU testing (user will be able to toggle between chart view
       and a simple 3D scene containing an object rotating accordingly to received roll,
       pitch and yaw values, representing the sensor's orientation),
-
-    - "What’s this ?" popups for less obvious widgets,
 
     - Improvements, fixes etc.
 

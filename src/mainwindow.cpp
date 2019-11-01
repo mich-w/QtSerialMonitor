@@ -842,7 +842,7 @@ void MainWindow::on_updateSerialDeviceList()
     else if ((devices.count() < 1) && !ui->comboBoxDevices->itemText(0).startsWith("No COM devices"))
     {
         ui->comboBoxDevices->clear();
-        ui->comboBoxDevices->addItem("No COM devices detected :(");
+        ui->comboBoxDevices->addItem("No serial devices detected :(");
         ui->comboBoxDevices->setCurrentIndex(ui->comboBoxDevices->count() - 1);
     }
 
