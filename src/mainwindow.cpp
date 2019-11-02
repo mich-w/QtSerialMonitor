@@ -67,7 +67,7 @@ void MainWindow::setupGUI()
         else
             ui->textBrowserLogs->setLineWrapMode(QPlainTextEdit::LineWrapMode::NoWrap);
 
-     //   highlighter = new Highlighter(ui->textBrowserLogs->document());
+        //   highlighter = new Highlighter(ui->textBrowserLogs->document());
     }
 
     // ui->comboBoxBaudRates
@@ -79,7 +79,6 @@ void MainWindow::setupGUI()
     }
 
     connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
-
 
     ui->comboBoxTracerStyle->addItem("Crosshair");
     ui->comboBoxTracerStyle->addItem("Circle");
@@ -134,7 +133,7 @@ void MainWindow::setupGUI()
 
     if (ui->checkBoxAutoRefresh->isChecked())
     {
-        serialDeviceCheckTimer->start(500);
+        serialDeviceCheckTimer->start(SERIAL_DEVICE_CHECK_TIMER_INTERVAL);
         ui->pushButtonRefresh->setEnabled(false);
     }
     else
@@ -253,7 +252,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !");
@@ -781,9 +780,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                       .arg(graph->name())
-                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                       .arg(QString::number(temp.y(), 'f', 5)),
+                           .arg(graph->name())
+                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                           .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -821,14 +820,12 @@ void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
 
 void MainWindow::on_updateSerialDeviceList()
 {
-    QList<QSerialPortInfo> devices = QSerialPortInfo::availablePorts();
+    QList<QSerialPortInfo> devices = serial.getAvailiblePorts();
     QList<QString> portNames;
     static QList<QString> portNamesOld;
 
     foreach (auto item, devices)
-    {
         portNames.append(item.portName());
-    }
 
     if ((devices.count() >= 1) && (!(portNames.toSet().intersects(portNamesOld.toSet())) || (portNames.count() != portNamesOld.count())))
     {
@@ -848,7 +845,7 @@ void MainWindow::on_updateSerialDeviceList()
 
     portNamesOld = portNames;
 
-    this->radioButtonTimer->start(100);
+    this->radioButtonTimer->start(RADIO_BUTTON_UPDATE_SERIAL_DEVICES_ON_INTERVAL);
     ui->radioButtonDeviceUpdate->setChecked(true);
 }
 
@@ -1020,7 +1017,7 @@ void MainWindow::sendUDPDatagram(QString message)
         networkUDP.write(message, QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPTargetPort->value());
     }
 
-   // addLog("UDP >>\t" + message);
+    // addLog("UDP >>\t" + message);
 }
 
 void MainWindow::processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList)
@@ -1046,9 +1043,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
-                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1294,7 +1291,7 @@ void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
     if (checked == true)
     {
         ui->pushButtonRefresh->setEnabled(false);
-        serialDeviceCheckTimer->start(500);
+        serialDeviceCheckTimer->start(SERIAL_DEVICE_CHECK_TIMER_INTERVAL);
     }
     else
     {
@@ -1554,9 +1551,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
             return;
         }
 
-        // clearGraphData(true);
-
-        QString parsedPortName = ui->comboBoxDevices->currentText().mid(ui->comboBoxDevices->currentText().indexOf("COM"), ui->comboBoxDevices->currentText().indexOf(")") - 1);
+        QString parsedPortName = QSerialPortInfo::availablePorts().at(ui->comboBoxDevices->currentIndex()).portName();
         qint32 parsedBaudRate = ui->comboBoxBaudRates->currentText().toInt();
         QString dataBits = ui->comboBoxDataBits->currentText();
         QString stopBits = ui->comboBoxStopBits->currentText();

@@ -27,6 +27,7 @@ public:
     bool send(QString message);
     bool setReadMode(int mode);
     int getAvailiblePortsCount();
+    QList<QSerialPortInfo> getAvailiblePorts();
     QString getSerialInfo();
     QString getString(bool clearBuffer = true);
     void clearAll(bool clearHardwareBuffers = false);

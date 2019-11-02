@@ -179,6 +179,11 @@ bool Serial::isOpen()
     return serialDevice->isOpen();
 }
 
+QList<QSerialPortInfo> Serial::getAvailiblePorts()
+{
+    return QSerialPortInfo::availablePorts();
+}
+
 int Serial::getAvailiblePortsCount()
 {
     return QSerialPortInfo::availablePorts().count();

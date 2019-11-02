@@ -50,8 +50,7 @@
 
 #include "highlighter.h"
 
-Highlighter::Highlighter(QTextDocument *parent)
-    : QSyntaxHighlighter(parent)
+Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
 {
     HighlightingRule rule;
 
@@ -107,7 +106,7 @@ void Highlighter::highlightBlock(const QString &text)
 {
     for (const HighlightingRule &rule : qAsConst(highlightingRules))
     {
-        QRegularExpressionMatchIterator matchIterator = rule.pattern.globalMatch(text,0,
+        QRegularExpressionMatchIterator matchIterator = rule.pattern.globalMatch(text, 0,
                                                                                  QRegularExpression::MatchType::PartialPreferCompleteMatch,
                                                                                  QRegularExpression::MatchOption::NoMatchOption);
         if (matchIterator.hasNext())
