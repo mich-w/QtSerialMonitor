@@ -1519,24 +1519,15 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QTextBrowser" name="textBrowserLogs">
+            <widget class="CodeEditor" name="textBrowserLogs">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="font">
-              <font>
-               <family>Consolas</family>
-               <pointsize>9</pointsize>
-              </font>
-             </property>
              <property name="whatsThis">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the main text browser. Received messages and notification will be displayed here.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="lineWrapMode">
-              <enum>QTextEdit::NoWrap</enum>
              </property>
              <property name="readOnly">
               <bool>true</bool>
@@ -1547,51 +1538,7 @@
             <layout class="QHBoxLayout" name="horizontalLayout">
              <item>
               <layout class="QGridLayout" name="gridLayout_15">
-               <item row="0" column="0">
-                <widget class="QPushButton" name="pushButtonTextLogToggle">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Disable</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="5">
-                <widget class="QComboBox" name="comboBoxFormat">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose message display format:&lt;/p&gt;&lt;p&gt;- text&lt;/p&gt;&lt;p&gt;- hex (base 16)&lt;/p&gt;&lt;p&gt;- binary (base 2)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <item>
-                  <property name="text">
-                   <string>TXT</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>HEX</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>BIN</string>
-                  </property>
-                 </item>
-                </widget>
-               </item>
-               <item row="1" column="3" colspan="3">
+               <item row="1" column="3" colspan="4">
                 <widget class="QLineEdit" name="lineEditHighlight">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -1606,6 +1553,57 @@
                   <string>Text to highlight...</string>
                  </property>
                  <property name="clearButtonEnabled">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QCheckBox" name="checkBoxSendKey">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, pressed key will be immidietly sent to the device via Serial or UDP, depending on the active control section tab as long as the &lt;span style=&quot; font-weight:600;&quot;&gt;text window remains focused&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;This is very useful for creating a rapidly accesible control interface via serial i.e, you could quickly regulate motor's PWM output by holding &amp;quot;+&amp;quot; or &amp;quot;-&amp;quot; keys, instead of typing &amp;quot;set value ... &amp;quot; every time you need to make a change.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>Send Key</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="2">
+                <widget class="QCheckBox" name="checkBoxShowTime">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, received message will be displayed with system clock time in which it was received.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>Timestamp</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QPushButton" name="pushButtonTextLogToggle">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Disable</string>
+                 </property>
+                 <property name="checkable">
                   <bool>true</bool>
                  </property>
                 </widget>
@@ -1685,48 +1683,44 @@
                  </property>
                 </widget>
                </item>
-               <item row="0" column="1">
-                <widget class="QCheckBox" name="checkBoxSendKey">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, pressed key will be immidietly sent to the device via Serial or UDP, depending on the active control section tab as long as the &lt;span style=&quot; font-weight:600;&quot;&gt;text window remains focused&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;This is very useful for creating a rapidly accesible control interface via serial i.e, you could quickly regulate motor's PWM output by holding &amp;quot;+&amp;quot; or &amp;quot;-&amp;quot; keys, instead of typing &amp;quot;set value ... &amp;quot; every time you need to make a change.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <property name="text">
-                  <string>Send Key</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="2">
-                <widget class="QCheckBox" name="checkBoxShowTime">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, received message will be displayed with system clock time in which it was received.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <property name="text">
-                  <string>Timestamp</string>
-                 </property>
-                </widget>
-               </item>
                <item row="0" column="4">
+                <widget class="QComboBox" name="comboBoxFormat">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose message display format:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- text&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- hex (base 16)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- binary (base 2)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>TXT</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>HEX</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>BIN</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item row="0" column="5" colspan="2">
                 <widget class="QComboBox" name="comboBoxTextProcessing">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose text post-processing:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- None&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Trim - remove whitespace form the start and the end of each line.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Simplify - removes whitespace form the start and the end, and that has each sequence of internal whitespace replaced with a single space.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <item>
                   <property name="text">
@@ -2284,7 +2278,7 @@ p, li { white-space: pre-wrap; }
                        </size>
                       </property>
                       <property name="whatsThis">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the missing samples threshold value. If process string doesnt contain related data n times in a row it is then automatically deleted.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the missing samples threshold value. If processed string doesnt contain one new data for the already present graph n times in a row it is then this graph will be automatically deleted. This is useful when switching between diffrent steaming data sets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>
@@ -2672,6 +2666,11 @@ p, li { white-space: pre-wrap; }
    <extends>QWidget</extends>
    <header>qcustomplot.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CodeEditor</class>
+   <extends>QTextBrowser</extends>
+   <header>codeeditor.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

@@ -30,7 +30,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+        codeeditor.cpp \
         filereader.cpp \
+        highlighter.cpp \
         infodialog.cpp \
         logger.cpp \
         main.cpp \
@@ -42,8 +44,10 @@ SOURCES += \
 
 HEADERS += \
         ../../../../../../Downloads/QCustomPlot.tar/qcustomplot/qcustomplot.h \
+        codeeditor.h \
         config.h \
         filereader.h \
+        highlighter.h \
         infodialog.h \
         logger.h \
         mainwindow.h \
@@ -64,7 +68,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    QtSM.ico
+    QtSM.ico \
+    TODO
 
 RESOURCES += \
     3dres.qrc
