@@ -1,2 +1,1 @@
-- QRegExp -> new QRegularExpressions from Qt 5.0
-- TODO - make serial linux compatible (port names)
+
