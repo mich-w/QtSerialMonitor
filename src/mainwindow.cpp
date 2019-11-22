@@ -75,7 +75,7 @@ void MainWindow::setupGUI()
         foreach (auto item, QSerialPortInfo::standardBaudRates())
             ui->comboBoxBaudRates->addItem(QString::number(item));
 
-        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() - 3); // TODO SETTINGS !
+        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2);
     }
 
     connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
@@ -241,7 +241,7 @@ void MainWindow::setupTable()
 void MainWindow::settingsLoadAll()
 {
     QSettings appSettings(QSettings::Format::IniFormat,
-                          QSettings::Scope::SystemScope,
+                          QSettings::Scope::UserScope,
                           "QtSerialMonitor", "QtSerialMonitor"); // Settings
 
     // ----- Info ----- //
@@ -358,7 +358,7 @@ void MainWindow::settingsLoadAll()
 void MainWindow::settingsSaveAll()
 {
     QSettings appSettings(QSettings::Format::IniFormat,
-                          QSettings::Scope::SystemScope,
+                          QSettings::Scope::UserScope,
                           "QtSerialMonitor", "QtSerialMonitor"); // Settings
 
     // ----- Info ----- //
