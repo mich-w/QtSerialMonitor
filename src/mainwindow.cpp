@@ -883,12 +883,19 @@ void MainWindow::addLog(QString text)
         //            text.chop(1);
         if (ui->comboBoxAddTextMode->currentIndex() == 0)
         {
-            int sliderPos = ui->textBrowserLogs->verticalScrollBar()->value();
+            int sliderPosVertical = ui->textBrowserLogs->verticalScrollBar()->value();
+            int sliderPosHorizontal = ui->textBrowserLogs->horizontalScrollBar()->value();
+
             ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
             ui->textBrowserLogs->insertPlainText(text);
 
+            ui->textBrowserLogs->horizontalScrollBar()->setValue(sliderPosHorizontal);
+
+
             if (!ui->radioButtonScrollToButtom->isChecked())
-                ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPos);
+                ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPosVertical);
+            else
+                ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
         }
         else if (ui->comboBoxAddTextMode->currentIndex() == 1)
         {
@@ -920,12 +927,19 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary)
 
         if (ui->comboBoxAddTextMode->currentIndex() == 0)
         {
-            int sliderPos = ui->textBrowserLogs->verticalScrollBar()->value();
+            int sliderPosVertical = ui->textBrowserLogs->verticalScrollBar()->value();
+            int sliderPosHorizontal = ui->textBrowserLogs->horizontalScrollBar()->value();
+
             ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
             ui->textBrowserLogs->insertPlainText(bytesText);
 
+            ui->textBrowserLogs->horizontalScrollBar()->setValue(sliderPosHorizontal);
+
             if (!ui->radioButtonScrollToButtom->isChecked())
-                ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPos);
+                ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPosVertical);
+            else
+                ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
+
         }
         else if (ui->comboBoxAddTextMode->currentIndex() == 1)
         {
