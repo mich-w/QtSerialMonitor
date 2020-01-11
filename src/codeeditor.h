@@ -22,6 +22,7 @@ public:
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
 
+    void setHighlightEnabled(bool status);
 protected:
     void resizeEvent(QResizeEvent *event) override;
 
@@ -32,6 +33,7 @@ private slots:
 
 private:
     QWidget *lineNumberArea;
+    bool isHighlightCurrentLineEnabled = false;
 };
 
 class LineNumberArea : public QWidget

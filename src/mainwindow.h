@@ -122,7 +122,6 @@ private slots:
     void on_pushButtonRAMClear_clicked();
     void on_pushButtonRefresh_clicked();
     void on_pushButtonSaveRAMBuffer_clicked();
-    void on_pushButtonScrollToButtom_clicked();
     void on_pushButtonSend_clicked();
     void on_pushButtonSerialConnect_toggled(bool checked);
     void on_pushButtonSetDefaultLogPath_clicked();
@@ -140,6 +139,11 @@ private slots:
     void on_toolButtonAdvancedGraphMenu_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
+    void on_toolButtonHideTable_clicked();
+    void on_comboBoxAddTextMode_currentIndexChanged(int index);
+    void on_actionHide_parser_data_triggered();
+    void on_actionShow_parser_data_triggered();
+    void on_radioButtonScrollToButtom_clicked();
 private:
     // QCompleter *completer;
     FileReader fileReader;

@@ -104,20 +104,27 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
 
 void CodeEditor::highlightCurrentLine()
 {
-    QList<QTextEdit::ExtraSelection> extraSelections;
-    QTextEdit::ExtraSelection selection;
-    QColor lineColor = QColor(Qt::yellow).lighter(160);
+    if (isHighlightCurrentLineEnabled == true)
+    {
+        QList<QTextEdit::ExtraSelection> extraSelections;
+        QTextEdit::ExtraSelection selection;
+        QColor lineColor = QColor(Qt::yellow).lighter(160);
 
-    selection.format.setBackground(lineColor);
-    selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-    selection.cursor = textCursor();
-    selection.cursor.clearSelection();
-    extraSelections.append(selection);
+        selection.format.setBackground(lineColor);
+        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+        selection.cursor = textCursor();
+        selection.cursor.clearSelection();
+        extraSelections.append(selection);
 
-    setExtraSelections(extraSelections);
+        setExtraSelections(extraSelections);
 
-    selection.cursor.clearSelection();
+        selection.cursor.clearSelection();
+    }
+}
 
+void CodeEditor::setHighlightEnabled(bool status)
+{
+    isHighlightCurrentLineEnabled = status;
 }
 
 void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)

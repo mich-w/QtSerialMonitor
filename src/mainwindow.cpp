@@ -75,7 +75,7 @@ void MainWindow::setupGUI()
         foreach (auto item, QSerialPortInfo::standardBaudRates())
             ui->comboBoxBaudRates->addItem(QString::number(item));
 
-        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() - 3); // TODO SETTINGS !
+        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2);
     }
 
     connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
@@ -210,6 +210,8 @@ void MainWindow::createChart()
         createChartTracer();
         connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
     }
+
+    ui->textBrowserLogs->setHighlightEnabled(false);
 }
 
 void MainWindow::create3DView()
@@ -241,7 +243,7 @@ void MainWindow::setupTable()
 void MainWindow::settingsLoadAll()
 {
     QSettings appSettings(QSettings::Format::IniFormat,
-                          QSettings::Scope::SystemScope,
+                          QSettings::Scope::UserScope,
                           "QtSerialMonitor", "QtSerialMonitor"); // Settings
 
     // ----- Info ----- //
@@ -252,7 +254,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !");
@@ -282,6 +284,11 @@ void MainWindow::settingsLoadAll()
         splitterSizes = appSettings.value("layout/splitterGraphTable.sizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
         if (!splitterSizes.isEmpty())
             ui->splitterGraphTable->setSizes(QList<int>({splitterSizes.first().trimmed().toInt(), splitterSizes.last().trimmed().toInt()}));
+
+        if (ui->splitterGraphTable->sizes().last() > 0)
+            ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::DownArrow);
+        else
+            ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::UpArrow);
     }
     // ------------------------- //
 
@@ -358,7 +365,7 @@ void MainWindow::settingsLoadAll()
 void MainWindow::settingsSaveAll()
 {
     QSettings appSettings(QSettings::Format::IniFormat,
-                          QSettings::Scope::SystemScope,
+                          QSettings::Scope::UserScope,
                           "QtSerialMonitor", "QtSerialMonitor"); // Settings
 
     // ----- Info ----- //
@@ -780,9 +787,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                           .arg(graph->name())
-                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                           .arg(QString::number(temp.y(), 'f', 5)),
+                       .arg(graph->name())
+                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                       .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -865,11 +872,21 @@ void MainWindow::addLog(QString text)
         if (ui->checkBoxShowTime->isChecked())
             text = currentDateTime + text;
 
-        ui->textBrowserLogs->appendPlainText(text);
+        //        while (text.endsWith('\n') || text.endsWith('\r'))
+        //            text.chop(1);
+        if (ui->comboBoxAddTextMode->currentIndex() == 0)
+        {
+            int sliderPos = ui->textBrowserLogs->verticalScrollBar()->value();
+            ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
+            ui->textBrowserLogs->insertPlainText(text);
 
-        // ui->textBrowserLogs->insertPlainText(text);
-        // ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
-        // ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
+            if (!ui->radioButtonScrollToButtom->isChecked())
+                ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPos);
+        }
+        else if (ui->comboBoxAddTextMode->currentIndex() == 1)
+        {
+            ui->textBrowserLogs->appendPlainText(text);
+        }
     }
 }
 
@@ -894,7 +911,19 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary)
         if (ui->checkBoxShowTime->isChecked())
             bytesText = currentDateTime + bytesText;
 
-        ui->textBrowserLogs->appendPlainText(bytesText);
+        if (ui->comboBoxAddTextMode->currentIndex() == 0)
+        {
+            int sliderPos = ui->textBrowserLogs->verticalScrollBar()->value();
+            ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
+            ui->textBrowserLogs->insertPlainText(bytesText);
+
+            if (!ui->radioButtonScrollToButtom->isChecked())
+                ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPos);
+        }
+        else if (ui->comboBoxAddTextMode->currentIndex() == 1)
+        {
+            ui->textBrowserLogs->appendPlainText(bytesText);
+        }
     }
 }
 
@@ -917,7 +946,7 @@ void MainWindow::on_processSerial()
 
     if (ui->comboBoxTextProcessing->currentIndex() == 1) // Append text to textBrowser
         serialInput = serialInput.trimmed();
-    else if (ui->comboBoxTextProcessing->currentIndex() == 2) // Append text to textBrowser
+    else if (ui->comboBoxTextProcessing->currentIndex() == 2)
         serialInput = serialInput.simplified();
 
     if (ui->comboBoxFormat->currentIndex() == 0 && serialInput.isEmpty() == false)
@@ -1043,9 +1072,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
-            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1298,11 +1327,6 @@ void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
         ui->pushButtonRefresh->setEnabled(true);
         serialDeviceCheckTimer->stop();
     }
-}
-
-void MainWindow::on_pushButtonScrollToButtom_clicked()
-{
-    ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
 }
 
 void MainWindow::on_pushButtonClear_clicked()
@@ -2185,4 +2209,37 @@ void MainWindow::on_comboBoxFormat_currentIndexChanged(int index)
         ui->comboBoxTextProcessing->setEnabled(true);
     else
         ui->comboBoxTextProcessing->setEnabled(false);
+}
+
+void MainWindow::on_toolButtonHideTable_clicked()
+{
+    ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), 0});
+}
+
+void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)
+{
+    if (index == 1)
+    {
+        ui->radioButtonScrollToButtom->setCheckable(false);
+        ui->radioButtonScrollToButtom->setChecked(false);
+    }
+    else
+    {
+        ui->radioButtonScrollToButtom->setCheckable(true);
+    }
+}
+
+void MainWindow::on_actionHide_parser_data_triggered()
+{
+    ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), 0});
+}
+
+void MainWindow::on_actionShow_parser_data_triggered()
+{
+    ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), ui->splitterGraphTable->height() / 2});
+}
+
+void MainWindow::on_radioButtonScrollToButtom_clicked()
+{
+    ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
 }
