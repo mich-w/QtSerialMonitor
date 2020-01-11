@@ -2090,6 +2090,9 @@ p, li { white-space: pre-wrap; }
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="whatsThis">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chose which labels will be plotted on the graph.&lt;/p&gt;&lt;p&gt;- Auto - all labels as they go,&lt;/p&gt;&lt;p&gt;- Custom - labels defined by the user.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                      </widget>
                     </item>
                     <item row="11" column="5">
@@ -2307,7 +2310,7 @@ p, li { white-space: pre-wrap; }
                        </size>
                       </property>
                       <property name="whatsThis">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the missing samples threshold value. If processed string doesnt contain one new data for the already present graph n times in a row it is then this graph will be automatically deleted. This is useful when switching between diffrent steaming data sets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the missing samples threshold value. If processed string doesnt contain one new data for the already present graph n times in a row it is then this graph will be automatically deleted. This is useful when switching between diffrent steaming data sets or removing garbage data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>
