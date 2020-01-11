@@ -161,7 +161,7 @@ private:
     Serial serial;
     Ui::MainWindow *ui;
     Highlighter *highlighter;
-    void addLog(QString text);
+    void addLog(QString text, bool appendAsLine = false);
     void chartPrintPreview();
     void clearGraphData(bool replot);
     void clearGraphs(bool replot);
@@ -182,7 +182,7 @@ private:
     void setupGUI();
     void setupTable();
     void writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);
-    void addLogBytes(QByteArray bytes, bool hexToBinary = false);
+    void addLogBytes(QByteArray bytes, bool hexToBinary = false, bool appendAsLine = false);
 protected:
     void keyPressEvent(QKeyEvent *event);
 };

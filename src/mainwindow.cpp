@@ -257,7 +257,7 @@ void MainWindow::settingsLoadAll()
                 appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
-            addLog("App >>\t Error loading settings. Config file incorrect !");
+            addLog("App >>\t Error loading settings. Config file incorrect !",true);
             return;
         }
     }
@@ -866,11 +866,11 @@ void MainWindow::on_updateSerialDeviceList()
 void MainWindow::on_pushButtonRefresh_clicked()
 {
     qDebug() << "Refreshing serial device list...";
-    this->addLog("App >>\t Searching for COM ports...");
+    this->addLog("App >>\t Searching for COM ports...",true);
     this->on_updateSerialDeviceList();
 }
 
-void MainWindow::addLog(QString text)
+void MainWindow::addLog(QString text, bool appendAsLine)
 {
     if (ui->pushButtonTextLogToggle->isChecked() == false)
     {
@@ -879,9 +879,7 @@ void MainWindow::addLog(QString text)
         if (ui->checkBoxShowTime->isChecked())
             text = currentDateTime + text;
 
-        //        while (text.endsWith('\n') || text.endsWith('\r'))
-        //            text.chop(1);
-        if (ui->comboBoxAddTextMode->currentIndex() == 0)
+        if (!appendAsLine)
         {
             int sliderPosVertical = ui->textBrowserLogs->verticalScrollBar()->value();
             int sliderPosHorizontal = ui->textBrowserLogs->horizontalScrollBar()->value();
@@ -897,14 +895,14 @@ void MainWindow::addLog(QString text)
             else
                 ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
         }
-        else if (ui->comboBoxAddTextMode->currentIndex() == 1)
+        else
         {
             ui->textBrowserLogs->appendPlainText(text);
         }
     }
 }
 
-void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary)
+void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLine)
 {
     if (ui->pushButtonTextLogToggle->isChecked() == false)
     {
@@ -925,7 +923,7 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary)
         if (ui->checkBoxShowTime->isChecked())
             bytesText = currentDateTime + bytesText;
 
-        if (ui->comboBoxAddTextMode->currentIndex() == 0)
+        if (!appendAsLine)
         {
             int sliderPosVertical = ui->textBrowserLogs->verticalScrollBar()->value();
             int sliderPosHorizontal = ui->textBrowserLogs->horizontalScrollBar()->value();
@@ -941,7 +939,7 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary)
                 ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
 
         }
-        else if (ui->comboBoxAddTextMode->currentIndex() == 1)
+        else
         {
             ui->textBrowserLogs->appendPlainText(bytesText);
         }
@@ -972,15 +970,15 @@ void MainWindow::on_processSerial()
 
     if (ui->comboBoxFormat->currentIndex() == 0 && serialInput.isEmpty() == false)
     {
-        addLog(serialInput);
+        addLog(serialInput, ui->comboBoxAddTextMode->currentIndex());
     }
     else if (ui->comboBoxFormat->currentIndex() == 1 && serialInput.length() > 0)
     {
-        addLogBytes(serialInput.toUtf8());
+        addLogBytes(serialInput.toUtf8(), false, ui->comboBoxAddTextMode->currentIndex());
     }
     else if (ui->comboBoxFormat->currentIndex() == 2 && serialInput.length() > 0)
     {
-        addLogBytes(serialInput.toUtf8(), true);
+        addLogBytes(serialInput.toUtf8(), true, ui->comboBoxAddTextMode->currentIndex());
     }
 
     if (serialInput.isEmpty() == false)
@@ -1025,11 +1023,11 @@ void MainWindow::on_processUDP()
     }
     else if (ui->comboBoxFormat->currentIndex() == 1 && udpInput.length() > 0)
     {
-        addLogBytes(udpInput.toUtf8());
+        addLogBytes(udpInput.toUtf8(),false, ui->comboBoxAddTextMode->currentIndex());
     }
     else if (ui->comboBoxFormat->currentIndex() == 2 && udpInput.length() > 0)
     {
-        addLogBytes(udpInput.toUtf8(), true);
+        addLogBytes(udpInput.toUtf8(), true, ui->comboBoxAddTextMode->currentIndex());
     }
 
     if (udpInput.isEmpty() == false)
@@ -1050,7 +1048,7 @@ void MainWindow::sendUDPDatagram(QString message)
 {
     if (!networkUDP.isOpen())
     {
-        addLog("App >>\t Unable to send - port closed.");
+        addLog("App >>\t Unable to send - port closed.", true);
         return;
     }
 
@@ -1247,7 +1245,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 void MainWindow::sendSerial(QString message)
 {
     if (!serial.send(message))
-        this->addLog("App >>\t Unable to send! Serial port closed !");
+        this->addLog("App >>\t Unable to send! Serial port closed !", true);
 }
 
 void MainWindow::saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText, QString text)
@@ -1590,8 +1588,8 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
     {
         if (serial.getAvailiblePortsCount() < 1)
         {
-            addLog("App >>\t No devices available");
-            addLog("App >>\t Unable to open serial port!");
+            addLog("App >>\t No devices available", true);
+            addLog("App >>\t Unable to open serial port!", true);
             ui->pushButtonSerialConnect->setChecked(false);
             return;
         }
@@ -1613,13 +1611,13 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 
             connect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processSerial()));
 
-            addLog("App >>\t Serial port opened. " + serial.getSerialInfo() + " DTR: " + QString::number(ui->checkBoxDTR->isChecked()));
+            addLog("App >>\t Serial port opened. " + serial.getSerialInfo() + " DTR: " + QString::number(ui->checkBoxDTR->isChecked()), true);
             ui->pushButtonSerialConnect->setText("Disconnect");
         }
         else
         {
             ui->pushButtonSerialConnect->setChecked(false);
-            addLog("App >>\t Unable to open serial port!");
+            addLog("App >>\t Unable to open serial port!", true);
         }
     }
     else
@@ -1630,13 +1628,13 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 
         if (serial.end())
         {
-            addLog("App >>\t Connection closed.");
+            addLog("App >>\t Connection closed.", true);
             ui->pushButtonSerialConnect->setText("Connect");
         }
         else
         {
             ui->pushButtonSerialConnect->setChecked(true);
-            addLog("App >>\t ERROR: Unable to close cennection !");
+            addLog("App >>\t ERROR: Unable to close cennection !", true);
         }
 
         if (!ui->pushButtonSerialConnect->isChecked() && !ui->pushButtonUDPConnect->isChecked())
@@ -1651,7 +1649,7 @@ void MainWindow::on_actionSave_As_triggered()
 
     if (fileName.isEmpty())
     {
-        addLog("App >>\t Saving file aborted - filename not specified.");
+        addLog("App >>\t Saving file aborted - filename not specified.", true);
         return;
     }
     else
@@ -1796,13 +1794,13 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
 
             connect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
-            addLog("App >>\t UDP port opened.");
+            addLog("App >>\t UDP port opened.", true);
 
             ui->pushButtonUDPConnect->setText("Close Connection");
         }
         else
         {
-            addLog("App >>\t UDP error. Unable to bind");
+            addLog("App >>\t UDP error. Unable to bind",true);
         }
     }
     else
@@ -1811,7 +1809,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
         {
             udpStringProcessingTimer->stop();
 
-            addLog("App >>\t UDP port closed.");
+            addLog("App >>\t UDP port closed.",true);
 
             disconnect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
@@ -1861,7 +1859,7 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
     {
         if (ui->checkBoxAutoLogging->isChecked() == false && ui->lineEditSaveFileName->text().isEmpty())
         {
-            addLog("App >>\t logger error - filename not specified !");
+            addLog("App >>\t logger error - filename not specified !", true);
             ui->pushButtonLogging->setChecked(false);
             return;
         }
@@ -1872,7 +1870,7 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
         {
             if (!fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text()))
             {
-                addLog("App >>\t logger error - unable to open File");
+                addLog("App >>\t logger error - unable to open File",true);
                 ui->pushButtonLogging->setChecked(false);
                 return;
             }
@@ -2116,18 +2114,18 @@ void MainWindow::on_pushButtonLoadFile_clicked()
 
             if (fileReader.readAllAtOnce(&inputFile))
             {
-                addLog("App >>\t Read file succesfully... ");
+                addLog("App >>\t Read file succesfully... ",true);
             }
             else
             {
-                addLog("App >>\t invalid file !");
+                addLog("App >>\t invalid file !",true);
                 ui->pushButtonLoadFile->setText("Load File");
                 ui->progressBarLoadFile->setValue(0);
             }
         }
         else
         {
-            addLog("App >>\t file reader error - invalid file path !");
+            addLog("App >>\t file reader error - invalid file path !",true);
             ui->pushButtonLoadFile->setText("Load File");
             ui->progressBarLoadFile->setValue(0);
         }
@@ -2242,7 +2240,7 @@ void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)
     if (index == 1)
     {
         ui->radioButtonScrollToButtom->setCheckable(false);
-       // ui->radioButtonScrollToButtom->setChecked(false);
+        // ui->radioButtonScrollToButtom->setChecked(false);
     }
     else
     {
