@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1779</width>
+    <width>1782</width>
     <height>722</height>
    </rect>
   </property>
@@ -1798,31 +1798,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="0" column="0">
-                <widget class="QPushButton" name="pushButtonScrollToButtom">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>0</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Scroll down</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
                <item row="1" column="0" colspan="2">
                 <widget class="QSpinBox" name="spinBoxMaxLines">
                  <property name="sizePolicy">
@@ -1860,6 +1835,31 @@
                  </property>
                  <property name="value">
                   <number>1000</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QRadioButton" name="radioButtonScrollToButtom">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Scroll Down</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
                  </property>
                 </widget>
                </item>
@@ -2525,7 +2525,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1779</width>
+     <width>1782</width>
      <height>27</height>
     </rect>
    </property>
@@ -2571,6 +2571,8 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionFull_text_view"/>
      <addaction name="action50_50_view"/>
      <addaction name="actionFull_chart"/>
+     <addaction name="actionShow_parser_data"/>
+     <addaction name="actionHide_parser_data"/>
     </widget>
     <widget class="QMenu" name="menuChange_visualisation">
      <property name="title">
@@ -2658,7 +2660,7 @@ p, li { white-space: pre-wrap; }
     <string>Plotter</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+4</string>
+    <string>Ctrl+6</string>
    </property>
   </action>
   <action name="action3D_orientation">
@@ -2669,7 +2671,7 @@ p, li { white-space: pre-wrap; }
     <string>3D Orientation</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+5</string>
+    <string>Ctrl+7</string>
    </property>
   </action>
   <action name="actionPrint_Graph">
@@ -2698,6 +2700,22 @@ p, li { white-space: pre-wrap; }
   <action name="actionInfo">
    <property name="text">
     <string>Application Info</string>
+   </property>
+  </action>
+  <action name="actionShow_parser_data">
+   <property name="text">
+    <string>Show parser data</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+4</string>
+   </property>
+  </action>
+  <action name="actionHide_parser_data">
+   <property name="text">
+    <string>Hide parser data</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+5</string>
    </property>
   </action>
  </widget>

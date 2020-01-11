@@ -880,7 +880,7 @@ void MainWindow::addLog(QString text)
             ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
             ui->textBrowserLogs->insertPlainText(text);
 
-            if (!ui->pushButtonScrollToButtom->isChecked())
+            if (!ui->radioButtonScrollToButtom->isChecked())
                 ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPos);
         }
         else if (ui->comboBoxAddTextMode->currentIndex() == 1)
@@ -917,7 +917,7 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary)
             ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
             ui->textBrowserLogs->insertPlainText(bytesText);
 
-            if (!ui->pushButtonScrollToButtom->isChecked())
+            if (!ui->radioButtonScrollToButtom->isChecked())
                 ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPos);
         }
         else if (ui->comboBoxAddTextMode->currentIndex() == 1)
@@ -1327,11 +1327,6 @@ void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
         ui->pushButtonRefresh->setEnabled(true);
         serialDeviceCheckTimer->stop();
     }
-}
-
-void MainWindow::on_pushButtonScrollToButtom_clicked()
-{
-    ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
 }
 
 void MainWindow::on_pushButtonClear_clicked()
@@ -2225,11 +2220,26 @@ void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)
 {
     if (index == 1)
     {
-        ui->pushButtonScrollToButtom->setCheckable(false);
-        ui->pushButtonScrollToButtom->setChecked(false);
+        ui->radioButtonScrollToButtom->setCheckable(false);
+        ui->radioButtonScrollToButtom->setChecked(false);
     }
     else
     {
-        ui->pushButtonScrollToButtom->setCheckable(true);
+        ui->radioButtonScrollToButtom->setCheckable(true);
     }
+}
+
+void MainWindow::on_actionHide_parser_data_triggered()
+{
+    ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), 0});
+}
+
+void MainWindow::on_actionShow_parser_data_triggered()
+{
+    ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), ui->splitterGraphTable->height() / 2});
+}
+
+void MainWindow::on_radioButtonScrollToButtom_clicked()
+{
+    ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
 }
