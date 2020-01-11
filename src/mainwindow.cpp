@@ -326,6 +326,7 @@ void MainWindow::settingsLoadAll()
         ui->comboBoxLoggingMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLoggingMode.currentIndex").value<int>());
         ui->comboBoxTextProcessing->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTextProcessing.currentIndex").value<int>());
         ui->comboBoxClockSource->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxClockSource.currentIndex").value<int>());
+        ui->comboBoxAddTextMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxAddTextMode.currentIndex").value<int>());
 
         ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
         ui->checkBoxSendKey->setChecked(appSettings.value("GUI_Elements/checkBoxSendKey.isChecked").value<bool>());
@@ -344,6 +345,8 @@ void MainWindow::settingsLoadAll()
         ui->pushButtonEnablePlot->setChecked(appSettings.value("GUI_Elements/pushButtonEnablePlot.isChecked", false).value<bool>());
 
         ui->tabWidgetControlSection->setCurrentIndex(appSettings.value("GUI_Elements/tabWidgetControlSection.currentIndex").value<int>());
+
+        ui->radioButtonScrollToButtom->setChecked(appSettings.value("GUI_Elements/radioButtonScrollToButtom.isChecked").value<bool>());
 
         ui->lineEditCustomParsingRules->setText(appSettings.value("data/lineEditCustomParsingRules.text").value<QString>());
         ui->lineEditUDPTargetIP->setText(appSettings.value("data/lineEditUDPTargetIP.text").value<QString>());
@@ -423,6 +426,7 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/comboBoxLoggingMode.currentIndex", ui->comboBoxLoggingMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxTextProcessing.currentIndex", ui->comboBoxTextProcessing->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxClockSource.currentIndex", ui->comboBoxClockSource->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxAddTextMode.currentIndex", ui->comboBoxAddTextMode->currentIndex());
 
         appSettings.setValue("GUI_Elements/checkBoxDTR.isChecked", ui->checkBoxDTR->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxSendKey.isChecked", ui->checkBoxSendKey->isChecked());
@@ -441,6 +445,9 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/pushButtonEnablePlot.isChecked", ui->pushButtonEnablePlot->isChecked());
 
         appSettings.setValue("GUI_Elements/tabWidgetControlSection.currentIndex", ui->tabWidgetControlSection->currentIndex());
+
+        appSettings.setValue("GUI_Elements/radioButtonScrollToButtom.isChecked", ui->radioButtonScrollToButtom->isChecked());
+
 
         appSettings.setValue("data/lineEditCustomParsingRules.text", ui->lineEditCustomParsingRules->text());
         appSettings.setValue("data/lineEditUDPTargetIP.text", ui->lineEditUDPTargetIP->text());
@@ -2221,7 +2228,7 @@ void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)
     if (index == 1)
     {
         ui->radioButtonScrollToButtom->setCheckable(false);
-        ui->radioButtonScrollToButtom->setChecked(false);
+       // ui->radioButtonScrollToButtom->setChecked(false);
     }
     else
     {

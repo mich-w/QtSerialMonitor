@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1782</width>
+    <width>1801</width>
     <height>722</height>
    </rect>
   </property>
@@ -1859,7 +1859,7 @@
                   <bool>true</bool>
                  </property>
                  <property name="checked">
-                  <bool>false</bool>
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
@@ -2525,7 +2525,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1782</width>
+     <width>1801</width>
      <height>27</height>
     </rect>
    </property>
