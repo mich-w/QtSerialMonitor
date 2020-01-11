@@ -140,6 +140,10 @@ private slots:
     void on_toolButtonAdvancedGraphMenu_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
+    void on_toolButtonHideTable_clicked();
+
+    void on_comboBoxAddTextMode_currentIndexChanged(int index);
+
 private:
     // QCompleter *completer;
     FileReader fileReader;

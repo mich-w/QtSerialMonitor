@@ -210,6 +210,8 @@ void MainWindow::createChart()
         createChartTracer();
         connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
     }
+
+    ui->textBrowserLogs->setHighlightEnabled(false);
 }
 
 void MainWindow::create3DView()
@@ -870,11 +872,21 @@ void MainWindow::addLog(QString text)
         if (ui->checkBoxShowTime->isChecked())
             text = currentDateTime + text;
 
-        ui->textBrowserLogs->appendPlainText(text);
+        //        while (text.endsWith('\n') || text.endsWith('\r'))
+        //            text.chop(1);
+        if (ui->comboBoxAddTextMode->currentIndex() == 0)
+        {
+            int sliderPos = ui->textBrowserLogs->verticalScrollBar()->value();
+            ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
+            ui->textBrowserLogs->insertPlainText(text);
 
-        // ui->textBrowserLogs->insertPlainText(text);
-        // ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
-        // ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
+            if (!ui->pushButtonScrollToButtom->isChecked())
+                ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPos);
+        }
+        else if (ui->comboBoxAddTextMode->currentIndex() == 1)
+        {
+            ui->textBrowserLogs->appendPlainText(text);
+        }
     }
 }
 
@@ -899,7 +911,19 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary)
         if (ui->checkBoxShowTime->isChecked())
             bytesText = currentDateTime + bytesText;
 
-        ui->textBrowserLogs->appendPlainText(bytesText);
+        if (ui->comboBoxAddTextMode->currentIndex() == 0)
+        {
+            int sliderPos = ui->textBrowserLogs->verticalScrollBar()->value();
+            ui->textBrowserLogs->moveCursor(QTextCursor::MoveOperation::End, QTextCursor::MoveMode::MoveAnchor);
+            ui->textBrowserLogs->insertPlainText(bytesText);
+
+            if (!ui->pushButtonScrollToButtom->isChecked())
+                ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPos);
+        }
+        else if (ui->comboBoxAddTextMode->currentIndex() == 1)
+        {
+            ui->textBrowserLogs->appendPlainText(bytesText);
+        }
     }
 }
 
@@ -922,7 +946,7 @@ void MainWindow::on_processSerial()
 
     if (ui->comboBoxTextProcessing->currentIndex() == 1) // Append text to textBrowser
         serialInput = serialInput.trimmed();
-    else if (ui->comboBoxTextProcessing->currentIndex() == 2) // Append text to textBrowser
+    else if (ui->comboBoxTextProcessing->currentIndex() == 2)
         serialInput = serialInput.simplified();
 
     if (ui->comboBoxFormat->currentIndex() == 0 && serialInput.isEmpty() == false)
@@ -2190,4 +2214,22 @@ void MainWindow::on_comboBoxFormat_currentIndexChanged(int index)
         ui->comboBoxTextProcessing->setEnabled(true);
     else
         ui->comboBoxTextProcessing->setEnabled(false);
+}
+
+void MainWindow::on_toolButtonHideTable_clicked()
+{
+    ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), 0});
+}
+
+void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)
+{
+    if (index == 1)
+    {
+        ui->pushButtonScrollToButtom->setCheckable(false);
+        ui->pushButtonScrollToButtom->setChecked(false);
+    }
+    else
+    {
+        ui->pushButtonScrollToButtom->setCheckable(true);
+    }
 }
