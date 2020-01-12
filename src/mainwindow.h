@@ -183,6 +183,7 @@ private:
     void setupTable();
     void writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);
     void addLogBytes(QByteArray bytes, bool hexToBinary = false, bool appendAsLine = false);
+    QString controlCharactersVisibleConvert(QString text);
 protected:
     void keyPressEvent(QKeyEvent *event);
 };

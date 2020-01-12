@@ -1538,7 +1538,26 @@
             <layout class="QHBoxLayout" name="horizontalLayout">
              <item>
               <layout class="QGridLayout" name="gridLayout_15">
-               <item row="1" column="2">
+               <item row="0" column="2">
+                <widget class="QCheckBox" name="checkBoxSendKey">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, pressed key will be immidietly sent to the device via Serial or UDP, depending on the active control section tab as long as the &lt;span style=&quot; font-weight:600;&quot;&gt;text window remains focused&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;This is very useful for creating a rapidly accesible control interface via serial i.e, you could quickly regulate motor's PWM output by holding &amp;quot;+&amp;quot; or &amp;quot;-&amp;quot; keys, instead of typing &amp;quot;set value ... &amp;quot; every time you need to make a change.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>Send Key</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="3">
                 <widget class="QLabel" name="label_4">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -1553,50 +1572,40 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>Text highlight:</string>
+                  <string>Highlight:</string>
                  </property>
                 </widget>
                </item>
-               <item row="1" column="8">
-                <widget class="QComboBox" name="comboBoxAddTextMode">
+               <item row="1" column="4" colspan="8">
+                <widget class="QCheckBox" name="checkBoxShowControlChars">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="sizeAdjustPolicy">
-                  <enum>QComboBox::AdjustToContents</enum>
-                 </property>
-                 <item>
-                  <property name="text">
-                   <string>Insert</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Append</string>
-                  </property>
-                 </item>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QPushButton" name="pushButtonTextLogToggle">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Disable</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
+                  <string>Control chars</string>
                  </property>
                 </widget>
                </item>
-               <item row="1" column="3" colspan="5">
+               <item row="0" column="4" colspan="8">
+                <widget class="QCheckBox" name="checkBoxShowTime">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, received message will be displayed with system clock time in which it was received.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>Timestamp</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="4" colspan="8">
                 <widget class="QLineEdit" name="lineEditHighlight">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -1615,35 +1624,23 @@
                  </property>
                 </widget>
                </item>
-               <item row="0" column="5" colspan="4">
-                <widget class="QComboBox" name="comboBoxTextProcessing">
+               <item row="0" column="3">
+                <widget class="QCheckBox" name="checkBoxWrapText">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose text post-processing:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- None&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Trim - remove whitespace form the start and the end of each line.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Simplify - removes whitespace form the start and the end, and that has each sequence of internal whitespace replaced with a single space.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wrap all text inside the text window - may work slowly with large text.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
-                 <item>
-                  <property name="text">
-                   <string>None</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Trim</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Simplify</string>
-                  </property>
-                 </item>
+                 <property name="text">
+                  <string>Wrap</string>
+                 </property>
                 </widget>
                </item>
-               <item row="1" column="0" colspan="2">
+               <item row="3" column="1" colspan="2">
                 <widget class="QSpinBox" name="spinBoxProcessingDelay">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -1683,64 +1680,32 @@
                  </property>
                 </widget>
                </item>
-               <item row="0" column="2">
-                <widget class="QCheckBox" name="checkBoxShowTime">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, received message will be displayed with system clock time in which it was received.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <property name="text">
-                  <string>Timestamp</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="3">
-                <widget class="QCheckBox" name="checkBoxWrapText">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wrap all text inside the text window - may work slowly with large text.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <property name="text">
-                  <string>Wrap</string>
-                 </property>
-                </widget>
-               </item>
                <item row="0" column="1">
-                <widget class="QCheckBox" name="checkBoxSendKey">
+                <widget class="QPushButton" name="pushButtonTextLogToggle">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
-                 <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, pressed key will be immidietly sent to the device via Serial or UDP, depending on the active control section tab as long as the &lt;span style=&quot; font-weight:600;&quot;&gt;text window remains focused&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;This is very useful for creating a rapidly accesible control interface via serial i.e, you could quickly regulate motor's PWM output by holding &amp;quot;+&amp;quot; or &amp;quot;-&amp;quot; keys, instead of typing &amp;quot;set value ... &amp;quot; every time you need to make a change.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
                  <property name="text">
-                  <string>Send Key</string>
+                  <string>Disable</string>
                  </property>
-                 <property name="checked">
+                 <property name="checkable">
                   <bool>true</bool>
                  </property>
                 </widget>
                </item>
-               <item row="0" column="4">
+               <item row="1" column="3">
                 <widget class="QComboBox" name="comboBoxFormat">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Change text format&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="whatsThis">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose message display format:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- text&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- hex (base 16)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- binary (base 2)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1758,6 +1723,66 @@
                  <item>
                   <property name="text">
                    <string>BIN</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item row="1" column="2">
+                <widget class="QComboBox" name="comboBoxTextProcessing">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Text processing modes&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose text post-processing:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- None&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Trim - remove whitespace form the start and the end of each line.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Simplify - removes whitespace form the start and the end, and has each sequence of internal whitespace replaced with a single space.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>None</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Trim</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Simplify</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QComboBox" name="comboBoxAddTextMode">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;New line print method&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Change how new text line is added:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Insert - moves the cursor to the end of document and simply pastes new data. Similar to &amp;quot;print()&amp;quot; in Arduino&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- Append - adds new text as newline. Acts as &amp;quot;println()&amp;quot;. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;One can use &amp;quot;trim&amp;quot; or &amp;quot;simplify&amp;quot; to remove all control characters form the text while still adding it as newline without the escape sequences present.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="sizeAdjustPolicy">
+                  <enum>QComboBox::AdjustToContents</enum>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Insert line</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Append line</string>
                   </property>
                  </item>
                 </widget>
@@ -1839,7 +1864,7 @@
                 </widget>
                </item>
                <item row="0" column="0">
-                <widget class="QRadioButton" name="radioButtonScrollToButtom">
+                <widget class="QCheckBox" name="checkBoxScrollToButtom">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -2529,7 +2554,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1801</width>
-     <height>22</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

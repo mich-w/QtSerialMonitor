@@ -346,7 +346,7 @@ void MainWindow::settingsLoadAll()
 
         ui->tabWidgetControlSection->setCurrentIndex(appSettings.value("GUI_Elements/tabWidgetControlSection.currentIndex").value<int>());
 
-        ui->radioButtonScrollToButtom->setChecked(appSettings.value("GUI_Elements/radioButtonScrollToButtom.isChecked").value<bool>());
+        ui->checkBoxScrollToButtom->setChecked(appSettings.value("GUI_Elements/checkBoxScrollToButtom.isChecked").value<bool>());
 
         ui->lineEditCustomParsingRules->setText(appSettings.value("data/lineEditCustomParsingRules.text").value<QString>());
         ui->lineEditUDPTargetIP->setText(appSettings.value("data/lineEditUDPTargetIP.text").value<QString>());
@@ -446,7 +446,7 @@ void MainWindow::settingsSaveAll()
 
         appSettings.setValue("GUI_Elements/tabWidgetControlSection.currentIndex", ui->tabWidgetControlSection->currentIndex());
 
-        appSettings.setValue("GUI_Elements/radioButtonScrollToButtom.isChecked", ui->radioButtonScrollToButtom->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxScrollToButtom.isChecked", ui->checkBoxScrollToButtom->isChecked());
 
 
         appSettings.setValue("data/lineEditCustomParsingRules.text", ui->lineEditCustomParsingRules->text());
@@ -879,6 +879,10 @@ void MainWindow::addLog(QString text, bool appendAsLine)
         if (ui->checkBoxShowTime->isChecked())
             text = currentDateTime + text;
 
+        // Replace control chars
+        if (ui->checkBoxShowControlChars->isChecked())
+            text = controlCharactersVisibleConvert(text);
+
         if (!appendAsLine)
         {
             int sliderPosVertical = ui->textBrowserLogs->verticalScrollBar()->value();
@@ -890,7 +894,7 @@ void MainWindow::addLog(QString text, bool appendAsLine)
             ui->textBrowserLogs->horizontalScrollBar()->setValue(sliderPosHorizontal);
 
 
-            if (!ui->radioButtonScrollToButtom->isChecked())
+            if (!ui->checkBoxScrollToButtom->isChecked())
                 ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPosVertical);
             else
                 ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
@@ -900,6 +904,20 @@ void MainWindow::addLog(QString text, bool appendAsLine)
             ui->textBrowserLogs->appendPlainText(text);
         }
     }
+}
+
+QString MainWindow::controlCharactersVisibleConvert(QString text)
+{
+    if (text.replace("\r\n", "\\r\\n\r\n").isEmpty())
+    {
+        text.replace("\r", "\\r\r");
+        text.replace("\n", "\\n\n");
+    }
+
+    text.replace(' ', QChar(183));
+    text.replace("\t", "\\t\t");
+
+    return text;
 }
 
 void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLine)
@@ -933,7 +951,7 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLi
 
             ui->textBrowserLogs->horizontalScrollBar()->setValue(sliderPosHorizontal);
 
-            if (!ui->radioButtonScrollToButtom->isChecked())
+            if (!ui->checkBoxScrollToButtom->isChecked())
                 ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPosVertical);
             else
                 ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
@@ -2237,15 +2255,15 @@ void MainWindow::on_toolButtonHideTable_clicked()
 
 void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)
 {
-    if (index == 1)
-    {
-        ui->radioButtonScrollToButtom->setCheckable(false);
-        // ui->radioButtonScrollToButtom->setChecked(false);
-    }
-    else
-    {
-        ui->radioButtonScrollToButtom->setCheckable(true);
-    }
+    //    if (index == 1)
+    //    {
+    //        ui->radioButtonScrollToButtom->setCheckable(false);
+    //         ui->radioButtonScrollToButtom->setChecked(false);
+    //    }
+    //    else
+    //    {
+    //        ui->radioButtonScrollToButtom->setCheckable(true);
+    //    }
 }
 
 void MainWindow::on_actionHide_parser_data_triggered()
