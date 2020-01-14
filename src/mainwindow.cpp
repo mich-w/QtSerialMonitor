@@ -914,8 +914,8 @@ QString MainWindow::controlCharactersVisibleConvert(QString text)
         text.replace("\n", "\\n\n");
     }
 
-    text.replace(' ', QChar(183));
     text.replace("\t", "\\t\t");
+    text.replace(' ', QChar(183));
 
     return text;
 }
