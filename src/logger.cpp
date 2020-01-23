@@ -4,13 +4,17 @@ Logger::Logger(QObject *parent) : QObject(parent)
 {
 }
 
-void Logger::openFile(QString fileName)
+void Logger::openFile(QString fileName, bool truncateFile)
 {
     if (!fileName.isEmpty())
     {
         logFile = new QFile;
         logFile->setFileName(fileName);
-        logFile->open(QIODevice::OpenModeFlag::ReadWrite | QIODevice::Text);
+
+        if (truncateFile)
+            logFile->open(QIODevice::OpenModeFlag::ReadWrite | QIODevice::OpenModeFlag::Truncate | QIODevice::Text);
+        else
+            logFile->open(QIODevice::OpenModeFlag::ReadWrite | QIODevice::Text);
     }
 }
 
@@ -137,7 +141,7 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool app
 
     for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
     {
-        out.atEnd();
+        out.atEnd(); // ???
 
         int index = labelList.indexOf(csvLabelsBuffer[i]);
         if (index >= 0 && index < dataList.count())

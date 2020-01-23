@@ -16,7 +16,7 @@ public:
     bool beginLog(QString path, bool autoLogging, QString fileName);
     bool isOpen();
     void closeFile();
-    void openFile(QString fileName);
+    void openFile(QString fileName, bool truncateFile = false);
     void writeLogLine(QString lineToAppend, bool simplifyText, bool appendDate);
     void writeLogParsedData(QStringList labelList, QList<double> dataList, bool appendDate = false);
     void writeLogCSV(QStringList labelList, QList<double> dataList, bool appendDate);
