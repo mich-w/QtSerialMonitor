@@ -144,6 +144,7 @@ private slots:
     void on_actionHide_parser_data_triggered();
     void on_actionShow_parser_data_triggered();
     void on_radioButtonScrollToButtom_clicked();
+    void on_comboBoxLogFormat_currentIndexChanged(int index);
 private:
     // QCompleter *completer;
     FileReader fileReader;

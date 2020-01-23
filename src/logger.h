@@ -20,6 +20,7 @@ public:
     void writeLogLine(QString lineToAppend, bool simplifyText, bool appendDate);
     void writeLogParsedData(QStringList labelList, QList<double> dataList, bool appendDate = false);
     void writeLogCSV(QStringList labelList, QList<double> dataList, bool appendDate);
+    void clearWriteBuffer();
 signals:
 
 public slots:

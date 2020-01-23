@@ -208,6 +208,7 @@ void MainWindow::createChart()
     }
 
     ui->textBrowserLogs->setHighlightEnabled(false);
+    emit on_comboBoxLogFormat_currentIndexChanged(ui->comboBoxLogFormat->currentIndex());
 }
 
 void MainWindow::create3DView()
@@ -1664,7 +1665,9 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
         }
 
         if (!ui->pushButtonSerialConnect->isChecked() && !ui->pushButtonUDPConnect->isChecked())
+        {
             fileLogger.closeFile();
+        }
     }
 }
 
@@ -1917,7 +1920,8 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->lineEditSaveFileName->setEnabled(false);
         ui->pushButtonAddDateTime->setEnabled(false);
 
-        ui->lineEditSaveFileName->setText("%DateTime%_Log.txt");
+        ui->lineEditSaveFileName->setText("%DateTime%_Log" + ui->comboBoxLogFormat->currentText());
+
         ui->pushButtonLogging->setChecked(true); // Trigger begin log
         ui->pushButtonLogging->setText("Auto");
     }
@@ -2298,4 +2302,16 @@ void MainWindow::on_actionShow_parser_data_triggered()
 void MainWindow::on_radioButtonScrollToButtom_clicked()
 {
     ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
+}
+
+void MainWindow::on_comboBoxLogFormat_currentIndexChanged(int index)
+{
+    ui->comboBoxLoggingMode->setEnabled((bool)index);
+    ui->checkBoxSimplifyLog->setEnabled((bool)index);
+    ui->pushButtonLoadFile->setEnabled((bool)index);
+
+    if (ui->comboBoxLogFormat->currentText().contains("txt"))
+        ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("csv", "txt"));
+    else if (ui->comboBoxLogFormat->currentText().contains("csv"))
+        ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("txt", "csv"));
 }
