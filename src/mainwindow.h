@@ -87,7 +87,6 @@ private slots:
     void on_clearGraphSelection();
     void on_comboBoxClockSource_currentIndexChanged(int index);
     void on_comboBoxFormat_currentIndexChanged(int index);
-    void on_comboBoxGraphDisplayMode_currentIndexChanged(const QString &arg1);
     void on_comboBoxLoggingMode_currentIndexChanged(int index);
     void on_comboBoxSendReturnPressedSlot();
     void on_comboBoxSerialReadMode_currentIndexChanged(int index);
@@ -145,6 +144,8 @@ private slots:
     void on_actionShow_parser_data_triggered();
     void on_radioButtonScrollToButtom_clicked();
     void on_comboBoxLogFormat_currentIndexChanged(int index);
+    void on_comboBoxGraphDisplayMode_currentIndexChanged(int index);
+
 private:
     // QCompleter *completer;
     FileReader fileReader;

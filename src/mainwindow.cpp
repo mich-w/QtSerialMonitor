@@ -145,10 +145,6 @@ void MainWindow::setupGUI()
     ui->comboBoxExternalTimeFormat->addItem("[ms]");
     ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
 
-    ui->comboBoxLoggingMode->addItem("Log Text");
-    ui->comboBoxLoggingMode->addItem("Log Parsed Data");
-    ui->comboBoxLoggingMode->setCurrentIndex(0);
-
     ui->comboBoxRAMSaveMode->addItem("Save Data Only");
     ui->comboBoxRAMSaveMode->addItem("Save Data & Text");
     ui->comboBoxRAMSaveMode->setCurrentIndex(0);
@@ -1497,30 +1493,6 @@ void MainWindow::on_pushButtonClearHistory_clicked()
     ui->comboBoxSend->clear();
 }
 
-void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(const QString &arg1)
-{
-    clearGraphs(true);
-    loadFromRAM(0);
-
-    QPalette *paletteRed = new QPalette();
-    QPalette *paletteBlack = new QPalette();
-    paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
-    paletteBlack->setColor(QPalette::Text, Qt::GlobalColor::black);
-
-    if (arg1.contains("Auto", Qt::CaseSensitivity::CaseInsensitive))
-    {
-        ui->lineEditCustomParsingRules->setEnabled(false);
-        ui->labelParsingRules->setEnabled(false);
-        ui->comboBoxGraphDisplayMode->setPalette(*paletteBlack);
-    }
-    else if (arg1.contains("Custom", Qt::CaseSensitivity::CaseInsensitive))
-    {
-        ui->lineEditCustomParsingRules->setEnabled(true);
-        ui->labelParsingRules->setEnabled(true);
-        ui->comboBoxGraphDisplayMode->setPalette(*paletteRed);
-    }
-}
-
 void MainWindow::on_pushButtonClearGraphs_clicked()
 {
     clearGraphData(true);
@@ -1537,14 +1509,12 @@ void MainWindow::on_lineEditCustomParsingRules_editingFinished()
 void MainWindow::on_spinBoxMaxGraphs_valueChanged(int arg1)
 {
     QPalette *paletteRed = new QPalette();
-    QPalette *paletteBlack = new QPalette();
     paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
-    paletteBlack->setColor(QPalette::Text, Qt::GlobalColor::black);
 
     if (arg1 > 10)
         ui->spinBoxMaxGraphs->setPalette(*paletteRed);
     else
-        ui->spinBoxMaxGraphs->setPalette(*paletteBlack);
+        ui->spinBoxMaxGraphs->setPalette(QPalette());
 
     this->clearGraphs(false);
     this->loadFromRAM(false);
@@ -1573,22 +1543,18 @@ void MainWindow::on_checkBoxAutoTrack_toggled(bool checked)
 
 void MainWindow::on_spinBoxProcessingDelay_valueChanged(int arg1)
 {
-    int newInterval = arg1;
-    if (newInterval < 1)
-        newInterval = 1; // Never 0 ! Couses CPU run like crazy !
+    int newInterval = qMax(1, arg1); // Never 0 ! Couses CPU run like crazy !
 
-    serialStringProcessingTimer->setInterval(arg1);
-    udpStringProcessingTimer->setInterval(arg1);
+    serialStringProcessingTimer->setInterval(newInterval);
+    udpStringProcessingTimer->setInterval(newInterval);
 
     QPalette *paletteRed = new QPalette();
-    QPalette *paletteBlack = new QPalette();
     paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
-    paletteBlack->setColor(QPalette::Text, Qt::GlobalColor::black);
 
-    if (arg1 > ui->spinBoxProcessingDelay->minimum())
+    if (newInterval > ui->spinBoxProcessingDelay->minimum())
         ui->spinBoxProcessingDelay->setPalette(*paletteRed);
     else
-        ui->spinBoxProcessingDelay->setPalette(*paletteBlack);
+        ui->spinBoxProcessingDelay->setPalette(QPalette());
 }
 
 void MainWindow::on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1)
@@ -2314,4 +2280,26 @@ void MainWindow::on_comboBoxLogFormat_currentIndexChanged(int index)
         ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("csv", "txt"));
     else if (ui->comboBoxLogFormat->currentText().contains("csv"))
         ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("txt", "csv"));
+}
+
+void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
+{
+    clearGraphs(true);
+    loadFromRAM(0);
+
+    QPalette *paletteRed = new QPalette();
+    paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
+
+    if (index == 0)
+    {
+        ui->lineEditCustomParsingRules->setEnabled(false);
+        ui->labelParsingRules->setEnabled(false);
+        ui->comboBoxGraphDisplayMode->setPalette(QPalette()); // Empty = default (OS specific !)
+    }
+    else
+    {
+        ui->lineEditCustomParsingRules->setEnabled(true);
+        ui->labelParsingRules->setEnabled(true);
+        ui->comboBoxGraphDisplayMode->setPalette(*paletteRed);
+    }
 }
