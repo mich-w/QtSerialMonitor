@@ -10,7 +10,7 @@ void Logger::openFile(QString fileName)
     {
         logFile = new QFile;
         logFile->setFileName(fileName);
-        logFile->open(QIODevice::OpenModeFlag::Append | QIODevice::Text);
+        logFile->open(QIODevice::OpenModeFlag::WriteOnly | QIODevice::Text);
     }
 }
 
@@ -95,4 +95,95 @@ void Logger::writeLogParsedData(QStringList labelList, QList<double> dataList, b
 
         out << text + "\r";
     }
+}
+
+void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool appendDate)
+{
+    QTextStream out(logFile);
+    QString newCSVLine;
+
+    if (labelList.count() == 0)
+        return;
+
+    if(csvLabelsBuffer.count() == 0)
+    {
+        csvLabelsBuffer.append(labelList[0]);
+        out.readLine(0);
+        out << "\"" + labelList[0].trimmed() + "\",";
+        out << "\r";
+    }
+    else
+    {
+        bool added = false;
+        for (auto i = 0; i < labelList.count(); ++i)
+        {
+            if (!csvLabelsBuffer.contains(labelList[i]))
+            {
+                csvLabelsBuffer.append(labelList[i]);
+
+                out.readLine(0);
+                out << "\"" + labelList[i].trimmed() + "\",";
+                added = true;
+            }
+        }
+
+        if (added)
+            out << "\r";
+
+    }
+
+    for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
+    {
+        out.atEnd();
+
+        int index = labelList.indexOf(csvLabelsBuffer[i]);
+        if (index >= 0 && index < dataList.count())
+            out << QString::number(dataList[index]) + ',';
+    }
+
+    out << "\r";
+
+    //    for (auto i = 0; i < labelsInFile.count(); ++i)
+    //    {
+
+
+
+    //        for (auto i = 0; i < labelsInFile.count(); ++i)
+    //        {
+    //            if(!labelsInFile.contains(labelList[i]))
+    //            {
+    //                out.readLine(0);
+    //                out << labelList[i] + ',';
+
+
+    //            }
+    //            else
+    //            {
+    //                //logFile->atEnd();
+    //                out.atEnd();
+
+    //                out << dataList[i] + ',';
+    //            }
+    //        }
+
+    //        out << "\r";
+    //    }
+
+
+    //    for (auto i = 0; i < labelList.count(); ++i)
+    //    {
+    //        text.append(labelList[i] + " " + QString::number(dataList[i], 'f') + " :: ");
+    //    }
+
+    //    text = text.simplified();
+
+    //    if (appendDate)
+    //        text = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss:zzz ") + text;
+    //    else
+    //        text = QDateTime::currentDateTime().toString("hh:mm:ss:zzz ") + text;
+
+
+
+    //    out.setCodec("UTF-8");
+    //    out << text + "\r";
 }

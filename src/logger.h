@@ -19,12 +19,14 @@ public:
     void openFile(QString fileName);
     void writeLogLine(QString lineToAppend, bool simplifyText, bool appendDate);
     void writeLogParsedData(QStringList labelList, QList<double> dataList, bool appendDate = false);
+    void writeLogCSV(QStringList labelList, QList<double> dataList, bool appendDate);
 signals:
 
 public slots:
 
 private:
     QFile *logFile = nullptr;
+    QStringList csvLabelsBuffer;
 };
 
 #endif // LOGGER_H

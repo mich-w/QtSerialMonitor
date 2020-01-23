@@ -84,10 +84,6 @@ void MainWindow::setupGUI()
     ui->comboBoxTracerStyle->addItem("Circle");
     ui->comboBoxTracerStyle->setCurrentIndex(0);
 
-    ui->comboBoxGraphDisplayMode->addItem("Auto");
-    ui->comboBoxGraphDisplayMode->addItem("Custom");
-    ui->comboBoxGraphDisplayMode->setCurrentIndex(0);
-
     ui->comboBoxDataBits->addItem("Data5");
     ui->comboBoxDataBits->addItem("Data6");
     ui->comboBoxDataBits->addItem("Data7");
@@ -969,10 +965,17 @@ void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<do
 {
     if (ui->pushButtonLogging->isChecked()) // Write log into file
     {
-        if (ui->comboBoxLoggingMode->currentIndex() == 0)
-            fileLogger.writeLogLine(rawLine, ui->checkBoxSimplifyLog->isChecked(), ui->checkBoxAppendDate->isChecked());
-        else if (ui->comboBoxLoggingMode->currentIndex() == 1)
-            fileLogger.writeLogParsedData(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+        if (ui->comboBoxLogFormat->currentIndex() == 1)
+        {
+            if (ui->comboBoxLoggingMode->currentIndex() == 0)
+                fileLogger.writeLogLine(rawLine, ui->checkBoxSimplifyLog->isChecked(), ui->checkBoxAppendDate->isChecked());
+            else if (ui->comboBoxLoggingMode->currentIndex() == 1)
+                fileLogger.writeLogParsedData(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+        }
+        else if (ui->comboBoxLogFormat->currentIndex() == 0)
+        {
+            fileLogger.writeLogCSV(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+        }
     }
 }
 
@@ -1109,9 +1112,14 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
+
                 ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+
                  (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
+
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
+                  !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -2096,6 +2104,9 @@ void MainWindow::on_processLoadedFile(QString *text)
     this->processChart(labelList, numericDataList, timeStampList);
     this->processTable(labelList, numericDataList);
     this->saveToRAM(labelList, numericDataList, timeStampList);
+
+    if (ui->checkBoxAppendLoadedTextToLog->isChecked() == true)
+        this->ui->textBrowserLogs->appendPlainText(*text);
 }
 
 void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
@@ -2216,8 +2227,16 @@ void MainWindow::on_actionWhats_this_triggered()
 
 void MainWindow::on_lineEditSaveFileName_editingFinished()
 {
-    if (ui->lineEditSaveFileName->text().endsWith(".txt") == false)
-        ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().append(".txt")); // auto-complete filename with .txt extension
+    if (ui->comboBoxLogFormat->currentText() == ".txt")
+    {
+        if (ui->lineEditSaveFileName->text().endsWith(".txt") == false)
+            ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().append(".txt")); // auto-complete filename with .txt extension
+    }
+    else if (ui->comboBoxLogFormat->currentText() == ".csv")
+    {
+        if (ui->lineEditSaveFileName->text().endsWith(".csv") == false)
+            ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().append(".csv")); // auto-complete filename with .txt extension
+    }
 }
 
 void MainWindow::on_checkBoxAutoSaveBuffer_toggled(bool checked)
