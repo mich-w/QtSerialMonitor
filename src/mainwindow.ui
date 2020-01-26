@@ -1200,7 +1200,7 @@
              <item row="1" column="0">
               <widget class="QLabel" name="label_22">
                <property name="text">
-                <string>Log mode:</string>
+                <string>Text format</string>
                </property>
               </widget>
              </item>
@@ -1226,7 +1226,7 @@
                </property>
                <item>
                 <property name="text">
-                 <string>Text</string>
+                 <string>Raw message</string>
                 </property>
                </item>
                <item>
@@ -1244,11 +1244,8 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Pick log format&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="sizeAdjustPolicy">
                 <enum>QComboBox::AdjustToContents</enum>
@@ -2649,7 +2646,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1801</width>
-     <height>22</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

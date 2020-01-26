@@ -12,7 +12,7 @@ void Logger::openFile(QString fileName, bool truncateFile)
         logFile->setFileName(fileName);
 
         if (truncateFile)
-            logFile->open(QIODevice::OpenModeFlag::ReadWrite | QIODevice::OpenModeFlag::Truncate | QIODevice::Text);
+            logFile->open(QIODevice::OpenModeFlag::Truncate | QFile::OpenModeFlag::ReadWrite | QIODevice::Text);
         else
             logFile->open(QIODevice::OpenModeFlag::ReadWrite | QIODevice::Text);
     }
@@ -32,16 +32,16 @@ void Logger::closeFile()
     }
 }
 
-bool Logger::beginLog(QString path, bool autoLogging, QString fileName)
+bool Logger::beginLog(QString path, bool autoLogging, QString fileName, bool truncateFile)
 {
     if (logFile == nullptr && QDir(path).isReadable())
     {
         qDebug() << "File open";
 
         if (autoLogging)
-            openFile(path + "/" + QDateTime::currentDateTime().toString("dd.MM.yyyy_hh.mm.ss.zzz_") + "Log" + fileName.right(fileName.length() - fileName.lastIndexOf('.')));
+            openFile(path + "/" + QDateTime::currentDateTime().toString("dd.MM.yyyy_hh.mm.ss.zzz_") + "Log" + fileName.right(fileName.length() - fileName.lastIndexOf('.')),truncateFile);
         else
-            openFile(path + "/" + fileName);
+            openFile(path + "/" + fileName, truncateFile);
 
         return true;
     }
