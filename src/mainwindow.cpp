@@ -1385,19 +1385,16 @@ void MainWindow::on_highlighLog(QString searchString)
 {
     QTextDocument *document = ui->textBrowserLogs->document();
     QTextCursor highlightCursor(document);
-    QTextCharFormat colorFormat = highlightCursor.charFormat();
 
     // clear formatting !
-    colorFormat.setFontLetterSpacing(100);
-    colorFormat.setForeground(Qt::black);
-    colorFormat.setFontWeight(QFont::Thin);
-    colorFormat.setBackground(Qt::white);
     highlightCursor.setPosition(document->characterCount() - 1, QTextCursor::KeepAnchor);
-    highlightCursor.mergeCharFormat(colorFormat);
+    highlightCursor.mergeCharFormat(QTextCharFormat());
     highlightCursor.setPosition(0, QTextCursor::MoveAnchor);
 
     if (!searchString.isEmpty())
     {
+        QTextCharFormat colorFormat = highlightCursor.charFormat();
+
         colorFormat.setFontLetterSpacing(110);
         colorFormat.setForeground(Qt::black);
         colorFormat.setFontWeight(QFont::Bold);
@@ -1600,7 +1597,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
             parser.restartChartTimer();
 
             if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false) // logger on standby ?
-                fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text());
+                fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text(), ui->checkBoxTruncateFileOnSave->isChecked());
 
             connect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processSerial()));
 
@@ -1785,7 +1782,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
             parser.restartChartTimer();
 
             if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false)
-                fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text());
+                fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text(), ui->checkBoxTruncateFileOnSave->isChecked());
 
             connect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
@@ -1863,9 +1860,9 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
 
         if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
         {
-            if (!fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text()))
+            if (!fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text()), ui->checkBoxTruncateFileOnSave->isChecked())
             {
-                addLog("App >>\t logger error - unable to open File",true);
+                addLog("App >>\t logger error - unable to open File", true);
                 ui->pushButtonLogging->setChecked(false);
                 return;
             }
