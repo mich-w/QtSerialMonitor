@@ -13,7 +13,7 @@ class Logger : public QObject
     Q_OBJECT
 public:
     explicit Logger(QObject *parent = nullptr);
-    bool beginLog(QString path, bool autoLogging, QString fileName);
+    bool beginLog(QString path, bool autoLogging, QString fileName, bool truncateFile = false);
     bool isOpen();
     void closeFile();
     void openFile(QString fileName, bool truncateFile = false);
