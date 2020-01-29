@@ -109,6 +109,83 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
     }
 }
 
+void Parser::parseCSV(QString inputString)
+{
+    listNumericData.clear();
+    stringListLabels.clear();
+    listTimeStamp.clear();
+    lineCount = 0;
+
+    QStringList inputStringSplitArrayLines = inputString.split(QRegExp("[\\n+\\r+]"), QString::SplitBehavior::SkipEmptyParts);
+    lineCount = inputStringSplitArrayLines.count();
+
+    QStringList csvLabels; // !
+
+    for (auto l = 0; l < inputStringSplitArrayLines.count(); ++l)
+    {
+        parsingProgressPercent = (float)l / inputStringSplitArrayLines.count() * 100.0F;
+        if (l % 50 == 0 && canReportProgress)
+        {
+            emit updateProgress(&parsingProgressPercent);
+            QApplication::processEvents(); // Prevents app for freeezeng during processing large files and allows to udpate progress percent. A very cheap trick...
+        }
+
+        if (abortFlag)
+        {
+            abortFlag = false;
+            break;
+        }
+
+        QRegExp mainSymbols("[+-]?\\d*\\.?\\d+"); // float only   //  QRegExp mainSymbols("[-+]?[0-9]*\.?[0-9]+");
+        QRegExp alphanumericSymbols("\\w+");
+        QRegExp sepSymbols("[=,]");
+
+        inputStringSplitArrayLines[l].replace(sepSymbols, " ");
+        QStringList inputStringSplitArray = inputStringSplitArrayLines[l].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
+
+        // Look for labels
+        for (auto i = 0; i < inputStringSplitArray.count(); ++i)
+        {
+            if (!mainSymbols.exactMatch(inputStringSplitArray[i]))
+            {
+                csvLabels.append(inputStringSplitArray[i]);
+            }
+        }
+
+        // Look for time reference
+        for (auto i = 0; i < inputStringSplitArray.count(); ++i)
+        {
+            foreach (auto timeFormat, searchTimeFormatList)
+            {
+                if (QTime::fromString(inputStringSplitArray[i], timeFormat).isValid())
+                {
+                    latestTimeStamp = QTime::fromString(inputStringSplitArray[i], timeFormat);
+                    break;
+                }
+            }
+
+//            if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
+//            {
+//                if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
+//                {
+//                    continue;
+//                }
+//            }
+        }
+
+        // Look for data
+        for (auto i = 0; i < inputStringSplitArray.count(); ++i)
+        {
+            if (mainSymbols.exactMatch(inputStringSplitArray[i]))
+            {
+                stringListLabels.append(csvLabels[i]);
+                listNumericData.append(inputStringSplitArray[i].toDouble());
+                listTimeStamp.append(latestTimeStamp.msecsSinceStartOfDay());
+            }
+        }
+    }
+}
+
 QStringList Parser::getStringListNumericData()
 {
     return stringListNumericData;

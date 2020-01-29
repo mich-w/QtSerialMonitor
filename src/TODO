@@ -1,3 +1,5 @@
 - READ CSV
 - Check what happens when user switches log mode during work
 - save new button states
+- void MainWindow::getFileTimeRange(QFile *file) // TODO move to parser !
+

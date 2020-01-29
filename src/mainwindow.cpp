@@ -793,6 +793,7 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
+// Activates rect mode on middle button press
 void MainWindow::on_chartMousePressHandler(QMouseEvent *event)
 {
     if (event->button() == Qt::MiddleButton)
@@ -1301,20 +1302,20 @@ void MainWindow::loadFromRAM(bool loadText)
     processChart(RAMLabels, RAMData, RAMTime);
 }
 
-void MainWindow::getFileTimeRange(QFile *file)
+void MainWindow::getFileTimeRange(QFile *file) // TODO move to parser !
 {
     if (file->open(QIODevice::ReadOnly))
     {
         QString allData = file->readAll();
         file->close();
 
-        QStringList readFileSplitLines = allData.split(QRegExp("[\n\r]"), QString::SplitBehavior::SkipEmptyParts);
+        QStringList readFileSplitLines = allData.split(QRegExp("[\\n+\\r+]"), QString::SplitBehavior::SkipEmptyParts);
 
         for (auto i = 0; i < readFileSplitLines.count(); ++i)
         {
-            QStringList inputStringSplitArrayTopLine = readFileSplitLines[i].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);                                     // rozdzielamy traktująac spacje jako separator
-            QStringList inputStringSplitArrayButtomLine = readFileSplitLines[readFileSplitLines.count() - 1 - i].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
-            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z"};
+            QStringList inputStringSplitArrayTopLine = readFileSplitLines[i].simplified().split(QRegExp("[\\s+,]"), QString::SplitBehavior::SkipEmptyParts);                                     // rozdzielamy traktująac spacje jako separator
+            QStringList inputStringSplitArrayButtomLine = readFileSplitLines[readFileSplitLines.count() - 1 - i].simplified().split(QRegExp("[\\s+,]"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
+            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"}; // TODO !!!
 
             bool foundTime[2] = {false};
 
@@ -2021,7 +2022,7 @@ void MainWindow::on_pushButtonLoadPath_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Open Log File:"), "",
-                                                    tr("(*.txt);;All Files (*)"));
+                                                    tr("(*.txt *.csv);;All Files (*)"));
 
     ui->lineEditLoadFilePath->setText(fileName);
     QFile file(fileName);
@@ -2061,7 +2062,12 @@ void MainWindow::on_processLoadedFile(QString *text)
 
     parser.clearStorage();
     parser.setParsingTimeRange(ui->timeEditMinParsingTime->time(), ui->timeEditMaxParsingTime->time());
-    parser.parse(*text, false, true, "");
+
+    if (ui->comboBoxLogFormat->currentIndex() == 0)
+        parser.parseCSV(*text);
+    else
+        parser.parse(*text, false, true, "");
+
     parser.resetTimeRange();
 
     parser.setReportProgress(false);
@@ -2274,7 +2280,7 @@ void MainWindow::on_comboBoxLogFormat_currentIndexChanged(int index)
 {
     ui->comboBoxLoggingMode->setEnabled((bool)index);
     ui->checkBoxSimplifyLog->setEnabled((bool)index);
-    ui->pushButtonLoadFile->setEnabled((bool)index);
+    // ui->pushButtonLoadFile->setEnabled((bool)index);
 
     if (ui->comboBoxLogFormat->currentText().contains("txt"))
         ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("csv", "txt"));
@@ -2302,4 +2308,24 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
         ui->labelParsingRules->setEnabled(true);
         ui->comboBoxGraphDisplayMode->setPalette(*paletteRed);
     }
+}
+
+void MainWindow::on_actionTo_CSV_triggered()
+{
+//    QString output;
+//    QStringList graphLabels;
+//    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+//    {
+//        graphLabels.append(ui->widgetChart->graph(i)->name());
+//        output.append(ui->widgetChart->graph(i)->name() + ",");
+//    }
+
+//    //    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+//    //    {
+//    auto data = ui->widgetChart->graph(0)->data();
+//    auto it = data->size());
+//    QVector<QCPGraphData> y = ui->widgetChart->graph(0)->data().data();
+//    const QCPGraphData dataMap = *ui->widgetChart->graph(i)->data();
+
+//    // }
 }

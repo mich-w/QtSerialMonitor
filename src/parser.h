@@ -31,6 +31,7 @@ public:
     void restartChartTimer();
     void setParsingTimeRange(QTime minTime, QTime maxTime);
     void setReportProgress(bool isEnabled);
+    void parseCSV(QString inputString);
 signals:
     void updateProgress(float *percent);
 public slots:
@@ -44,7 +45,7 @@ private:
     QList<long> listTimeStamp;
     QList<long> timeStampStorage;
     QStringList labelStorage;
-    QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z"};
+    QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"};
     QStringList stringListNumericData, stringListLabels;
     QStringList textStorage;
     QTime *parserClock;

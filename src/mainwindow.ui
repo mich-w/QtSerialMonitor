@@ -1215,6 +1215,12 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
                <property name="sizeAdjustPolicy">
                 <enum>QComboBox::AdjustToContents</enum>
                </property>
@@ -1237,6 +1243,12 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
                </property>
                <property name="sizeAdjustPolicy">
                 <enum>QComboBox::AdjustToContents</enum>
@@ -2658,9 +2670,22 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionPrint_log"/>
      <addaction name="actionPrint_Graph"/>
     </widget>
+    <widget class="QMenu" name="menuExport">
+     <property name="title">
+      <string>Export...</string>
+     </property>
+     <widget class="QMenu" name="menuGraph_data">
+      <property name="title">
+       <string>Graph data...</string>
+      </property>
+      <addaction name="actionTo_CSV"/>
+     </widget>
+     <addaction name="menuGraph_data"/>
+    </widget>
     <addaction name="menuSave"/>
     <addaction name="menuPrint"/>
     <addaction name="actionQuit"/>
+    <addaction name="menuExport"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -2826,6 +2851,11 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="shortcut">
     <string>Ctrl+5</string>
+   </property>
+  </action>
+  <action name="actionTo_CSV">
+   <property name="text">
+    <string>To CSV...</string>
    </property>
   </action>
  </widget>
