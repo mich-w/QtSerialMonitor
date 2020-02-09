@@ -7,6 +7,7 @@
 #include <QObject>
 #include <QtDebug>
 #include <QTextStream>
+#include <QTime>
 
 class Logger : public QObject
 {
@@ -15,12 +16,12 @@ public:
     explicit Logger(QObject *parent = nullptr);
     bool beginLog(QString path, bool autoLogging, QString fileName, bool truncateFile = false);
     bool isOpen();
+    void clearWriteBuffer();
     void closeFile();
     void openFile(QString fileName, bool truncateFile = false);
-    void writeLogLine(QString lineToAppend, bool simplifyText, bool appendDate);
-    void writeLogParsedData(QStringList labelList, QList<double> dataList, bool appendDate = false);
-    void writeLogCSV(QStringList labelList, QList<double> dataList, bool appendDate);
-    void clearWriteBuffer();
+    void writeLogCSV(QStringList labelList, QList<double> dataList, bool addTime = true);
+    void writeLogLine(QString lineToAppend, bool simplifyText);
+    void writeLogParsedData(QStringList labelList, QList<double> dataList);
 signals:
 
 public slots:

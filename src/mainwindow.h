@@ -62,6 +62,7 @@ private slots:
     void on_actionAbout_Qt_triggered();
     void on_actionFull_chart_triggered();
     void on_actionFull_text_view_triggered();
+    void on_actionHide_parser_data_triggered();
     void on_actionInfo_triggered();
     void on_actionPlotter_triggered();
     void on_actionPrint_Graph_triggered();
@@ -69,6 +70,8 @@ private slots:
     void on_actionQuit_triggered();
     void on_actionSave_As_triggered();
     void on_actionSave_graph_as_triggered();
+    void on_actionShow_parser_data_triggered();
+    void on_actionTo_CSV_triggered();
     void on_actionWhat_s_new_triggered();
     void on_actionWhats_this_triggered();
     void on_chartBeforeReplotSlot();
@@ -79,14 +82,17 @@ private slots:
     void on_chartSelectionChanged();
     void on_checkBoxAutoLogging_toggled(bool checked);
     void on_checkBoxAutoRefresh_toggled(bool checked);
-    void on_checkBoxAutoSaveBuffer_toggled(bool checked);    
+    void on_checkBoxAutoSaveBuffer_toggled(bool checked);
     void on_checkBoxAutoTrack_toggled(bool checked);
     void on_checkBoxEnableTracer_toggled(bool checked);
     void on_checkBoxShowLegend_toggled(bool checked);
     void on_checkBoxWrapText_toggled(bool checked);
     void on_clearGraphSelection();
+    void on_comboBoxAddTextMode_currentIndexChanged(int index);
     void on_comboBoxClockSource_currentIndexChanged(int index);
     void on_comboBoxFormat_currentIndexChanged(int index);
+    void on_comboBoxGraphDisplayMode_currentIndexChanged(int index);
+    void on_comboBoxLogFormat_currentIndexChanged(int index);
     void on_comboBoxLoggingMode_currentIndexChanged(int index);
     void on_comboBoxSendReturnPressedSlot();
     void on_comboBoxSerialReadMode_currentIndexChanged(int index);
@@ -127,6 +133,7 @@ private slots:
     void on_pushButtonSetSelectedToGraph_clicked();
     void on_pushButtonTextLogToggle_toggled(bool checked);
     void on_pushButtonUDPConnect_toggled(bool checked);
+    void on_radioButtonScrollToButtom_clicked();
     void on_showAllGraphs();
     void on_showSelectedGraph();
     void on_showSelectedGraphExclusively();
@@ -136,17 +143,9 @@ private slots:
     void on_splitterGraphTable_splitterMoved(int pos, int index);
     void on_tableWidgetParsedData_customContextMenuRequested(const QPoint &pos);
     void on_toolButtonAdvancedGraphMenu_clicked();
+    void on_toolButtonHideTable_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
-    void on_toolButtonHideTable_clicked();
-    void on_comboBoxAddTextMode_currentIndexChanged(int index);
-    void on_actionHide_parser_data_triggered();
-    void on_actionShow_parser_data_triggered();
-    void on_radioButtonScrollToButtom_clicked();
-    void on_comboBoxLogFormat_currentIndexChanged(int index);
-    void on_comboBoxGraphDisplayMode_currentIndexChanged(int index);
-
-    void on_actionTo_CSV_triggered();    
 private:
     // QCompleter *completer;
     FileReader fileReader;
@@ -187,6 +186,9 @@ private:
     void writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);
     void addLogBytes(QByteArray bytes, bool hexToBinary = false, bool appendAsLine = false);
     QString controlCharactersVisibleConvert(QString text);
+    void sendMessageLineEdit(int mode);
+    void sendMessageKeyEvent(QKeyEvent *event);
+
 protected:
     void keyPressEvent(QKeyEvent *event);
 };

@@ -109,7 +109,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
     }
 }
 
-void Parser::parseCSV(QString inputString)
+void Parser::parseCSV(QString inputString, QString externalClockLabel)
 {
     listNumericData.clear();
     stringListLabels.clear();
@@ -121,9 +121,9 @@ void Parser::parseCSV(QString inputString)
 
     QStringList csvLabels; // !
 
-    for (auto l = 0; l < inputStringSplitArrayLines.count(); ++l)
+    for (auto l = 0; l < lineCount; ++l)
     {
-        parsingProgressPercent = (float)l / inputStringSplitArrayLines.count() * 100.0F;
+        parsingProgressPercent = (float)l / lineCount * 100.0F;
         if (l % 50 == 0 && canReportProgress)
         {
             emit updateProgress(&parsingProgressPercent);
@@ -155,22 +155,30 @@ void Parser::parseCSV(QString inputString)
         // Look for time reference
         for (auto i = 0; i < inputStringSplitArray.count(); ++i)
         {
-            foreach (auto timeFormat, searchTimeFormatList)
+
+            if (externalClockLabel.isEmpty() == false && inputStringSplitArray[i] == externalClockLabel)
             {
-                if (QTime::fromString(inputStringSplitArray[i], timeFormat).isValid())
+                latestTimeStamp = QTime::fromMSecsSinceStartOfDay(inputStringSplitArray[i + 1].toInt());
+            }
+            else if (externalClockLabel.isEmpty() == true)
+            {
+                foreach (auto timeFormat, searchTimeFormatList)
                 {
-                    latestTimeStamp = QTime::fromString(inputStringSplitArray[i], timeFormat);
-                    break;
+                    if (QTime::fromString(inputStringSplitArray[i], timeFormat).isValid())
+                    {
+                        latestTimeStamp = QTime::fromString(inputStringSplitArray[i], timeFormat);
+                        break;
+                    }
                 }
             }
 
-//            if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
-//            {
-//                if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
-//                {
-//                    continue;
-//                }
-//            }
+            if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
+            {
+                if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
+                {
+                    continue;
+                }
+            }
         }
 
         // Look for data

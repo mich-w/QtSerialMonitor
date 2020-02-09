@@ -247,10 +247,10 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
-            addLog("App >>\t Error loading settings. Config file incorrect !",true);
+            addLog("App >>\t Error loading settings. Config file incorrect !", true);
             return;
         }
     }
@@ -441,7 +441,6 @@ void MainWindow::settingsSaveAll()
 
         appSettings.setValue("GUI_Elements/checkBoxScrollToButtom.isChecked", ui->checkBoxScrollToButtom->isChecked());
 
-
         appSettings.setValue("data/lineEditCustomParsingRules.text", ui->lineEditCustomParsingRules->text());
         appSettings.setValue("data/lineEditUDPTargetIP.text", ui->lineEditUDPTargetIP->text());
         appSettings.setValue("data/lineEditSaveLogPath.text", ui->lineEditSaveLogPath->text());
@@ -527,15 +526,23 @@ void MainWindow::on_printIntroChangelog() // TODO
 
 void MainWindow::on_comboBoxSendReturnPressedSlot()
 {
-    if(ui->tabWidgetControlSection->currentIndex() == 0)
+    sendMessageLineEdit(ui->tabWidgetControlSection->currentIndex());
+}
+
+void MainWindow::sendMessageLineEdit(int mode)
+{
+    if (mode == 0)
         sendSerial(ui->comboBoxSend->currentText());
-    else if(ui->tabWidgetControlSection->currentIndex() == 1)
+    else if (mode == 1)
         sendUDPDatagram(ui->comboBoxSend->currentText());
     else
     {
         sendSerial(ui->comboBoxSend->currentText());
         sendUDPDatagram(ui->comboBoxSend->currentText());
     }
+
+    if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
+        addLog("\n >> " + ui->comboBoxSend->currentText() + "\n\n", ui->comboBoxAddTextMode->currentIndex());
 
     ui->comboBoxSend->setCurrentText("");
     ui->comboBoxSend->model()->sort(0, Qt::SortOrder::AscendingOrder); // sort alphabetically
@@ -792,9 +799,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                       .arg(graph->name())
-                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                       .arg(QString::number(temp.y(), 'f', 5)),
+                           .arg(graph->name())
+                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                           .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -865,7 +872,7 @@ void MainWindow::on_updateSerialDeviceList()
 void MainWindow::on_pushButtonRefresh_clicked()
 {
     qDebug() << "Refreshing serial device list...";
-    this->addLog("App >>\t Searching for COM ports...",true);
+    this->addLog("App >>\t Searching for COM ports...", true);
     this->on_updateSerialDeviceList();
 }
 
@@ -892,11 +899,10 @@ void MainWindow::addLog(QString text, bool appendAsLine)
 
             ui->textBrowserLogs->horizontalScrollBar()->setValue(sliderPosHorizontal);
 
-
             if (!ui->checkBoxScrollToButtom->isChecked())
                 ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPosVertical);
             else
-                ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
+                ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
         }
         else
         {
@@ -953,8 +959,7 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLi
             if (!ui->checkBoxScrollToButtom->isChecked())
                 ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPosVertical);
             else
-                ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
-
+                ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
         }
         else
         {
@@ -971,13 +976,13 @@ void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<do
         if (ui->comboBoxLogFormat->currentIndex() == 1)
         {
             if (ui->comboBoxLoggingMode->currentIndex() == 0)
-                fileLogger.writeLogLine(rawLine, ui->checkBoxSimplifyLog->isChecked(), ui->checkBoxAppendDate->isChecked());
+                fileLogger.writeLogLine(rawLine, ui->checkBoxSimplifyLog->isChecked());
             else if (ui->comboBoxLoggingMode->currentIndex() == 1)
-                fileLogger.writeLogParsedData(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+                fileLogger.writeLogParsedData(labelList, dataList);
         }
         else if (ui->comboBoxLogFormat->currentIndex() == 0)
         {
-            fileLogger.writeLogCSV(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+            fileLogger.writeLogCSV(labelList, dataList);
         }
     }
 }
@@ -1047,7 +1052,7 @@ void MainWindow::on_processUDP()
     }
     else if (ui->comboBoxFormat->currentIndex() == 1 && udpInput.length() > 0)
     {
-        addLogBytes(udpInput.toUtf8(),false, ui->comboBoxAddTextMode->currentIndex());
+        addLogBytes(udpInput.toUtf8(), false, ui->comboBoxAddTextMode->currentIndex());
     }
     else if (ui->comboBoxFormat->currentIndex() == 2 && udpInput.length() > 0)
     {
@@ -1116,13 +1121,13 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
 
-                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
 
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
 
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
-                  !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
+              !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1239,15 +1244,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         else if (ui->checkBoxSendKey->isChecked())
         {
-            if(ui->tabWidgetControlSection->currentIndex() == 0)
-                sendSerial(event->text());
-            else if(ui->tabWidgetControlSection->currentIndex() == 1)
-                sendUDPDatagram(event->text());
-            else
-            {
-                sendSerial(event->text());
-                sendUDPDatagram(event->text());
-            }
+            sendMessageKeyEvent(event);
+
+            if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
+                addLog("\n >>" + event->text() + "\n\n", ui->comboBoxAddTextMode->currentIndex());
         }
     }
     else if (ui->widgetChart->hasFocus())
@@ -1273,6 +1273,19 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key::Key_F1)
     {
         QWhatsThis::enterWhatsThisMode();
+    }
+}
+
+void MainWindow::sendMessageKeyEvent(QKeyEvent *event)
+{
+    if (ui->tabWidgetControlSection->currentIndex() == 0)
+        sendSerial(event->text());
+    else if (ui->tabWidgetControlSection->currentIndex() == 1)
+        sendUDPDatagram(event->text());
+    else
+    {
+        sendSerial(event->text());
+        sendUDPDatagram(event->text());
     }
 }
 
@@ -1325,7 +1338,7 @@ void MainWindow::getFileTimeRange(QFile *file) // TODO move to parser !
         {
             QStringList inputStringSplitArrayTopLine = readFileSplitLines[i].simplified().split(QRegExp("[\\s+,]"), QString::SplitBehavior::SkipEmptyParts);                                     // rozdzielamy traktująac spacje jako separator
             QStringList inputStringSplitArrayButtomLine = readFileSplitLines[readFileSplitLines.count() - 1 - i].simplified().split(QRegExp("[\\s+,]"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
-            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"}; // TODO !!!
+            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"};                                                                                       // TODO !!!
 
             bool foundTime[2] = {false};
 
@@ -1803,7 +1816,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
         }
         else
         {
-            addLog("App >>\t UDP error. Unable to bind",true);
+            addLog("App >>\t UDP error. Unable to bind", true);
         }
     }
     else
@@ -1812,7 +1825,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
         {
             udpStringProcessingTimer->stop();
 
-            addLog("App >>\t UDP port closed.",true);
+            addLog("App >>\t UDP port closed.", true);
 
             disconnect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
@@ -1883,6 +1896,7 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
     {
         ui->pushButtonLogging->setText("Enable Logging");
         fileLogger.closeFile();
+        fileLogger.clearWriteBuffer();
     }
 }
 
@@ -2063,33 +2077,39 @@ void MainWindow::on_updateProgressBar(float *percent)
 void MainWindow::on_processLoadedFile(QString *text)
 {
     disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
-
     connect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
-    parser.setReportProgress(true);
 
+    parser.setReportProgress(true);
     parser.clearStorage();
     parser.setParsingTimeRange(ui->timeEditMinParsingTime->time(), ui->timeEditMaxParsingTime->time());
 
+    // Select file type
     if (ui->comboBoxLogFormat->currentIndex() == 0)
         parser.parseCSV(*text);
     else
         parser.parse(*text, false, true, "");
 
+    // disconnect events, reset parser
     parser.resetTimeRange();
-
     parser.setReportProgress(false);
     disconnect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
 
-    QStringList labelList = parser.getStringListLabels();
-    QList<double> numericDataList = parser.getListNumericValues();
-    QList<long> timeStampList = parser.getListTimeStamp();
+    // Parsing
+    {
+        QStringList labelList = parser.getStringListLabels();
+        QList<double> numericDataList = parser.getListNumericValues();
+        QList<long> timeStampList = parser.getListTimeStamp();
 
-    this->processChart(labelList, numericDataList, timeStampList);
-    this->processTable(labelList, numericDataList);
-    this->saveToRAM(labelList, numericDataList, timeStampList);
+        this->processChart(labelList, numericDataList, timeStampList);
+        this->processTable(labelList, numericDataList);
+        this->saveToRAM(labelList, numericDataList, timeStampList);
+    }
 
-    if (ui->checkBoxAppendLoadedTextToLog->isChecked() == true)
-        this->ui->textBrowserLogs->appendPlainText(*text);
+    // Add text to log
+    {
+        if (ui->checkBoxAppendLoadedTextToLog->isChecked() == true)
+            this->ui->textBrowserLogs->appendPlainText(*text);
+    }
 }
 
 void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
@@ -2126,18 +2146,18 @@ void MainWindow::on_pushButtonLoadFile_clicked()
 
             if (fileReader.readAllAtOnce(&inputFile))
             {
-                addLog("App >>\t Read file succesfully... ",true);
+                addLog("App >>\t Read file succesfully... ", true);
             }
             else
             {
-                addLog("App >>\t invalid file !",true);
+                addLog("App >>\t invalid file !", true);
                 ui->pushButtonLoadFile->setText("Load File");
                 ui->progressBarLoadFile->setValue(0);
             }
         }
         else
         {
-            addLog("App >>\t file reader error - invalid file path !",true);
+            addLog("App >>\t file reader error - invalid file path !", true);
             ui->pushButtonLoadFile->setText("Load File");
             ui->progressBarLoadFile->setValue(0);
         }
