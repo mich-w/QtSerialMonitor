@@ -1983,11 +1983,6 @@
                  </item>
                  <item>
                   <property name="text">
-                   <string>Outgoing messages</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
                    <string>Incoming messages</string>
                   </property>
                  </item>

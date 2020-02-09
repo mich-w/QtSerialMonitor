@@ -14,7 +14,8 @@ void Logger::openFile(QString fileName, bool truncateFile)
 
         if (truncateFile)
         {
-            logFile->resize(0);
+            qDebug() << "trunk";
+           logFile->resize(0);
         }
     }
 }

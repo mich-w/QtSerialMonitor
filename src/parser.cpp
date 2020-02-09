@@ -172,13 +172,13 @@ void Parser::parseCSV(QString inputString, QString externalClockLabel)
                     }
                 }
             }
+        }
 
-            if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
+        if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
+        {
+            if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
             {
-                if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
-                {
-                    continue;
-                }
+                continue;
             }
         }
 
