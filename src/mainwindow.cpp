@@ -527,10 +527,15 @@ void MainWindow::on_printIntroChangelog() // TODO
 
 void MainWindow::on_comboBoxSendReturnPressedSlot()
 {
-    if (ui->pushButtonSerialConnect->isChecked())
+    if(ui->tabWidgetControlSection->currentIndex() == 0)
         sendSerial(ui->comboBoxSend->currentText());
-    if (ui->pushButtonUDPConnect->isChecked())
+    else if(ui->tabWidgetControlSection->currentIndex() == 1)
         sendUDPDatagram(ui->comboBoxSend->currentText());
+    else
+    {
+        sendSerial(ui->comboBoxSend->currentText());
+        sendUDPDatagram(ui->comboBoxSend->currentText());
+    }
 
     ui->comboBoxSend->setCurrentText("");
     ui->comboBoxSend->model()->sort(0, Qt::SortOrder::AscendingOrder); // sort alphabetically
@@ -1234,10 +1239,15 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         else if (ui->checkBoxSendKey->isChecked())
         {
-            if (ui->pushButtonSerialConnect->isChecked())
+            if(ui->tabWidgetControlSection->currentIndex() == 0)
                 sendSerial(event->text());
-            if (ui->pushButtonUDPConnect->isChecked())
+            else if(ui->tabWidgetControlSection->currentIndex() == 1)
                 sendUDPDatagram(event->text());
+            else
+            {
+                sendSerial(event->text());
+                sendUDPDatagram(event->text());
+            }
         }
     }
     else if (ui->widgetChart->hasFocus())
@@ -2312,20 +2322,20 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
 
 void MainWindow::on_actionTo_CSV_triggered()
 {
-//    QString output;
-//    QStringList graphLabels;
-//    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
-//    {
-//        graphLabels.append(ui->widgetChart->graph(i)->name());
-//        output.append(ui->widgetChart->graph(i)->name() + ",");
-//    }
+    //    QString output;
+    //    QStringList graphLabels;
+    //    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+    //    {
+    //        graphLabels.append(ui->widgetChart->graph(i)->name());
+    //        output.append(ui->widgetChart->graph(i)->name() + ",");
+    //    }
 
-//    //    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
-//    //    {
-//    auto data = ui->widgetChart->graph(0)->data();
-//    auto it = data->size());
-//    QVector<QCPGraphData> y = ui->widgetChart->graph(0)->data().data();
-//    const QCPGraphData dataMap = *ui->widgetChart->graph(i)->data();
+    //    //    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+    //    //    {
+    //    auto data = ui->widgetChart->graph(0)->data();
+    //    auto it = data->size());
+    //    QVector<QCPGraphData> y = ui->widgetChart->graph(0)->data().data();
+    //    const QCPGraphData dataMap = *ui->widgetChart->graph(i)->data();
 
-//    // }
+    //    // }
 }
