@@ -112,8 +112,8 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
 
     if (addTime)
     {
-        if (csvLabelsBuffer.contains("timeMS") == false)
-            csvLabelsBuffer.insert(0, "timeMS");
+        if (csvLabelsBuffer.contains("time") == false)
+            csvLabelsBuffer.insert(0, "time");
     }
 
     if (labelList.count() == 0)
@@ -136,10 +136,7 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
             logFile->resize(0); // delete contents !
 
             for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
-            {
-
                 out << "\"" + csvLabelsBuffer[i] + "\",";
-            }
 
             out << "\n";
 
@@ -159,10 +156,10 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
     {
         out.atEnd(); // ???
 
-        int index = labelList.indexOf(csvLabelsBuffer[i]);
+        int index = labelList.indexOf(csvLabelsBuffer[i]); // TODO
         if (index >= 0 && index < dataList.count())
             out << QString::number(dataList[index]) + ',';
-        else if (csvLabelsBuffer[i] == "timeMS")
+        else if (csvLabelsBuffer[i] == "time")
             out << QTime::currentTime().toString("hh:mm:ss:zzz") + ',';
     }
 

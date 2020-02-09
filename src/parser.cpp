@@ -148,7 +148,8 @@ void Parser::parseCSV(QString inputString, QString externalClockLabel)
         {
             if (!mainSymbols.exactMatch(inputStringSplitArray[i]))
             {
-                csvLabels.append(inputStringSplitArray[i]);
+                if (!csvLabels.contains(inputStringSplitArray[i]))
+                    csvLabels.append(inputStringSplitArray[i]);
             }
         }
 
