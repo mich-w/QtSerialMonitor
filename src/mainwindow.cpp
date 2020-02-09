@@ -1289,7 +1289,7 @@ void MainWindow::sendMessageKeyEvent(QKeyEvent *event)
     }
 }
 
-void MainWindow::sendSerial(QString message)
+void MainWindow::sendSerial(QString message) // TODO - move to serial - error via signal/slot
 {
     if (!serial.send(message))
         this->addLog("App >>\t Unable to send! Serial port closed !", true);
