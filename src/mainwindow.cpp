@@ -2253,6 +2253,7 @@ void MainWindow::on_comboBoxFormat_currentIndexChanged(int index)
 void MainWindow::on_toolButtonHideTable_clicked()
 {
     ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), 0});
+    ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::UpArrow);
 }
 
 void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)

@@ -146,8 +146,7 @@ private slots:
     void on_comboBoxLogFormat_currentIndexChanged(int index);
     void on_comboBoxGraphDisplayMode_currentIndexChanged(int index);
 
-    void on_actionTo_CSV_triggered();
-
+    void on_actionTo_CSV_triggered();    
 private:
     // QCompleter *completer;
     FileReader fileReader;
