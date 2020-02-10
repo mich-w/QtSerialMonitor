@@ -17,7 +17,7 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 - Resizable UI widgets,
 - Data plotter with multiple graphs support and basic data filtering - uses [QCustomPlot](https://www.qcustomplot.com/),
 - Printer support, ability to save graph as image,
-- Read/write ".txt" data logs,
+- Read/write ".csv", ".txt" data logs,
 - many more...
 
 <a href="https://github.com/mich-w/QtSerialMonitor/releases/download/v1.4/QtSerialMonitor_1.4_win_x64.zip" download>Download QtSerialMonitor_v1.4_win_x64</a> 
