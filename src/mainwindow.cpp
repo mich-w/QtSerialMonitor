@@ -54,8 +54,7 @@ void MainWindow::createTimers()
 
 void MainWindow::setupGUI()
 {
-    qDebug() << QDateTime::currentDateTime().toString("yyyy.MM.dd hh:mm:ss:zzz");
-
+    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
     this->setWindowTitle(this->windowTitle() + " " + VERSION);
 
     // ui->textBrowserLogs
@@ -70,19 +69,14 @@ void MainWindow::setupGUI()
         //   highlighter = new Highlighter(ui->textBrowserLogs->document());
     }
 
-    // ui->comboBoxBaudRates
     {
         foreach (auto item, QSerialPortInfo::standardBaudRates())
             ui->comboBoxBaudRates->addItem(QString::number(item));
 
-        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2);
+        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2); // select middle
     }
 
-    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
-
-    ui->comboBoxTracerStyle->addItem("Crosshair");
-    ui->comboBoxTracerStyle->addItem("Circle");
-    ui->comboBoxTracerStyle->setCurrentIndex(0);
+    on_updateSerialDeviceList();
 
     ui->comboBoxDataBits->addItem("Data5");
     ui->comboBoxDataBits->addItem("Data6");
@@ -112,8 +106,6 @@ void MainWindow::setupGUI()
     ui->comboBoxSerialReadMode->addItem("bytesAvailable | readLine");
     ui->comboBoxSerialReadMode->addItem("bytesAvailable | readAll");
     ui->comboBoxSerialReadMode->setCurrentIndex(0);
-
-    on_updateSerialDeviceList();
 
     ui->comboBoxUDPReceiveMode->addItem("Any");
     ui->comboBoxUDPReceiveMode->addItem("LocalHost");
