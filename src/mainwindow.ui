@@ -60,7 +60,7 @@
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideMiddle</enum>
@@ -359,6 +359,31 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <item>
+                <property name="text">
+                 <string>NoParity</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>EvenParity</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>OddParity</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>SpaceParity</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>MarkParity</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item row="0" column="6">
@@ -410,6 +435,21 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <item>
+                <property name="text">
+                 <string>NoFlowControl</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>HardwareControl</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string> SoftwareControl</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item row="1" column="11">
@@ -420,6 +460,29 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="currentIndex">
+                <number>3</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>Data5</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Data6</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Data7</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Data8</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item row="1" column="10">
@@ -462,6 +525,21 @@
                  <height>25</height>
                 </size>
                </property>
+               <item>
+                <property name="text">
+                 <string>OneStop</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>OneAndHalfStop</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>TwoStop</string>
+                </property>
+               </item>
               </widget>
              </item>
             </layout>
@@ -2011,7 +2089,7 @@
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
-             <widget class="QStackedWidget" name="stackedWidget">
+             <widget class="QStackedWidget" name="stackedWidgetGraphView">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                 <horstretch>0</horstretch>
@@ -2583,50 +2661,193 @@ p, li { white-space: pre-wrap; }
              <widget class="QWidget" name="verticalLayoutWidget">
               <layout class="QVBoxLayout" name="verticalLayout">
                <item>
-                <widget class="QTableWidget" name="tableWidgetParsedData">
-                 <property name="enabled">
-                  <bool>true</bool>
+                <widget class="QStackedWidget" name="stackedWidgetTableView">
+                 <property name="currentIndex">
+                  <number>1</number>
                  </property>
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="editTriggers">
-                  <set>QAbstractItemView::NoEditTriggers</set>
-                 </property>
-                 <property name="alternatingRowColors">
-                  <bool>true</bool>
-                 </property>
-                 <property name="selectionMode">
-                  <enum>QAbstractItemView::ExtendedSelection</enum>
-                 </property>
-                 <property name="selectionBehavior">
-                  <enum>QAbstractItemView::SelectRows</enum>
-                 </property>
-                 <property name="showGrid">
-                  <bool>true</bool>
-                 </property>
-                 <property name="gridStyle">
-                  <enum>Qt::DashLine</enum>
-                 </property>
-                 <property name="cornerButtonEnabled">
-                  <bool>false</bool>
-                 </property>
+                 <widget class="QWidget" name="page_3">
+                  <layout class="QGridLayout" name="gridLayout_20">
+                   <property name="leftMargin">
+                    <number>1</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>1</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>1</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>1</number>
+                   </property>
+                   <property name="spacing">
+                    <number>1</number>
+                   </property>
+                   <item row="0" column="0">
+                    <widget class="QTableWidget" name="tableWidgetParsedData">
+                     <property name="enabled">
+                      <bool>true</bool>
+                     </property>
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="editTriggers">
+                      <set>QAbstractItemView::NoEditTriggers</set>
+                     </property>
+                     <property name="alternatingRowColors">
+                      <bool>true</bool>
+                     </property>
+                     <property name="selectionMode">
+                      <enum>QAbstractItemView::ExtendedSelection</enum>
+                     </property>
+                     <property name="selectionBehavior">
+                      <enum>QAbstractItemView::SelectRows</enum>
+                     </property>
+                     <property name="showGrid">
+                      <bool>true</bool>
+                     </property>
+                     <property name="gridStyle">
+                      <enum>Qt::DashLine</enum>
+                     </property>
+                     <property name="cornerButtonEnabled">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <layout class="QGridLayout" name="gridLayout_21">
+                     <item row="0" column="1">
+                      <widget class="QCheckBox" name="checkBoxTableAutoResize">
+                       <property name="text">
+                        <string>Auto-resize</string>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="2">
+                      <spacer name="horizontalSpacer_5">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item row="0" column="0">
+                      <widget class="QPushButton" name="pushButtonSetSelectedToGraph">
+                       <property name="text">
+                        <string>Apply selected to plot</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="3">
+                      <widget class="QPushButton" name="pushButtonClearTable">
+                       <property name="text">
+                        <string>Clear</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="4">
+                      <widget class="QToolButton" name="toolButtonHideTable">
+                       <property name="text">
+                        <string>Hide</string>
+                       </property>
+                       <property name="toolButtonStyle">
+                        <enum>Qt::ToolButtonTextBesideIcon</enum>
+                       </property>
+                       <property name="arrowType">
+                        <enum>Qt::DownArrow</enum>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </widget>
+                 <widget class="QWidget" name="page_4">
+                  <layout class="QGridLayout" name="gridLayout_23">
+                   <property name="leftMargin">
+                    <number>1</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>1</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>1</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>1</number>
+                   </property>
+                   <item row="1" column="3">
+                    <widget class="QCheckBox" name="checkBoxAutoScrollLogTable">
+                     <property name="text">
+                      <string>Auto-scroll</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="4">
+                    <widget class="QPushButton" name="pushButtonClearLogTable">
+                     <property name="text">
+                      <string>Clear</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0" colspan="5">
+                    <widget class="QTableWidget" name="tableWidgetLogTable"/>
+                   </item>
+                   <item row="1" column="1">
+                    <spacer name="horizontalSpacer_9">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item row="1" column="2">
+                    <widget class="QCheckBox" name="checkBox">
+                     <property name="text">
+                      <string>CheckBox</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
                 </widget>
                </item>
                <item>
                 <layout class="QGridLayout" name="gridLayout_22">
-                 <item row="0" column="0">
-                  <widget class="QPushButton" name="pushButtonSetSelectedToGraph">
-                   <property name="text">
-                    <string>Apply selected to plot</string>
+                 <item row="1" column="2">
+                  <widget class="QComboBox" name="comboBoxTableViewMode">
+                   <property name="sizeAdjustPolicy">
+                    <enum>QComboBox::AdjustToContents</enum>
                    </property>
+                   <item>
+                    <property name="text">
+                     <string>Overview</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Log list</string>
+                    </property>
+                   </item>
                   </widget>
                  </item>
-                 <item row="0" column="2">
-                  <spacer name="horizontalSpacer_5">
+                 <item row="1" column="3">
+                  <spacer name="horizontalSpacer_7">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
                    </property>
@@ -2638,33 +2859,10 @@ p, li { white-space: pre-wrap; }
                    </property>
                   </spacer>
                  </item>
-                 <item row="0" column="1">
-                  <widget class="QCheckBox" name="checkBoxTableAutoResize">
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="label_24">
                    <property name="text">
-                    <string>Auto-resize</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="3">
-                  <widget class="QPushButton" name="pushButtonClearTable">
-                   <property name="text">
-                    <string>Clear</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="4">
-                  <widget class="QToolButton" name="toolButtonHideTable">
-                   <property name="text">
-                    <string>Hide</string>
-                   </property>
-                   <property name="toolButtonStyle">
-                    <enum>Qt::ToolButtonTextBesideIcon</enum>
-                   </property>
-                   <property name="arrowType">
-                    <enum>Qt::DownArrow</enum>
+                    <string>Table mode:</string>
                    </property>
                   </widget>
                  </item>

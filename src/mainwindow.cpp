@@ -78,29 +78,6 @@ void MainWindow::setupGUI()
 
     on_updateSerialDeviceList();
 
-    ui->comboBoxDataBits->addItem("Data5");
-    ui->comboBoxDataBits->addItem("Data6");
-    ui->comboBoxDataBits->addItem("Data7");
-    ui->comboBoxDataBits->addItem("Data8");
-    ui->comboBoxDataBits->setCurrentIndex(3);
-
-    ui->comboBoxParity->addItem("NoParity");
-    ui->comboBoxParity->addItem("EvenParity");
-    ui->comboBoxParity->addItem("OddParity");
-    ui->comboBoxParity->addItem("SpaceParity");
-    ui->comboBoxParity->addItem("MarkParity");
-    ui->comboBoxParity->setCurrentIndex(0);
-
-    ui->comboBoxStopBits->addItem("OneStop");
-    ui->comboBoxStopBits->addItem("OneAndHalfStop");
-    ui->comboBoxStopBits->addItem("TwoStop");
-    ui->comboBoxStopBits->setCurrentIndex(0);
-
-    ui->comboBoxFlowControl->addItem("NoFlowControl");
-    ui->comboBoxFlowControl->addItem("HardwareControl");
-    ui->comboBoxFlowControl->addItem("SoftwareControl");
-    ui->comboBoxFlowControl->setCurrentIndex(0);
-
     ui->comboBoxSerialReadMode->addItem("canReadLine | readLine");
     ui->comboBoxSerialReadMode->addItem("canReadLine | readAll");
     ui->comboBoxSerialReadMode->addItem("bytesAvailable | readLine");
@@ -146,6 +123,8 @@ void MainWindow::setupGUI()
     ui->comboBoxRAMLoadMode->setCurrentIndex(0);
 
     ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+
+    ui->stackedWidgetTableView->setCurrentIndex(ui->comboBoxTableViewMode->currentIndex());
 
     emit on_checkBoxAutoLogging_toggled(ui->checkBoxAutoLogging->isChecked());
     emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
@@ -197,6 +176,7 @@ void MainWindow::createChart()
 
     ui->textBrowserLogs->setHighlightEnabled(false);
     emit on_comboBoxLogFormat_currentIndexChanged(ui->comboBoxLogFormat->currentIndex());
+
 }
 
 void MainWindow::create3DView()
@@ -223,6 +203,12 @@ void MainWindow::setupTable()
     ui->tableWidgetParsedData->setHorizontalHeaderItem(1, new QTableWidgetItem("Current Value"));
     //    ui->tableWidgetParsedData->setHorizontalHeaderItem(2, new QTableWidgetItem("Max"));
     //    ui->tableWidgetParsedData->setHorizontalHeaderItem(3, new QTableWidgetItem("Min"));
+
+    ui->tableWidgetLogTable->clear();
+    ui->tableWidgetLogTable->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    ui->tableWidgetLogTable->setColumnCount(1);
+    ui->tableWidgetLogTable->setHorizontalHeaderItem(0, new QTableWidgetItem("Time"));
+    ui->tableWidgetLogTable->setSortingEnabled(true);
 }
 
 void MainWindow::settingsLoadAll()
@@ -239,7 +225,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !", true);
@@ -499,6 +485,66 @@ void MainWindow::processTable(QStringList labels, QList<double> values)
         ui->tableWidgetParsedData->resizeColumnsToContents();
         ui->tableWidgetParsedData->resizeRowsToContents();
     }
+}
+
+void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable)
+{
+    static QList<int> tableMissingCount;
+    unsigned long oldRowCount = ui->tableWidgetLogTable->rowCount();
+
+    QStringList firstRow;
+    for (auto i = 0; i < ui->tableWidgetLogTable->columnCount(); ++i)
+        firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text());
+
+    foreach (auto label, labelTable)
+    {
+        if (firstRow.contains(label) == false) // optimise
+        {
+            ui->tableWidgetLogTable->setColumnCount(ui->tableWidgetLogTable->columnCount() + 1);
+            ui->tableWidgetLogTable->setHorizontalHeaderItem(ui->tableWidgetLogTable->columnCount() - 1, new QTableWidgetItem(label));
+        }
+
+        for (auto i = 1; i < ui->tableWidgetLogTable->columnCount(); ++i)
+        {
+            if (ui->tableWidgetLogTable->horizontalHeaderItem(i)->text() == label)
+            {
+                if (oldRowCount == ui->tableWidgetLogTable->rowCount())
+                {
+                    ui->tableWidgetLogTable->setRowCount(oldRowCount + 1);
+                    ui->tableWidgetLogTable->setItem(oldRowCount, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[labelTable.indexOf(label)]).toString(parser.searchTimeFormatList[0])));
+                }
+
+                ui->tableWidgetLogTable->setItem(oldRowCount, firstRow.indexOf(label), new QTableWidgetItem(QString::number(valueTable[labelTable.indexOf(label)])));
+            }
+        }
+
+        if (ui->checkBoxAutoScrollLogTable->isChecked())
+            ui->tableWidgetLogTable->scrollToBottom();
+
+
+//        if (ui->spinBoxRemoveOldLabels->value() > 0)
+//        {
+//            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
+//            {
+//                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
+//                    tableMissingCount[i] = 0;
+//                else
+//                    tableMissingCount[i]++;
+
+//                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
+//                {
+//                    ui->tableWidgetParsedData->removeRow(i);
+//                    tableMissingCount.removeAt(i);
+//                }
+//            }
+//        }
+//    }
+
+//    if (ui->checkBoxTableAutoResize->isChecked())
+//    {
+//        ui->tableWidgetParsedData->resizeColumnsToContents();
+//        ui->tableWidgetParsedData->resizeRowsToContents();
+   }
 }
 
 void MainWindow::on_printIntroChangelog() // TODO
@@ -785,9 +831,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                           .arg(graph->name())
-                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                           .arg(QString::number(temp.y(), 'f', 5)),
+                       .arg(graph->name())
+                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                       .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -1007,6 +1053,7 @@ void MainWindow::on_processSerial()
         this->processChart(labelList, numericDataList, timeStamps);
         this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), serialInput);
         this->processTable(labelList, numericDataList); // Fill tableWidget
+        this->processLogTable(timeStamps, labelList, numericDataList);
     }
 }
 
@@ -1107,13 +1154,13 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
 
-            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
 
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
 
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
-              !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
+                  !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1695,7 +1742,7 @@ void MainWindow::on_actionQuit_triggered()
 
 void MainWindow::on_actionPlotter_triggered()
 {
-    ui->stackedWidget->setCurrentIndex(0);
+    ui->stackedWidgetGraphView->setCurrentIndex(0);
 }
 
 void MainWindow::on_action3D_orientation_triggered()
@@ -2326,20 +2373,26 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
 
 void MainWindow::on_actionTo_CSV_triggered()
 {
-    //    QString output;
-    //    QStringList graphLabels;
-    //    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
-    //    {
-    //        graphLabels.append(ui->widgetChart->graph(i)->name());
-    //        output.append(ui->widgetChart->graph(i)->name() + ",");
-    //    }
+    //        QString output;
+    //        QStringList graphLabels;
+    //        for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+    //        {
+    //            graphLabels.append(ui->widgetChart->graph(i)->name());
+    //            output.append(ui->widgetChart->graph(i)->name() + ",");
+    //        }
 
-    //    //    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
-    //    //    {
-    //    auto data = ui->widgetChart->graph(0)->data();
-    //    auto it = data->size());
-    //    QVector<QCPGraphData> y = ui->widgetChart->graph(0)->data().data();
-    //    const QCPGraphData dataMap = *ui->widgetChart->graph(i)->data();
+    //        //    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+    //        //    {
+    //        auto data = ui->widgetChart->graph(0)->data();
+    //        auto it = data->size();
+    //        QVector<QCPGraphData> y = ui->widgetChart->graph(0)->data().data();
+    //        const QCPGraphData dataMap = *ui->widgetChart->graph(i)->data();
 
-    //    // }
+    //        // }
+}
+
+void MainWindow::on_comboBoxTableViewMode_currentIndexChanged(int index)
+{
+    this->ui->stackedWidgetTableView->setCurrentIndex(index);
+
 }

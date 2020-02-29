@@ -146,6 +146,8 @@ private slots:
     void on_toolButtonHideTable_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
+    void on_comboBoxTableViewMode_currentIndexChanged(int index);
+
 private:
     // QCompleter *completer;
     FileReader fileReader;
@@ -189,6 +191,7 @@ private:
     void sendMessageLineEdit(int mode);
     void sendMessageKeyEvent(QKeyEvent *event);
 
+    void processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable);
 protected:
     void keyPressEvent(QKeyEvent *event);
 };
