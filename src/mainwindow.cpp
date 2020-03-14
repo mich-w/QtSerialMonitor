@@ -506,6 +506,8 @@ void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, 
         if (ui->checkBoxAutoScrollLogTable->isChecked())
             ui->tableWidgetLogTable->scrollToBottom();
 
+        if (ui->checkBoxAutoSizeColumnsLogTable->isChecked())
+            ui->tableWidgetLogTable->resizeColumnsToContents();
 
 //        if (ui->spinBoxRemoveOldLabels->value() > 0)
 //        {
