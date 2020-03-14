@@ -4,7 +4,7 @@ Logger::Logger(QObject *parent) : QObject(parent)
 {
 }
 
-void Logger::openFile(QString fileName, bool truncateFile)
+void Logger::openFile(QString fileName, bool trunc)
 {
     if (!fileName.isEmpty())
     {
@@ -12,9 +12,9 @@ void Logger::openFile(QString fileName, bool truncateFile)
         logFile->setFileName(fileName);
         logFile->open(QFile::OpenModeFlag::ReadWrite | QFile::Text);
 
-        if (truncateFile)
+        if (trunc)
         {
-            qDebug() << "trunk";
+           qDebug() << "trunk";
            logFile->resize(0);
         }
     }
@@ -67,7 +67,7 @@ bool Logger::isOpen()
     return logFile != nullptr;
 }
 
-void Logger::writeLogLine(QString lineToAppend, bool simplifyText)
+void Logger::writeLogTXTLine(QString lineToAppend, bool simplifyText)
 {
     QString text = lineToAppend; // + "";
 
@@ -85,7 +85,7 @@ void Logger::writeLogLine(QString lineToAppend, bool simplifyText)
     }
 }
 
-void Logger::writeLogParsedData(QStringList labelList, QList<double> dataList)
+void Logger::writeLogTXTParsedData(QStringList labelList, QList<double> dataList)
 {
     QString text;
 

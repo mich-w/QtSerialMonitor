@@ -995,17 +995,16 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLi
     }
 }
 
-// TODO
-void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
+void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
 {
     if (ui->pushButtonLogging->isChecked()) // Write log into file
     {
         if (ui->comboBoxLogFormat->currentIndex() == 1)
         {
             if (ui->comboBoxLoggingMode->currentIndex() == 0)
-                fileLogger.writeLogLine(rawLine, ui->checkBoxSimplifyLog->isChecked());
+                fileLogger.writeLogTXTLine(rawLine, ui->checkBoxSimplifyLog->isChecked());
             else if (ui->comboBoxLoggingMode->currentIndex() == 1)
-                fileLogger.writeLogParsedData(labelList, dataList);
+                fileLogger.writeLogTXTParsedData(labelList, dataList);
         }
         else if (ui->comboBoxLogFormat->currentIndex() == 0)
         {
@@ -1044,7 +1043,7 @@ void MainWindow::on_processSerial()
         QList<double> numericDataList = parser.getListNumericValues();
         QList<long> timeStamps = parser.getListTimeStamp();
 
-        this->writeLogToFile(serialInput, labelList, numericDataList, timeStamps);
+        this->processLogWrite(serialInput, labelList, numericDataList, timeStamps);
         this->processChart(labelList, numericDataList, timeStamps);
         this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), serialInput);
         this->processTable(labelList, numericDataList); // Fill tableWidget
@@ -1094,7 +1093,7 @@ void MainWindow::on_processUDP()
         QList<double> numericDataList = parser.getListNumericValues();
         QList<long> timeStamps = parser.getListTimeStamp();
 
-        this->writeLogToFile(udpInput, labelList, numericDataList, timeStamps);
+        this->processLogWrite(udpInput, labelList, numericDataList, timeStamps);
         this->processChart(labelList, numericDataList, timeStamps);
         this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), udpInput);
         this->processTable(labelList, numericDataList); // Fill tableWidget
@@ -1275,7 +1274,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             sendMessageKeyEvent(event);
 
             if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
-                addLog("\n >>" + event->text() + "\n\n", ui->comboBoxAddTextMode->currentIndex());
+                addLog(">>\t" + event->text() + "\n", ui->comboBoxAddTextMode->currentIndex());
         }
     }
     else if (ui->widgetChart->hasFocus())
@@ -1353,7 +1352,7 @@ void MainWindow::loadFromRAM(bool loadText)
     processChart(RAMLabels, RAMData, RAMTime);
 }
 
-void MainWindow::getFileTimeRange(QFile *file) // TODO move to parser !
+void MainWindow::getFileTimeRange(QFile *file) // TODO move to reader !
 {
     if (file->open(QIODevice::ReadOnly))
     {
@@ -1514,8 +1513,11 @@ void MainWindow::on_pushButtonClearAll_clicked()
     parser.restartChartTimer();
     parser.clearExternalClock();
     clearGraphs(true);
+
     ui->tableWidgetParsedData->clearContents();
     ui->tableWidgetParsedData->setRowCount(0);
+    ui->tableWidgetLogTable->setRowCount(0);
+    ui->tableWidgetLogTable->setColumnCount(1);
 
     if (ui->checkBoxRAMClearChart->isChecked())
         parser.clearStorage();
@@ -1926,7 +1928,6 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
         ui->comboBoxLogFormat->setEnabled(true);
         ui->pushButtonLogging->setText("Enable Logging");
         fileLogger.closeFile();
-        fileLogger.clearWriteBuffer();
     }
 }
 
@@ -2164,8 +2165,8 @@ void MainWindow::on_pushButtonLoadFile_clicked()
     if (ui->pushButtonLoadFile->text().contains("Load"))
     {
         this->clearGraphs(true);
-
         ui->pushButtonLoadFile->setText("Cancel");
+
         if (QDir(ui->lineEditLoadFilePath->text().trimmed()).isReadable())
         {
             QFile inputFile(ui->lineEditLoadFilePath->text().trimmed());
