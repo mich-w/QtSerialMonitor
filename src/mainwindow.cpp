@@ -265,6 +265,9 @@ void MainWindow::settingsLoadAll()
         ui->checkBoxTableAutoResize->setChecked(appSettings.value("GUI_Elements/checkBoxTableAutoResize.isChecked", true).value<bool>());
         ui->checkBoxTruncateFileOnSave->setChecked(appSettings.value("GUI_Elements/checkBoxTruncateFileOnSave.isChecked", false).value<bool>());
         ui->checkBoxWrapText->setChecked(appSettings.value("GUI_Elements/checkBoxWrapText.isChecked").value<bool>());
+        ui->checkBoxAutoScrollLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", true).value<bool>());
+        ui->checkBoxAutoSizeColumnsLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", true).value<bool>());
+        ui->checkBoxScrollLogEnableSorting->setChecked(appSettings.value("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", true).value<bool>());
         ui->comboBoxAddTextMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxAddTextMode.currentIndex").value<int>());
         ui->comboBoxBaudRates->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxBaudRates.currentIndex").value<int>());
         ui->comboBoxClockSource->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxClockSource.currentIndex").value<int>());
@@ -283,6 +286,7 @@ void MainWindow::settingsLoadAll()
         ui->comboBoxTracerStyle->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTracerStyle.currentIndex").value<int>());
         ui->comboBoxUDPReceiveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxUDPReceiveMode.currentIndex").value<int>());
         ui->comboBoxUDPSendMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxUDPSendMode.currentIndex").value<int>());
+        ui->comboBoxTableViewMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTableViewMode.currentIndex").value<int>());
         ui->lineEditCustomParsingRules->setText(appSettings.value("data/lineEditCustomParsingRules.text").value<QString>());
         ui->lineEditExternalClockLabel->setText(appSettings.value("data/lineEditExternalClockLabel.text").value<QString>());
         ui->lineEditLoadFilePath->setText(appSettings.value("data/lineEditLoadFilePath.text").value<QString>());
@@ -368,6 +372,9 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/checkBoxTableAutoResize.isChecked", ui->checkBoxTableAutoResize->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxTruncateFileOnSave.isChecked", ui->checkBoxTruncateFileOnSave->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxWrapText.isChecked", ui->checkBoxWrapText->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", ui->checkBoxAutoScrollLogTable->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", ui->checkBoxAutoSizeColumnsLogTable->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", ui->checkBoxScrollLogEnableSorting->isChecked());
         appSettings.setValue("GUI_Elements/comboBoxAddTextMode.currentIndex", ui->comboBoxAddTextMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxBaudRates.currentIndex", ui->comboBoxBaudRates->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxClockSource.currentIndex", ui->comboBoxClockSource->currentIndex());
@@ -386,6 +393,7 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/comboBoxTracerStyle.currentIndex", ui->comboBoxTracerStyle->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxUDPReceiveMode.currentIndex", ui->comboBoxUDPReceiveMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxUDPSendMode.currentIndex", ui->comboBoxUDPSendMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxTableViewMode.currentIndex", ui->comboBoxTableViewMode->currentIndex());
         appSettings.setValue("GUI_Elements/pushButtonEnablePlot.isChecked", ui->pushButtonEnablePlot->isChecked());
         appSettings.setValue("GUI_Elements/tabWidgetControlSection.currentIndex", ui->tabWidgetControlSection->currentIndex());
         appSettings.setValue("layout/spinBoxMaxGraphs.value", ui->spinBoxMaxGraphs->value());
