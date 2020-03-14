@@ -1,3 +1,3 @@
-- void MainWindow::getFileTimeRange(QFile *file) // TODO move to logger !
+- void MainWindow::getFileTimeRange(QFile *file) // TODO move to reader !
 - truncate is still buggy
 
