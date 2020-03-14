@@ -54,10 +54,14 @@ void MainWindow::createTimers()
 
 void MainWindow::setupGUI()
 {
+    // ----------------------- MainWindow ----------------------- //
+    {
     connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
     this->setWindowTitle(this->windowTitle() + " " + VERSION);
+    }
+    // ---------------------------------------------------------- //
 
-    // ui->textBrowserLogs
+    // ----------------------- textBrowserLogs ----------------------- //
     {
         ui->textBrowserLogs->document()->setMaximumBlockCount(ui->spinBoxMaxLines->value());
 
@@ -68,33 +72,16 @@ void MainWindow::setupGUI()
 
         //   highlighter = new Highlighter(ui->textBrowserLogs->document());
     }
+    // ---------------------------------------------------------------- //
 
+    // ----------------------- standardBaudRates ----------------------- //
     {
         foreach (auto item, QSerialPortInfo::standardBaudRates())
             ui->comboBoxBaudRates->addItem(QString::number(item));
 
         ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2); // select middle
     }
-
-    on_updateSerialDeviceList();
-
-    ui->comboBoxSerialReadMode->addItem("canReadLine | readLine");
-    ui->comboBoxSerialReadMode->addItem("canReadLine | readAll");
-    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readLine");
-    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readAll");
-    ui->comboBoxSerialReadMode->setCurrentIndex(0);
-
-    ui->comboBoxUDPReceiveMode->addItem("Any");
-    ui->comboBoxUDPReceiveMode->addItem("LocalHost");
-    ui->comboBoxUDPReceiveMode->addItem("SpecialAddress");
-    ui->comboBoxUDPReceiveMode->setCurrentIndex(0);
-
-    ui->comboBoxUDPSendMode->addItem("Broadcast");
-    ui->comboBoxUDPSendMode->addItem("LocalHost");
-    ui->comboBoxUDPSendMode->addItem("SpecialAddress");
-    ui->comboBoxUDPSendMode->setCurrentIndex(0);
-
-    // ui->lineEditUDPTargetIP->setInputMask( "000.000.000.000" );
+    // ----------------------------------------------------------------- //
 
     if (ui->checkBoxAutoRefresh->isChecked())
     {
@@ -108,27 +95,17 @@ void MainWindow::setupGUI()
 
     ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
     ui->lineEditSaveFileName->setText("Log.txt");
-
     ui->splitterGraphTable->setSizes({this->height(), 0});
-
     ui->comboBoxExternalTimeFormat->addItem("[ms]");
     ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
-
-    ui->comboBoxRAMSaveMode->addItem("Save Data Only");
-    ui->comboBoxRAMSaveMode->addItem("Save Data & Text");
-    ui->comboBoxRAMSaveMode->setCurrentIndex(0);
-
-    ui->comboBoxRAMLoadMode->addItem("Load Data Only");
-    ui->comboBoxRAMLoadMode->addItem("Load Data & Text");
-    ui->comboBoxRAMLoadMode->setCurrentIndex(0);
-
     ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-
     ui->stackedWidgetTableView->setCurrentIndex(ui->comboBoxTableViewMode->currentIndex());
 
     emit on_checkBoxAutoLogging_toggled(ui->checkBoxAutoLogging->isChecked());
     emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
     emit on_comboBoxClockSource_currentIndexChanged(ui->comboBoxClockSource->currentIndex());
+
+    on_updateSerialDeviceList();
 }
 
 void MainWindow::createChart()
