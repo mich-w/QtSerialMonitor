@@ -93,6 +93,15 @@ void MainWindow::setupGUI()
         ui->pushButtonRefresh->setEnabled(true);
     }
 
+    // ----------------------- comboBoxGraphDisplayMode ----------------------- //
+    {
+        if (ui->comboBoxGraphDisplayMode->currentIndex() == 0)
+            ui->lineEditCustomParsingRules->setEnabled(false);
+        else
+            ui->lineEditCustomParsingRules->setEnabled(true);
+    }
+    // ----------------------------------------------------------------- //
+
     ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
     ui->lineEditSaveFileName->setText("Log.txt");
     ui->splitterGraphTable->setSizes({this->height(), 0});
