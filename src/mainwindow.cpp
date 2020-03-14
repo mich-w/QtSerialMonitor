@@ -1539,8 +1539,8 @@ void MainWindow::on_pushButtonClearGraphs_clicked()
 
 void MainWindow::on_lineEditCustomParsingRules_editingFinished()
 {
-    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().replace(" && ", " "));
-    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().simplified().replace(" ", " && "));
+    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().replace(" || ", " "));
+    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().simplified().replace(" ", " || "));
     clearGraphs(true);
     loadFromRAM(false);
 }
