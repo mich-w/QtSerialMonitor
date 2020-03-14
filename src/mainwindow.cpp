@@ -1898,8 +1898,6 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
             return;
         }
 
-        ui->pushButtonLogging->setText("Disable Logging");
-
         if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
         {
             if (!fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text()), ui->checkBoxTruncateFileOnSave->isChecked())
@@ -1909,9 +1907,13 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
                 return;
             }
         }
+
+        ui->comboBoxLogFormat->setEnabled(false);
+        ui->pushButtonLogging->setText("Disable Logging");
     }
     else
     {
+        ui->comboBoxLogFormat->setEnabled(true);
         ui->pushButtonLogging->setText("Enable Logging");
         fileLogger.closeFile();
         fileLogger.clearWriteBuffer();
@@ -1925,6 +1927,7 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->pushButtonLogging->setEnabled(false);
         ui->lineEditSaveFileName->setEnabled(false);
         ui->pushButtonAddDateTime->setEnabled(false);
+        ui->comboBoxLogFormat->setEnabled(false);
 
         ui->lineEditSaveFileName->setText("%DateTime%_Log" + ui->comboBoxLogFormat->currentText());
 
@@ -1941,6 +1944,7 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->pushButtonLogging->setText("Enable Logging");
 
         ui->lineEditSaveFileName->clear();
+        ui->comboBoxLogFormat->setEnabled(true);
     }
 }
 
