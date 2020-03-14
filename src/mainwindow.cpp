@@ -56,8 +56,8 @@ void MainWindow::setupGUI()
 {
     // ----------------------- MainWindow ----------------------- //
     {
-    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
-    this->setWindowTitle(this->windowTitle() + " " + VERSION);
+        connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
+        this->setWindowTitle(this->windowTitle() + " " + VERSION);
     }
     // ---------------------------------------------------------- //
 
@@ -153,7 +153,6 @@ void MainWindow::createChart()
 
     ui->textBrowserLogs->setHighlightEnabled(false);
     emit on_comboBoxLogFormat_currentIndexChanged(ui->comboBoxLogFormat->currentIndex());
-
 }
 
 void MainWindow::create3DView()
@@ -202,7 +201,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !", true);
@@ -509,29 +508,29 @@ void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, 
         if (ui->checkBoxAutoSizeColumnsLogTable->isChecked())
             ui->tableWidgetLogTable->resizeColumnsToContents();
 
-//        if (ui->spinBoxRemoveOldLabels->value() > 0)
-//        {
-//            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
-//            {
-//                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
-//                    tableMissingCount[i] = 0;
-//                else
-//                    tableMissingCount[i]++;
+        //        if (ui->spinBoxRemoveOldLabels->value() > 0)
+        //        {
+        //            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
+        //            {
+        //                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
+        //                    tableMissingCount[i] = 0;
+        //                else
+        //                    tableMissingCount[i]++;
 
-//                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
-//                {
-//                    ui->tableWidgetParsedData->removeRow(i);
-//                    tableMissingCount.removeAt(i);
-//                }
-//            }
-//        }
-//    }
+        //                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
+        //                {
+        //                    ui->tableWidgetParsedData->removeRow(i);
+        //                    tableMissingCount.removeAt(i);
+        //                }
+        //            }
+        //        }
+        //    }
 
-//    if (ui->checkBoxTableAutoResize->isChecked())
-//    {
-//        ui->tableWidgetParsedData->resizeColumnsToContents();
-//        ui->tableWidgetParsedData->resizeRowsToContents();
-   }
+        //    if (ui->checkBoxTableAutoResize->isChecked())
+        //    {
+        //        ui->tableWidgetParsedData->resizeColumnsToContents();
+        //        ui->tableWidgetParsedData->resizeRowsToContents();
+    }
 }
 
 void MainWindow::on_printIntroChangelog() // TODO
@@ -818,9 +817,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                       .arg(graph->name())
-                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                       .arg(QString::number(temp.y(), 'f', 5)),
+                           .arg(graph->name())
+                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                           .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -1141,13 +1140,13 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
 
-                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
 
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
 
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
-                  !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
+              !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -2385,6 +2384,18 @@ void MainWindow::on_actionTo_CSV_triggered()
 void MainWindow::on_comboBoxTableViewMode_currentIndexChanged(int index)
 {
     this->ui->stackedWidgetTableView->setCurrentIndex(index);
+}
+
+void MainWindow::on_pushButtonClearLogTable_clicked()
+{
+    ui->tableWidgetLogTable->setRowCount(0);
+    ui->tableWidgetLogTable->setColumnCount(1);
+}
+
+void MainWindow::on_checkBoxScrollLogEnableSorting_toggled(bool checked)
+{
+    ui->tableWidgetLogTable->setSortingEnabled(checked);
+}
 
 // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
 void MainWindow::exportTableLogToCSV(QTableView *table, QChar sep)

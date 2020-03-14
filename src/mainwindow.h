@@ -147,7 +147,10 @@ private slots:
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
     void on_comboBoxTableViewMode_currentIndexChanged(int index);
-
+    void on_pushButtonClearLogTable_clicked();
+    void on_checkBoxScrollLogEnableSorting_toggled(bool checked);
+    void on_pushButtonExportLogTableToCSV_clicked();
+    void on_pushButtonSerialLogScrollown_clicked();
 private:
     // QCompleter *completer;
     FileReader fileReader;
@@ -190,8 +193,8 @@ private:
     QString controlCharactersVisibleConvert(QString text);
     void sendMessageLineEdit(int mode);
     void sendMessageKeyEvent(QKeyEvent *event);
-
     void processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable);
+    void exportTableLogToCSV(QTableView *table, QChar sep = ',');
 protected:
     void keyPressEvent(QKeyEvent *event);
 };
