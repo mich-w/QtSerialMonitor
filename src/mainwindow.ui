@@ -1856,7 +1856,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Control chars</string>
+                  <string>Control char's</string>
                  </property>
                 </widget>
                </item>
@@ -2742,7 +2742,11 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item row="1" column="0">
-                 <widget class="QWidget" name="widget3DView" native="true"/>
+                 <widget class="QQuickWidget" name="quickWidget3DView">
+                  <property name="resizeMode">
+                   <enum>QQuickWidget::SizeRootObjectToView</enum>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </widget>
@@ -3019,7 +3023,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1801</width>
-     <height>27</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -3231,6 +3235,11 @@ p, li { white-space: pre-wrap; }
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
+  <customwidget>
+   <class>QQuickWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QtQuickWidgets/QQuickWidget</header>
+  </customwidget>
   <customwidget>
    <class>QCustomPlot</class>
    <extends>QWidget</extends>

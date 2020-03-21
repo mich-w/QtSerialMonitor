@@ -104,12 +104,12 @@ void MainWindow::setupGUI()
     }
     // ----------------------------------------------------------------- //
 
-    ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
-    ui->lineEditSaveFileName->setText("Log.txt");
-    ui->splitterGraphTable->setSizes({this->height(), 0});
     ui->comboBoxExternalTimeFormat->addItem("[ms]");
     ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
     ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    ui->lineEditSaveFileName->setText("Log.txt");
+    ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
+    ui->splitterGraphTable->setSizes({this->height(), 0});
     ui->stackedWidgetTableView->setCurrentIndex(ui->comboBoxTableViewMode->currentIndex());
 
     emit on_checkBoxAutoLogging_toggled(ui->checkBoxAutoLogging->isChecked());

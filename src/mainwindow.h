@@ -32,6 +32,7 @@
 #include <QTime>
 #include <QTimer>
 #include <QCloseEvent>
+#include <QtQuickWidgets/QQuickWidget>
 
 //#include <q3dsruntimeglobal.h>
 //#include <Q3DSWidget>
