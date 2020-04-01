@@ -4,20 +4,22 @@ Logger::Logger(QObject *parent) : QObject(parent)
 {
 }
 
-void Logger::openFile(QString fileName, bool trunc)
+bool Logger::openFile(QString fileName, bool trunc)
 {
-    if (!fileName.isEmpty())
-    {
-        logFile = new QFile;
-        logFile->setFileName(fileName);
-        logFile->open(QFile::OpenModeFlag::ReadWrite | QFile::Text);
+    if (fileName.isEmpty())
+        return false;
 
-        if (trunc)
-        {
-           qDebug() << "trunk";
-           logFile->resize(0);
-        }
-    }
+    logFile = new QFile;
+    logFile->setFileName(fileName);
+    logFile->open(QFile::OpenModeFlag::ReadWrite | QFile::Text);
+
+    if (trunc)
+        logFile->resize(0);
+
+    if (logFile->isOpen())
+        return true;
+    else
+        return false;
 }
 
 void Logger::closeFile()
@@ -145,7 +147,7 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
                 out << origFile[i] + "\n\r";
 
             canAddLabel = false;
-           // break;
+            // break;
         }
     }
 

@@ -196,6 +196,7 @@ private:
     void settingsSaveAll();
     void setupGUI();
     void setupTable();
+    void exportArraysToCSV(QStringList labelList, QList<QList<float> > dataColums, QChar sep = ',');
 protected:
     void keyPressEvent(QKeyEvent *event);
 };

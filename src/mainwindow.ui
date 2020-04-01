@@ -3057,9 +3057,9 @@ p, li { white-space: pre-wrap; }
      <addaction name="menuGraph_data"/>
     </widget>
     <addaction name="menuSave"/>
+    <addaction name="menuExport"/>
     <addaction name="menuPrint"/>
     <addaction name="actionQuit"/>
-    <addaction name="menuExport"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">

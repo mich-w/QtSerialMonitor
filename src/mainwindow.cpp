@@ -2185,14 +2185,14 @@ void MainWindow::on_pushButtonLoadFile_clicked()
             }
             else
             {
-                addLog("App >>\t invalid file !", true);
+                addLog("App >>\t Error - invalid file !", true);
                 ui->pushButtonLoadFile->setText("Load File");
                 ui->progressBarLoadFile->setValue(0);
             }
         }
         else
         {
-            addLog("App >>\t file reader error - invalid file path !", true);
+            addLog("App >>\t Error - invalid file path !", true);
             ui->pushButtonLoadFile->setText("Load File");
             ui->progressBarLoadFile->setValue(0);
         }
@@ -2439,11 +2439,47 @@ void MainWindow::exportTableLogToCSV(QTableView *table, QChar sep)
             strList.clear();
             for (int j = 0; j < model->columnCount(); ++j)
             {
-
                 if (model->data(model->index(i, j)).toString().length() > 0)
                     strList.append("\"" + model->data(model->index(i, j)).toString() + "\"");
                 else
                     strList.append("");
+            }
+            data << strList.join(";") + "\n";
+        }
+        file.close();
+    }
+}
+
+void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<float>> dataColums, QChar sep)
+{
+    QString filters("CSV files (*.csv);;All files (*.*)");
+    QString defaultFilter("CSV files (*.csv)");
+    QString fileName = QFileDialog::getSaveFileName(0, "Save file", QCoreApplication::applicationDirPath(),
+                                                    filters, &defaultFilter);
+    QFile file(fileName);
+
+    if (file.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        QTextStream data(&file);
+        QStringList strList;
+
+        foreach (auto label,  labelList)
+        {
+            if (label.length() > 0)
+                strList.append("\"" + label + "\"");
+            else
+                strList.append("");
+        }
+
+        data << strList.join(sep) << "\n";
+
+        for (int i = 0; i < dataColums.count(); ++i)
+        {
+            strList.clear();
+            for (int j = 0; j < dataColums[i].count(); ++j)
+            {
+                    strList.append("\"" + QString::number(dataColums[i][j]) + "\"");
+
             }
             data << strList.join(";") + "\n";
         }

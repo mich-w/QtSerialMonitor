@@ -18,7 +18,7 @@ public:
     bool isOpen();
     void clearWriteBuffer();
     void closeFile();
-    void openFile(QString fileName, bool trunc = false);
+    bool openFile(QString fileName, bool trunc = false);
     void writeLogCSV(QStringList labelList, QList<double> dataList, bool addTime = true);
     void writeLogTXTLine(QString lineToAppend, bool simplifyText);
     void writeLogTXTParsedData(QStringList labelList, QList<double> dataList);
