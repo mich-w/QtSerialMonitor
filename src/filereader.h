@@ -12,7 +12,6 @@ class FileReader : public QObject
 public:
     explicit FileReader(QObject *parent = nullptr);
     bool readAllAtOnce(QFile *fileToRead);
-    bool startRead(QFile *fileToRead);
     void abortRead();
     void setReadInterval(int newVal);
 signals:

@@ -20,23 +20,6 @@ void FileReader::readLineSendLine()
     }
 }
 
-bool FileReader::startRead(QFile *fileToRead)
-{
-    if (fileToRead->open(QIODevice::ReadOnly))
-    {
-        QTextStream stream(fileToRead);
-        QString allData = stream.readAll();
-        fileToRead->close();
-
-        readFileSplitLines = allData.split(QRegExp("[\n\r]"), QString::SplitBehavior::SkipEmptyParts);
-    }
-
-    lineReadIterator = 0;
-
-    fileReadTimer.start(readInterval);
-    connect(&fileReadTimer, SIGNAL(timeout()), this, SLOT(readLineSendLine()));
-}
-
 bool FileReader::readAllAtOnce(QFile *fileToRead)
 {
     if (fileToRead->open(QIODevice::ReadOnly))
