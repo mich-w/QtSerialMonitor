@@ -51,7 +51,7 @@ bool Logger::beginLog(QString path, bool autoLogging, QString fileName, bool tru
         {
             csvLabelsBuffer.append(QString(logFile->readLine()).replace("\"", "").split(',', QString::SplitBehavior::SkipEmptyParts));
 
-            for (auto i=0; i < csvLabelsBuffer.count();++i)
+            for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
                 qDebug() << csvLabelsBuffer[i] + "\n";
         }
 
@@ -126,33 +126,39 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
     }
 
     bool canAddLabel = false;
-    for (auto i = 0; i <= labelList.count() - 1; ++i)
+    for (auto i = 0; i < labelList.count(); ++i)
     {
-        if (csvLabelsBuffer.count() == 0 || !csvLabelsBuffer.contains(labelList[i]))
-            canAddLabel = true;
-
-        if (canAddLabel)
+        if (csvLabelsBuffer.count() == 0 || csvLabelsBuffer.contains(labelList[i]) == false)
         {
-            csvLabelsBuffer.append(labelList[i].toLatin1());
-
-            QStringList origFile = out.readAll().split(QRegExp("[\r\n]"), Qt::SplitBehaviorFlags::SkipEmptyParts);
-            logFile->resize(0); // delete contents !
-
-            for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
-                out << "\"" + csvLabelsBuffer[i] + "\",";
-
-            out << "\n";
-
-            for (auto i = 1; i < origFile.count(); ++i) // Start from second line (data without first line which contains labels)
-                out << origFile[i] + "\n\r";
-
-            canAddLabel = false;
-            // break;
+            canAddLabel = true;
+            csvLabelsBuffer.append(labelList[i]);
         }
     }
 
     if (canAddLabel)
-        out << "\r";
+    {
+        canAddLabel = false;
+
+        QStringList origFile = out.readAll().split(QRegExp("[\r\n]"), Qt::SplitBehaviorFlags::SkipEmptyParts);
+
+        for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
+            out << "\"" + csvLabelsBuffer[i] + "\",";
+
+        out << "\n";
+
+        if (origFile.length() > 0)
+        {
+            while (origFile.first().contains("\""))
+                origFile.removeFirst();
+        }
+
+        logFile->resize(0); // delete contents !
+
+        for (auto i = 0; i < origFile.count(); ++i) // Start from second line (data without first line which contains labels)
+            out << origFile[i] + "\n";
+
+        return;
+    }
 
     // add Data !
     for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
@@ -166,7 +172,7 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
             out << QTime::currentTime().toString("hh:mm:ss:zzz") + ',';
     }
 
-    out << "\r";
+    out << "\n";
 }
 
 void Logger::clearWriteBuffer()
