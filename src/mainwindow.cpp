@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     settingsLoadAll();
 
     infoDialog.setFixedSize(800, 600);
-    
+
     connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(on_aboutToQuitSlot()));
 }
 
@@ -164,6 +164,8 @@ void MainWindow::createChart()
 
     ui->textBrowserLogs->setHighlightEnabled(false);
     emit on_comboBoxLogFormat_currentIndexChanged(ui->comboBoxLogFormat->currentIndex());
+
+    ui->pushButtonEnableTableLog->toggle();
 }
 
 void MainWindow::create3DView()
@@ -194,7 +196,7 @@ void MainWindow::setupTable()
     ui->tableWidgetLogTable->clear();
     ui->tableWidgetLogTable->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
     ui->tableWidgetLogTable->setColumnCount(1);
-    ui->tableWidgetLogTable->setHorizontalHeaderItem(0, new QTableWidgetItem("Time"));
+    ui->tableWidgetLogTable->setHorizontalHeaderItem(0, new QTableWidgetItem("Time:"));
     ui->tableWidgetLogTable->setSortingEnabled(true);
 }
 
@@ -212,7 +214,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !", true);
@@ -484,64 +486,76 @@ void MainWindow::processTable(QStringList labels, QList<double> values)
 
 void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable)
 {
-    static QList<int> tableMissingCount;
+    if (ui->pushButtonEnableTableLog->isChecked())
+        return;
+
+    //    static QList<int> tableMissingCount;
     unsigned long oldRowCount = ui->tableWidgetLogTable->rowCount();
 
     QStringList firstRow;
     for (auto i = 0; i < ui->tableWidgetLogTable->columnCount(); ++i)
-        firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text());
+        firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text().trimmed());
 
     foreach (auto label, labelTable)
     {
-        if (firstRow.contains(label) == false) // optimise
+        while (firstRow.contains(label) == false) // optimise
         {
             ui->tableWidgetLogTable->setColumnCount(ui->tableWidgetLogTable->columnCount() + 1);
-            ui->tableWidgetLogTable->setHorizontalHeaderItem(ui->tableWidgetLogTable->columnCount() - 1, new QTableWidgetItem(label));
+            ui->tableWidgetLogTable->setHorizontalHeaderItem(ui->tableWidgetLogTable->columnCount() - 1, new QTableWidgetItem(label.trimmed()));
+
+            firstRow.clear();
+            for (auto i = 0; i < ui->tableWidgetLogTable->columnCount(); ++i)
+                firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text().trimmed());
         }
 
-        for (auto i = 1; i < ui->tableWidgetLogTable->columnCount(); ++i)
+        if (firstRow.contains(label))
         {
-            if (ui->tableWidgetLogTable->horizontalHeaderItem(i)->text() == label)
+            if (oldRowCount == ui->tableWidgetLogTable->rowCount())
             {
-                if (oldRowCount == ui->tableWidgetLogTable->rowCount())
-                {
-                    ui->tableWidgetLogTable->setRowCount(oldRowCount + 1);
-                    ui->tableWidgetLogTable->setItem(oldRowCount, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[labelTable.indexOf(label)]).toString(parser.searchTimeFormatList[0])));
-                }
-
-                ui->tableWidgetLogTable->setItem(oldRowCount, firstRow.indexOf(label), new QTableWidgetItem(QString::number(valueTable[labelTable.indexOf(label)])));
+                ui->tableWidgetLogTable->setRowCount(oldRowCount + 1);
+                ui->tableWidgetLogTable->setItem(oldRowCount, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[labelTable.indexOf(label)]).toString(parser.searchTimeFormatList[0])));
             }
+
+            ui->tableWidgetLogTable->setItem(oldRowCount, firstRow.indexOf(label), new QTableWidgetItem(QString::number(valueTable[labelTable.indexOf(label)])));
         }
-
-        if (ui->checkBoxAutoScrollLogTable->isChecked())
-            ui->tableWidgetLogTable->scrollToBottom();
-
-        if (ui->checkBoxAutoSizeColumnsLogTable->isChecked())
-            ui->tableWidgetLogTable->resizeColumnsToContents();
-
-        //        if (ui->spinBoxRemoveOldLabels->value() > 0)
-        //        {
-        //            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
-        //            {
-        //                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
-        //                    tableMissingCount[i] = 0;
-        //                else
-        //                    tableMissingCount[i]++;
-
-        //                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
-        //                {
-        //                    ui->tableWidgetParsedData->removeRow(i);
-        //                    tableMissingCount.removeAt(i);
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    if (ui->checkBoxTableAutoResize->isChecked())
-        //    {
-        //        ui->tableWidgetParsedData->resizeColumnsToContents();
-        //        ui->tableWidgetParsedData->resizeRowsToContents();
     }
+
+    if (ui->checkBoxAutoScrollLogTable->isChecked())
+        ui->tableWidgetLogTable->scrollToBottom();
+
+    if (ui->spinBoxMaxRowsLogTable->value() > 0)
+    {
+        while (ui->tableWidgetLogTable->rowCount() > ui->spinBoxMaxRowsLogTable->value())
+        {
+            ui->tableWidgetLogTable->removeRow(0);
+        }
+    }
+
+    //    if (ui->checkBoxAutoSizeColumnsLogTable->isChecked())
+    //        ui->tableWidgetLogTable->resizeColumnsToContents();
+
+    //    if (ui->checkBoxTableAutoResize->isChecked())
+    //    {
+    //        ui->tableWidgetParsedData->resizeColumnsToContents();
+    //        ui->tableWidgetParsedData->resizeRowsToContents();
+    //    }
+    //        if (ui->spinBoxRemoveOldLabels->value() > 0)
+    //        {
+    //            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
+    //            {
+    //                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
+    //                    tableMissingCount[i] = 0;
+    //                else
+    //                    tableMissingCount[i]++;
+
+    //                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
+    //                {
+    //                    ui->tableWidgetParsedData->removeRow(i);
+    //                    tableMissingCount.removeAt(i);
+    //                }
+    //            }
+    //        }
+    //    }
 }
 
 void MainWindow::on_printIntroChangelog() // TODO
@@ -828,9 +842,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                           .arg(graph->name())
-                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                           .arg(QString::number(temp.y(), 'f', 5)),
+                       .arg(graph->name())
+                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                       .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -1150,13 +1164,13 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
 
-            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
 
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
 
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
-              !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
+                  !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -2083,6 +2097,12 @@ void MainWindow::on_pushButtonLoadPath_clicked()
     ui->lineEditLoadFilePath->setText(fileName);
     QFile file(fileName);
 
+    if (!file.exists())
+    {
+        ui->lineEditFileInfo->setText("File doesnt exist !");
+        return;
+    }
+
     getFileTimeRange(&file);
 
     QString info = "Size: " + QString::number(file.size());
@@ -2120,7 +2140,7 @@ void MainWindow::on_processLoadedFile(QString *text)
 
     // Select file type
     if (ui->comboBoxLogFormat->currentIndex() == 0)
-        parser.parseCSV(*text);
+        parser.parseCSV(*text, (bool)ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text());
     else
         parser.parse(*text, false, true, "");
 
@@ -2373,24 +2393,27 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
     }
 }
 
-void MainWindow::on_actionTo_CSV_triggered()
+void MainWindow::on_actionTo_CSV_triggered() // WORKS
 {
-    //        QString output;
-    //        QStringList graphLabels;
-    //        for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
-    //        {
-    //            graphLabels.append(ui->widgetChart->graph(i)->name());
-    //            output.append(ui->widgetChart->graph(i)->name() + ",");
-    //        }
+    QStringList labelList = parser.getLabelStorage();
+    QList<double> numericDataList = parser.getDataStorage();
 
-    //        //    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
-    //        //    {
-    //        auto data = ui->widgetChart->graph(0)->data();
-    //        auto it = data->size();
-    //        QVector<QCPGraphData> y = ui->widgetChart->graph(0)->data().data();
-    //        const QCPGraphData dataMap = *ui->widgetChart->graph(i)->data();
+    QStringList columnNames = labelList;
+    columnNames.removeDuplicates();
 
-    //        // }
+    QList<QList<double>> columnsData;
+    for (auto i = 0; i < columnNames.count(); ++i)
+    {
+        columnsData.append(*new QList<double>);
+
+        while (labelList.contains(columnNames[i]))
+        {
+            columnsData[columnsData.count() - 1].append(numericDataList.takeAt(labelList.indexOf(columnNames[i])));
+            labelList.removeAt(labelList.indexOf(columnNames[i]));
+        }
+    }
+
+    this->exportArraysToCSV(columnNames, columnsData, ',');
 }
 
 void MainWindow::on_comboBoxTableViewMode_currentIndexChanged(int index)
@@ -2444,13 +2467,13 @@ void MainWindow::exportTableLogToCSV(QTableView *table, QChar sep)
                 else
                     strList.append("");
             }
-            data << strList.join(";") + "\n";
+            data << strList.join(sep) + "\n";
         }
         file.close();
     }
 }
 
-void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<float>> dataColums, QChar sep)
+void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep)
 {
     QString filters("CSV files (*.csv);;All files (*.*)");
     QString defaultFilter("CSV files (*.csv)");
@@ -2463,7 +2486,7 @@ void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<float>> da
         QTextStream data(&file);
         QStringList strList;
 
-        foreach (auto label,  labelList)
+        foreach (auto label, labelList)
         {
             if (label.length() > 0)
                 strList.append("\"" + label + "\"");
@@ -2473,15 +2496,23 @@ void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<float>> da
 
         data << strList.join(sep) << "\n";
 
-        for (int i = 0; i < dataColums.count(); ++i)
+        int maxRowCount = 0;
+        foreach (auto column, dataColums)
+        {
+            maxRowCount = qMax(maxRowCount, column.count());
+        }
+
+        for (int i = 0; i < maxRowCount; ++i) // rows
         {
             strList.clear();
-            for (int j = 0; j < dataColums[i].count(); ++j)
+            for (int j = 0; j < dataColums.count(); ++j) // columns
             {
-                    strList.append("\"" + QString::number(dataColums[i][j]) + "\"");
-
+                if (i < dataColums[j].count())
+                    strList.append(QString::number(dataColums[j][i], 'f'));
+                else
+                    strList.append("\"\"");
             }
-            data << strList.join(";") + "\n";
+            data << strList.join(sep) + "\n";
         }
         file.close();
     }
@@ -2495,4 +2526,34 @@ void MainWindow::on_pushButtonExportLogTableToCSV_clicked()
 void MainWindow::on_pushButtonSerialLogScrollown_clicked()
 {
     ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
+}
+
+void MainWindow::on_pushButtonEnableTableLog_toggled(bool checked)
+{
+    if (checked)
+    {
+        ui->pushButtonEnableTableLog->setChecked(true);
+        ui->pushButtonEnableTableLog->setText("Enable");
+    }
+    else
+    {
+        ui->pushButtonEnableTableLog->setChecked(false);
+        ui->pushButtonEnableTableLog->setText("Disable");
+    }
+}
+
+void MainWindow::on_lineEditLoadFilePath_editingFinished()
+{
+    QFile file(ui->lineEditLoadFilePath->text());
+
+    if (!file.exists())
+    {
+        ui->lineEditFileInfo->setText("File doesnt exist !");
+        return;
+    }
+
+    getFileTimeRange(&file);
+
+    QString info = "Size: " + QString::number(file.size());
+    ui->lineEditFileInfo->setText(info);
 }

@@ -109,7 +109,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
     }
 }
 
-void Parser::parseCSV(QString inputString, QString externalClockLabel)
+void Parser::parseCSV(QString inputString, bool useExternalLabel, QString externalClockLabel)
 {
     listNumericData.clear();
     stringListLabels.clear();
@@ -141,46 +141,62 @@ void Parser::parseCSV(QString inputString, QString externalClockLabel)
         QRegExp sepSymbols("[=,]");
 
         inputStringSplitArrayLines[l].replace(sepSymbols, " ");
+        inputStringSplitArrayLines[l].remove("\"");
+
         QStringList inputStringSplitArray = inputStringSplitArrayLines[l].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
 
         // Look for labels
-        for (auto i = 0; i < inputStringSplitArray.count(); ++i)
+        if (l == 0)
         {
-            if (!mainSymbols.exactMatch(inputStringSplitArray[i]))
+            for (auto i = 0; i < inputStringSplitArray.count(); ++i)
             {
-                if (!csvLabels.contains(inputStringSplitArray[i]))
-                    csvLabels.append(inputStringSplitArray[i]);
+                if (!mainSymbols.exactMatch(inputStringSplitArray[i]))
+                {
+                    if (!csvLabels.contains(inputStringSplitArray[i]))
+                        csvLabels.append(inputStringSplitArray[i]);
+                }
             }
         }
 
         // Look for time reference
         for (auto i = 0; i < inputStringSplitArray.count(); ++i)
         {
-
-            if (externalClockLabel.isEmpty() == false && inputStringSplitArray[i] == externalClockLabel)
+            if  (useExternalLabel == true && externalClockLabel.isEmpty() == false  && i == csvLabels.indexOf(externalClockLabel))
             {
-                latestTimeStamp = QTime::fromMSecsSinceStartOfDay(inputStringSplitArray[i + 1].toInt());
+                qDebug() << "inputStringSplitArray: " + QString::number(inputStringSplitArray[i].toFloat());
+
+                latestTimeStamp = QTime::fromMSecsSinceStartOfDay((int)inputStringSplitArray[i].toFloat());
+                qDebug() << "TIME: " + QString::number(inputStringSplitArray[i].toFloat());
+                qDebug() << "latestTimeStamp: " + latestTimeStamp.toString();
+                break;
+
             }
-            else if (externalClockLabel.isEmpty() == true)
+            else if (useExternalLabel == false)
             {
                 foreach (auto timeFormat, searchTimeFormatList)
                 {
                     if (QTime::fromString(inputStringSplitArray[i], timeFormat).isValid())
                     {
                         latestTimeStamp = QTime::fromString(inputStringSplitArray[i], timeFormat);
+
+
+                        if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
+                        {
+                            if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
+                            {
+                                continue;
+                            }
+                        }
+
+
+
                         break;
                     }
                 }
             }
         }
 
-        if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
-        {
-            if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
-            {
-                continue;
-            }
-        }
+
 
         // Look for data
         for (auto i = 0; i < inputStringSplitArray.count(); ++i)

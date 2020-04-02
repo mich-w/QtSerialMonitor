@@ -27,7 +27,7 @@ public:
     void clearExternalClock();
     void clearStorage();
     void parse(QString inputString, bool syncToSystemClock = true, bool useExternalClock = false, QString externalClockLabel = QString());
-    void parseCSV(QString inputString, QString externalClockLabel = "");
+    void parseCSV(QString inputString, bool useExternalLabel = false, QString externalClockLabel = "");
     void parserClockAddMSecs(int millis);
     void resetTimeRange();
     void restartChartTimer();

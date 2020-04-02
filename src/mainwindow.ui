@@ -845,19 +845,6 @@
            <string>File storage</string>
           </attribute>
           <layout class="QGridLayout" name="gridLayout_9">
-           <item row="0" column="7">
-            <spacer name="horizontalSpacer_4">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
            <item row="0" column="8">
             <layout class="QGridLayout" name="gridLayout_14">
              <item row="1" column="1">
@@ -1118,63 +1105,25 @@
              </item>
             </layout>
            </item>
-           <item row="0" column="0">
-            <widget class="QCheckBox" name="checkBoxAutoLogging">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <weight>50</weight>
-               <bold>false</bold>
-               <underline>true</underline>
-              </font>
-             </property>
-             <property name="text">
-              <string>Auto-Log</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QPushButton" name="pushButtonLogging">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>150</width>
-               <height>30</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Enable Logging</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="autoExclusive">
-              <bool>false</bool>
-             </property>
-             <property name="default">
-              <bool>true</bool>
-             </property>
-             <property name="flat">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="10">
             <widget class="Line" name="line">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
             </widget>
+           </item>
+           <item row="0" column="7">
+            <spacer name="horizontalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
            <item row="0" column="12">
             <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1413,6 +1362,57 @@
               </widget>
              </item>
             </layout>
+           </item>
+           <item row="0" column="0">
+            <widget class="QCheckBox" name="checkBoxAutoLogging">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <weight>50</weight>
+               <bold>false</bold>
+               <underline>true</underline>
+              </font>
+             </property>
+             <property name="text">
+              <string>Auto-Log</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QPushButton" name="pushButtonLogging">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Enable Logging</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
+             </property>
+             <property name="default">
+              <bool>true</bool>
+             </property>
+             <property name="flat">
+              <bool>false</bool>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -1772,12 +1772,18 @@
              <property name="readOnly">
               <bool>true</bool>
              </property>
+             <property name="textInteractionFlags">
+              <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+             </property>
             </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout">
              <item>
               <layout class="QGridLayout" name="gridLayout_15">
+               <property name="verticalSpacing">
+                <number>3</number>
+               </property>
                <item row="0" column="2">
                 <widget class="QCheckBox" name="checkBoxSendKey">
                  <property name="sizePolicy">
@@ -2047,6 +2053,9 @@
              </item>
              <item>
               <layout class="QGridLayout" name="gridLayout_17">
+               <property name="verticalSpacing">
+                <number>3</number>
+               </property>
                <item row="0" column="2">
                 <widget class="QPushButton" name="pushButtonClear">
                  <property name="sizePolicy">
@@ -2081,12 +2090,6 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>0</width>
-                   <height>0</height>
-                  </size>
-                 </property>
                  <property name="text">
                   <string>Auto scroll</string>
                  </property>
@@ -2101,16 +2104,10 @@
                <item row="1" column="0" colspan="3">
                 <widget class="QSpinBox" name="spinBoxMaxLines">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>0</width>
-                   <height>0</height>
-                  </size>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignCenter</set>
@@ -2247,6 +2244,9 @@ p, li { white-space: pre-wrap; }
                  <layout class="QHBoxLayout" name="horizontalLayout_3">
                   <item>
                    <layout class="QGridLayout" name="gridLayout_18">
+                    <property name="verticalSpacing">
+                     <number>3</number>
+                    </property>
                     <item row="15" column="1">
                      <widget class="QComboBox" name="comboBoxClockSource">
                       <property name="sizePolicy">
@@ -2294,7 +2294,7 @@ p, li { white-space: pre-wrap; }
                     <item row="11" column="3">
                      <widget class="QComboBox" name="comboBoxTracerStyle">
                       <property name="sizePolicy">
-                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
@@ -2510,7 +2510,7 @@ p, li { white-space: pre-wrap; }
                        <bool>false</bool>
                       </property>
                       <property name="sizePolicy">
-                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
@@ -2565,6 +2565,12 @@ p, li { white-space: pre-wrap; }
                   </item>
                   <item>
                    <layout class="QGridLayout" name="gridLayout_19">
+                    <property name="horizontalSpacing">
+                     <number>6</number>
+                    </property>
+                    <property name="verticalSpacing">
+                     <number>3</number>
+                    </property>
                     <item row="2" column="2">
                      <widget class="QPushButton" name="pushButtonClearAll">
                       <property name="sizePolicy">
@@ -2870,11 +2876,67 @@ p, li { white-space: pre-wrap; }
                    </property>
                    <item row="1" column="2">
                     <widget class="QCheckBox" name="checkBoxAutoSizeColumnsLogTable">
+                     <property name="enabled">
+                      <bool>false</bool>
+                     </property>
                      <property name="text">
                       <string>Auto-size</string>
                      </property>
                      <property name="checked">
                       <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="5">
+                    <widget class="QPushButton" name="pushButtonExportLogTableToCSV">
+                     <property name="text">
+                      <string>Export to CSV...</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0" colspan="10">
+                    <widget class="QTableWidget" name="tableWidgetLogTable">
+                     <property name="enabled">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="8">
+                    <spacer name="horizontalSpacer_9">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item row="1" column="7">
+                    <widget class="QSpinBox" name="spinBoxMaxRowsLogTable">
+                     <property name="maximum">
+                      <number>10000</number>
+                     </property>
+                     <property name="singleStep">
+                      <number>10</number>
+                     </property>
+                     <property name="value">
+                      <number>500</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QPushButton" name="pushButtonEnableTableLog">
+                     <property name="text">
+                      <string>Disable</string>
+                     </property>
+                     <property name="checkable">
+                      <bool>true</bool>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
                      </property>
                     </widget>
                    </item>
@@ -2888,28 +2950,12 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="7">
+                   <item row="1" column="9">
                     <widget class="QPushButton" name="pushButtonClearLogTable">
                      <property name="text">
                       <string>Clear</string>
                      </property>
                     </widget>
-                   </item>
-                   <item row="0" column="0" colspan="8">
-                    <widget class="QTableWidget" name="tableWidgetLogTable"/>
-                   </item>
-                   <item row="1" column="6">
-                    <spacer name="horizontalSpacer_9">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
                    </item>
                    <item row="1" column="3">
                     <widget class="QCheckBox" name="checkBoxAutoScrollLogTable">
@@ -2921,10 +2967,10 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="5">
-                    <widget class="QPushButton" name="pushButtonExportLogTableToCSV">
+                   <item row="1" column="6">
+                    <widget class="QLabel" name="label_25">
                      <property name="text">
-                      <string>Export to CSV...</string>
+                      <string>Max rows:</string>
                      </property>
                     </widget>
                    </item>
@@ -3023,7 +3069,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1801</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -3036,6 +3082,7 @@ p, li { white-space: pre-wrap; }
      </property>
      <addaction name="actionSave_As"/>
      <addaction name="actionSave_graph_as"/>
+     <addaction name="actionTo_CSV"/>
     </widget>
     <widget class="QMenu" name="menuPrint">
      <property name="title">
@@ -3044,20 +3091,7 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionPrint_log"/>
      <addaction name="actionPrint_Graph"/>
     </widget>
-    <widget class="QMenu" name="menuExport">
-     <property name="title">
-      <string>Export...</string>
-     </property>
-     <widget class="QMenu" name="menuGraph_data">
-      <property name="title">
-       <string>Graph data...</string>
-      </property>
-      <addaction name="actionTo_CSV"/>
-     </widget>
-     <addaction name="menuGraph_data"/>
-    </widget>
     <addaction name="menuSave"/>
-    <addaction name="menuExport"/>
     <addaction name="menuPrint"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -3229,7 +3263,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionTo_CSV">
    <property name="text">
-    <string>To CSV...</string>
+    <string>Save parser data as CSV...</string>
    </property>
   </action>
  </widget>

@@ -161,7 +161,7 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
 
         int index = labelList.indexOf(csvLabelsBuffer[i]); // TODO
         if (index >= 0 && index < dataList.count())
-            out << QString::number(dataList[index]) + ',';
+            out << QString::number(dataList[index], 'f') + ',';
         else if (csvLabelsBuffer[i] == "time")
             out << QTime::currentTime().toString("hh:mm:ss:zzz") + ',';
     }

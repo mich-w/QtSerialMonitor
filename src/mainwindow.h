@@ -11,6 +11,7 @@
 #include "infodialog.h"
 #include "highlighter.h"
 
+#include <QCloseEvent>
 #include <QCompleter>
 #include <QDateTime>
 #include <QElapsedTimer>
@@ -31,7 +32,6 @@
 #include <QTextStream>
 #include <QTime>
 #include <QTimer>
-#include <QCloseEvent>
 #include <QtQuickWidgets/QQuickWidget>
 
 //#include <q3dsruntimeglobal.h>
@@ -152,6 +152,9 @@ private slots:
     void on_toolButtonHideTable_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
+    void on_pushButtonEnableTableLog_toggled(bool checked);
+    void on_lineEditLoadFilePath_editingFinished();
+
 private:
     // QCompleter *completer;
     FileReader fileReader;
@@ -196,7 +199,8 @@ private:
     void settingsSaveAll();
     void setupGUI();
     void setupTable();
-    void exportArraysToCSV(QStringList labelList, QList<QList<float> > dataColums, QChar sep = ',');
+    void exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep = ',');
+
 protected:
     void keyPressEvent(QKeyEvent *event);
 };
