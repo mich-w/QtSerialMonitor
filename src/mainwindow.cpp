@@ -214,7 +214,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !", true);
@@ -280,6 +280,9 @@ void MainWindow::settingsLoadAll()
         ui->checkBoxAutoScrollLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", true).value<bool>());
         ui->checkBoxAutoSizeColumnsLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", true).value<bool>());
         ui->checkBoxScrollLogEnableSorting->setChecked(appSettings.value("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", true).value<bool>());
+        ui->checkBoxAutoSizeColumnsLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", true).value<bool>());
+        ui->checkBoxAutoScrollLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", true).value<bool>());
+        ui->checkBoxScrollLogEnableSorting->setChecked(appSettings.value("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", true).value<bool>());
         ui->comboBoxAddTextMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxAddTextMode.currentIndex").value<int>());
         ui->comboBoxBaudRates->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxBaudRates.currentIndex").value<int>());
         ui->comboBoxClockSource->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxClockSource.currentIndex").value<int>());
@@ -306,6 +309,7 @@ void MainWindow::settingsLoadAll()
         ui->lineEditSaveLogPath->setText(appSettings.value("data/lineEditSaveLogPath.text").value<QString>());
         ui->lineEditUDPTargetIP->setText(appSettings.value("data/lineEditUDPTargetIP.text").value<QString>());
         ui->pushButtonEnablePlot->setChecked(appSettings.value("GUI_Elements/pushButtonEnablePlot.isChecked", false).value<bool>());
+        ui->pushButtonEnableTableLog->setChecked(appSettings.value("GUI_Elements/pushButtonEnableTableLog.isChecked", false).value<bool>());
         ui->spinBoxMaxGraphs->setValue(appSettings.value("layout/spinBoxMaxGraphs.value").value<int>());
         ui->spinBoxMaxLines->setValue(appSettings.value("layout/spinBoxMaxLines.value").value<int>());
         ui->spinBoxMaxTimeRange->setValue(appSettings.value("layout/spinBoxMaxTimeRange.value").value<int>());
@@ -314,6 +318,7 @@ void MainWindow::settingsLoadAll()
         ui->spinBoxScrollingTimeRange->setValue(appSettings.value("layout/spinBoxScrollingTimeRange.value").value<int>());
         ui->spinBoxUDPReceivePort->setValue(appSettings.value("layout/spinBoxUDPReceivePort.value").value<int>());
         ui->spinBoxUDPTargetPort->setValue(appSettings.value("layout/spinBoxUDPTargetPort.value").value<int>());
+        ui->spinBoxMaxRowsLogTable->setValue(appSettings.value("layout/spinBoxMaxRowsLogTable.value").value<int>());
         ui->tabWidgetControlSection->setCurrentIndex(appSettings.value("GUI_Elements/tabWidgetControlSection.currentIndex").value<int>());
 
         if (ui->lineEditLoadFilePath->text().isEmpty() == false)
@@ -387,6 +392,9 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", ui->checkBoxAutoScrollLogTable->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", ui->checkBoxAutoSizeColumnsLogTable->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", ui->checkBoxScrollLogEnableSorting->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", ui->checkBoxAutoSizeColumnsLogTable->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", ui->checkBoxAutoScrollLogTable->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", ui->checkBoxScrollLogEnableSorting->isChecked());
         appSettings.setValue("GUI_Elements/comboBoxAddTextMode.currentIndex", ui->comboBoxAddTextMode->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxBaudRates.currentIndex", ui->comboBoxBaudRates->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxClockSource.currentIndex", ui->comboBoxClockSource->currentIndex());
@@ -416,6 +424,8 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("layout/spinBoxScrollingTimeRange.value", ui->spinBoxScrollingTimeRange->value());
         appSettings.setValue("layout/spinBoxUDPReceivePort.value", ui->spinBoxUDPReceivePort->value());
         appSettings.setValue("layout/spinBoxUDPTargetPort.value", ui->spinBoxUDPTargetPort->value());
+        appSettings.setValue("layout/spinBoxMaxRowsLogTable.value", ui->spinBoxMaxRowsLogTable->value());
+        appSettings.setValue("layout/pushButtonEnableTableLog.isChecked", ui->pushButtonEnableTableLog->isChecked());
     }
     // ------------------------- //
 
@@ -506,6 +516,9 @@ void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, 
             firstRow.clear();
             for (auto i = 0; i < ui->tableWidgetLogTable->columnCount(); ++i)
                 firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text().trimmed());
+
+            if (ui->checkBoxAutoSizeColumnsLogTable->isChecked())
+                ui->tableWidgetLogTable->resizeColumnsToContents();
         }
 
         if (firstRow.contains(label))
@@ -842,9 +855,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                       .arg(graph->name())
-                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                       .arg(QString::number(temp.y(), 'f', 5)),
+                           .arg(graph->name())
+                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                           .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -1164,13 +1177,13 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
 
-                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
 
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
 
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
-                  !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
+              !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1791,18 +1804,7 @@ void MainWindow::on_checkBoxShowLegend_toggled(bool checked)
 
 void MainWindow::on_actionSave_graph_as_triggered()
 {
-    QString default_name = "export.png";
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::homePath() + "/" + default_name, tr("Image Files (*.png *.jpg *.bmp)"));
 
-    if (filename.isEmpty())
-        return;
-
-    QImage bitmap(ui->widgetChart->size(), QImage::Format_ARGB32_Premultiplied);
-    QPainter painter(&bitmap);
-    ui->widgetChart->render(&painter, QPoint(), QRegion(), QWidget::DrawChildren);
-    QImageWriter writer(filename, "png");
-    writer.write(bitmap);
-    qDebug() << "Wrote image to file";
 }
 
 void MainWindow::on_actionPrint_Graph_triggered()
@@ -2395,25 +2397,7 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
 
 void MainWindow::on_actionTo_CSV_triggered() // WORKS
 {
-    QStringList labelList = parser.getLabelStorage();
-    QList<double> numericDataList = parser.getDataStorage();
 
-    QStringList columnNames = labelList;
-    columnNames.removeDuplicates();
-
-    QList<QList<double>> columnsData;
-    for (auto i = 0; i < columnNames.count(); ++i)
-    {
-        columnsData.append(*new QList<double>);
-
-        while (labelList.contains(columnNames[i]))
-        {
-            columnsData[columnsData.count() - 1].append(numericDataList.takeAt(labelList.indexOf(columnNames[i])));
-            labelList.removeAt(labelList.indexOf(columnNames[i]));
-        }
-    }
-
-    this->exportArraysToCSV(columnNames, columnsData, ',');
 }
 
 void MainWindow::on_comboBoxTableViewMode_currentIndexChanged(int index)
@@ -2544,6 +2528,10 @@ void MainWindow::on_pushButtonEnableTableLog_toggled(bool checked)
 
 void MainWindow::on_lineEditLoadFilePath_editingFinished()
 {
+}
+
+void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &arg1)
+{
     QFile file(ui->lineEditLoadFilePath->text());
 
     if (!file.exists())
@@ -2556,4 +2544,53 @@ void MainWindow::on_lineEditLoadFilePath_editingFinished()
 
     QString info = "Size: " + QString::number(file.size());
     ui->lineEditFileInfo->setText(info);
+}
+
+void MainWindow::on_actionFull_parser_data_triggered()
+{
+    ui->splitterGraphTable->setSizes({0, ui->splitterGraphTable->height()});
+}
+
+void MainWindow::on_actionImage_triggered()
+{
+    QString default_name = "export.png";
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::homePath() + "/" + default_name, tr("Image Files (*.png *.jpg *.bmp)"));
+
+    if (filename.isEmpty())
+        return;
+
+    QImage bitmap(ui->widgetChart->size(), QImage::Format_ARGB32_Premultiplied);
+    QPainter painter(&bitmap);
+    ui->widgetChart->render(&painter, QPoint(), QRegion(), QWidget::DrawChildren);
+    QImageWriter writer(filename, "png");
+    writer.write(bitmap);
+    qDebug() << "Wrote image to file";
+}
+
+void MainWindow::on_action_CSV_triggered()
+{
+
+}
+
+void MainWindow::on_actionto_csv_triggered()
+{
+    QStringList labelList = parser.getLabelStorage();
+    QList<double> numericDataList = parser.getDataStorage();
+
+    QStringList columnNames = labelList;
+    columnNames.removeDuplicates();
+
+    QList<QList<double>> columnsData;
+    for (auto i = 0; i < columnNames.count(); ++i)
+    {
+        columnsData.append(*new QList<double>);
+
+        while (labelList.contains(columnNames[i]))
+        {
+            columnsData[columnsData.count() - 1].append(numericDataList.takeAt(labelList.indexOf(columnNames[i])));
+            labelList.removeAt(labelList.indexOf(columnNames[i]));
+        }
+    }
+
+    this->exportArraysToCSV(columnNames, columnsData, ',');
 }
