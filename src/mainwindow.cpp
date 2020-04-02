@@ -1103,6 +1103,7 @@ void MainWindow::on_processUDP()
         this->processChart(labelList, numericDataList, timeStamps);
         this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), udpInput);
         this->processTable(labelList, numericDataList); // Fill tableWidget
+        this->processLogTable(timeStamps, labelList, numericDataList);
     }
 }
 

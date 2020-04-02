@@ -9,3 +9,4 @@ sendSerial(ui->comboBoxSend->currentText()); // TODO
 sendUDPDatagram(ui->comboBoxSend->currentText());
 }
 
+- time ref used in logging ?
