@@ -214,7 +214,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !", true);
@@ -598,7 +598,7 @@ void MainWindow::sendMessageLineEdit(int mode)
     }
 
     if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
-        addLog("\n >> " + ui->comboBoxSend->currentText() + "\n\n", ui->comboBoxAddTextMode->currentIndex());
+        addLog("\n >> " + ui->comboBoxSend->currentText(), ui->comboBoxAddTextMode->currentIndex());
 
     ui->comboBoxSend->setCurrentText("");
     ui->comboBoxSend->model()->sort(0, Qt::SortOrder::AscendingOrder); // sort alphabetically
@@ -855,9 +855,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                           .arg(graph->name())
-                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                           .arg(QString::number(temp.y(), 'f', 5)),
+                       .arg(graph->name())
+                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                       .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -1177,13 +1177,13 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
 
-            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
 
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
 
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
-              !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+                 (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
+                  !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1303,7 +1303,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             sendMessageKeyEvent(event);
 
             if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
-                addLog(">>\t" + event->text() + "\n", ui->comboBoxAddTextMode->currentIndex());
+                addLog(">>\n\t" + event->text(), ui->comboBoxAddTextMode->currentIndex());
         }
     }
     else if (ui->widgetChart->hasFocus())
@@ -2395,11 +2395,6 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
     }
 }
 
-void MainWindow::on_actionTo_CSV_triggered() // WORKS
-{
-
-}
-
 void MainWindow::on_comboBoxTableViewMode_currentIndexChanged(int index)
 {
     this->ui->stackedWidgetTableView->setCurrentIndex(index);
@@ -2482,9 +2477,7 @@ void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<double>> d
 
         int maxRowCount = 0;
         foreach (auto column, dataColums)
-        {
             maxRowCount = qMax(maxRowCount, column.count());
-        }
 
         for (int i = 0; i < maxRowCount; ++i) // rows
         {
@@ -2526,10 +2519,6 @@ void MainWindow::on_pushButtonEnableTableLog_toggled(bool checked)
     }
 }
 
-void MainWindow::on_lineEditLoadFilePath_editingFinished()
-{
-}
-
 void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &arg1)
 {
     QFile file(ui->lineEditLoadFilePath->text());
@@ -2567,30 +2556,39 @@ void MainWindow::on_actionImage_triggered()
     qDebug() << "Wrote image to file";
 }
 
-void MainWindow::on_action_CSV_triggered()
-{
 
-}
+
+//void MainWindow::on_actionto_csv_triggered()
+//{
+
+//    //    QStringList labelList = parser.getLabelStorage();
+
+//    //    QStringList columnNames = labelList;
+//    //    QList<QList<double>> columnsData;
+
+//    //    QList<double> numericDataList = parser.getDataStorage();
+
+//    //    columnNames.removeDuplicates();
+
+//    //    for (auto i = 0; i < columnNames.count(); ++i)
+//    //    {
+//    //        columnsData.append(*new QList<double>);
+
+//    //        while (labelList.contains(columnNames[i]))
+//    //        {
+//    //            columnsData[columnsData.count() - 1].append(numericDataList.takeAt(labelList.indexOf(columnNames[i])));
+//    //            labelList.removeAt(labelList.indexOf(columnNames[i]));
+//    //        }
+//    //    }
+
+//}
 
 void MainWindow::on_actionto_csv_triggered()
 {
-    QStringList labelList = parser.getLabelStorage();
-    QList<double> numericDataList = parser.getDataStorage();
+        QStringList columnNames;
+        QList<QList<double>> columnsData;
 
-    QStringList columnNames = labelList;
-    columnNames.removeDuplicates();
+        parser.getCSVReadyData(&columnNames, &columnsData);
 
-    QList<QList<double>> columnsData;
-    for (auto i = 0; i < columnNames.count(); ++i)
-    {
-        columnsData.append(*new QList<double>);
-
-        while (labelList.contains(columnNames[i]))
-        {
-            columnsData[columnsData.count() - 1].append(numericDataList.takeAt(labelList.indexOf(columnNames[i])));
-            labelList.removeAt(labelList.indexOf(columnNames[i]));
-        }
-    }
-
-    this->exportArraysToCSV(columnNames, columnsData, ',');
+        this->exportArraysToCSV(columnNames, columnsData, ',');
 }

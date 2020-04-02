@@ -72,7 +72,6 @@ private slots:
     void on_actionSave_As_triggered();
     void on_actionSave_graph_as_triggered();
     void on_actionShow_parser_data_triggered();
-    void on_actionTo_CSV_triggered();
     void on_actionWhat_s_new_triggered();
     void on_actionWhats_this_triggered();
     void on_chartBeforeReplotSlot();
@@ -153,7 +152,11 @@ private slots:
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
     void on_pushButtonEnableTableLog_toggled(bool checked);
-    void on_lineEditLoadFilePath_editingFinished();
+    void on_lineEditLoadFilePath_textChanged(const QString &arg1);
+    void on_actionFull_parser_data_triggered();
+    void on_actionImage_triggered();
+
+    void on_actionto_csv_triggered();
 
 private:
     // QCompleter *completer;

@@ -196,19 +196,42 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
             }
         }
 
-
-
         // Look for data
         for (auto i = 0; i < inputStringSplitArray.count(); ++i)
         {
             if (mainSymbols.exactMatch(inputStringSplitArray[i]))
             {
+                if (i >= csvLabels.count())
+                    continue; // TODO ERROR REPORTING
                 stringListLabels.append(csvLabels[i]);
                 listNumericData.append(inputStringSplitArray[i].toDouble());
                 listTimeStamp.append(latestTimeStamp.msecsSinceStartOfDay());
             }
         }
     }
+}
+
+void Parser::getCSVReadyData(QStringList *columnNames, QList<QList<double>> *dataColumns)
+{
+    QStringList labelStorage = this->getLabelStorage();
+    QStringList tempColumnNames = labelStorage;
+    tempColumnNames.removeDuplicates();
+    QList<QList<double>> tempColumnsData;
+    QList<double> numericDataList = this->getDataStorage();
+
+    for (auto i = 0; i < tempColumnNames.count(); ++i)
+    {
+        tempColumnsData.append(*new QList<double>);
+
+        while (labelStorage.contains(tempColumnNames[i]))
+        {
+            tempColumnsData[tempColumnsData.count() - 1].append(numericDataList.takeAt(labelStorage.indexOf(tempColumnNames[i])));
+            labelStorage.removeAt(labelStorage.indexOf(tempColumnNames[i]));
+        }
+    }
+
+    *columnNames = tempColumnNames;
+    *dataColumns = tempColumnsData;
 }
 
 QStringList Parser::getStringListNumericData()

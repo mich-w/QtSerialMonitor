@@ -33,6 +33,7 @@ public:
     void restartChartTimer();
     void setParsingTimeRange(QTime minTime, QTime maxTime);
     void setReportProgress(bool isEnabled);
+    void getCSVReadyData(QStringList *columnNames, QList<QList<double> > *dataColumns);
 signals:
     void updateProgress(float *percent);
 public slots:
