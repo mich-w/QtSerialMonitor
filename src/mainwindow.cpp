@@ -40,6 +40,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::on_aboutToQuitSlot()
 {
+    qDebug() << "on_aboutToQuitSlot";
     settingsSaveAll();
 }
 
@@ -214,7 +215,7 @@ void MainWindow::settingsLoadAll()
         }
 
         if (appSettings.value("Info/organizationName").value<QString>() != appSettings.organizationName() ||
-                appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
+            appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
             addLog("App >>\t Error loading settings. Config file incorrect !", true);
@@ -324,7 +325,9 @@ void MainWindow::settingsLoadAll()
         if (ui->lineEditLoadFilePath->text().isEmpty() == false)
         {
             QFile file(ui->lineEditLoadFilePath->text());
-            getFileTimeRange(&file);
+            QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+            ui->timeEditMinParsingTime->setTime(timeRange.first());
+            ui->timeEditMaxParsingTime->setTime(timeRange.last());
         }
 
         qDebug() << "Loaded settings";
@@ -543,32 +546,6 @@ void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, 
             ui->tableWidgetLogTable->removeRow(0);
         }
     }
-
-    //    if (ui->checkBoxAutoSizeColumnsLogTable->isChecked())
-    //        ui->tableWidgetLogTable->resizeColumnsToContents();
-
-    //    if (ui->checkBoxTableAutoResize->isChecked())
-    //    {
-    //        ui->tableWidgetParsedData->resizeColumnsToContents();
-    //        ui->tableWidgetParsedData->resizeRowsToContents();
-    //    }
-    //        if (ui->spinBoxRemoveOldLabels->value() > 0)
-    //        {
-    //            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
-    //            {
-    //                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
-    //                    tableMissingCount[i] = 0;
-    //                else
-    //                    tableMissingCount[i]++;
-
-    //                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
-    //                {
-    //                    ui->tableWidgetParsedData->removeRow(i);
-    //                    tableMissingCount.removeAt(i);
-    //                }
-    //            }
-    //        }
-    //    }
 }
 
 void MainWindow::on_printIntroChangelog() // TODO
@@ -593,7 +570,7 @@ void MainWindow::sendMessageLineEdit(int mode)
         sendUDPDatagram(ui->comboBoxSend->currentText());
     else
     {
-        sendSerial(ui->comboBoxSend->currentText());
+        sendSerial(ui->comboBoxSend->currentText()); // TODO
         sendUDPDatagram(ui->comboBoxSend->currentText());
     }
 
@@ -855,9 +832,9 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                           "<td>Y: %L3</td>"
                           "</tr>"
                           "</table>")
-                       .arg(graph->name())
-                       .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
-                       .arg(QString::number(temp.y(), 'f', 5)),
+                           .arg(graph->name())
+                           .arg(QTime::fromMSecsSinceStartOfDay(temp.x() * 1000).toString("hh:mm:ss:zzz"))
+                           .arg(QString::number(temp.y(), 'f', 5)),
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
@@ -1177,13 +1154,13 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
 
         if (canAddGraph && ui->widgetChart->graphCount() < ui->spinBoxMaxGraphs->value() &&
 
-                ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
+            ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
 
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-                  ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
+              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
 
-                 (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
-                  !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
+              !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -1379,62 +1356,6 @@ void MainWindow::loadFromRAM(bool loadText)
         return;
 
     processChart(RAMLabels, RAMData, RAMTime);
-}
-
-void MainWindow::getFileTimeRange(QFile *file) // TODO move to reader !
-{
-    if (file->open(QIODevice::ReadOnly))
-    {
-        QString allData = file->readAll();
-        file->close();
-
-        QStringList readFileSplitLines = allData.split(QRegExp("[\\n+\\r+]"), QString::SplitBehavior::SkipEmptyParts);
-
-        for (auto i = 0; i < readFileSplitLines.count(); ++i)
-        {
-            QStringList inputStringSplitArrayTopLine = readFileSplitLines[i].simplified().split(QRegExp("[\\s+,]"), QString::SplitBehavior::SkipEmptyParts);                                     // rozdzielamy traktująac spacje jako separator
-            QStringList inputStringSplitArrayButtomLine = readFileSplitLines[readFileSplitLines.count() - 1 - i].simplified().split(QRegExp("[\\s+,]"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
-            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"};                                                                                       // TODO !!!
-
-            bool foundTime[2] = {false};
-
-            for (auto j = 0; j < inputStringSplitArrayTopLine.count(); ++j)
-            {
-                foreach (auto timeFormat, searchTimeFormatList)
-                {
-                    if (QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat).isValid())
-                    {
-                        ui->timeEditMinParsingTime->setTime(QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat));
-                        foundTime[0] = true;
-                        break;
-                    }
-                }
-            }
-
-            for (auto j = 0; j < inputStringSplitArrayButtomLine.count(); ++j)
-            {
-                foreach (auto timeFormat, searchTimeFormatList)
-                {
-                    if (QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat).isValid())
-                    {
-                        ui->timeEditMaxParsingTime->setTime(QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat));
-                        foundTime[1] = true;
-
-                        break;
-                    }
-                }
-            }
-
-            if (foundTime[0] && foundTime[1])
-                return;
-        }
-    }
-    else
-    {
-        qDebug() << "Get file time range - invalid file ?";
-        ui->timeEditMaxParsingTime->setTime(QTime());
-        ui->timeEditMinParsingTime->setTime(QTime());
-    }
 }
 
 void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
@@ -1804,7 +1725,6 @@ void MainWindow::on_checkBoxShowLegend_toggled(bool checked)
 
 void MainWindow::on_actionSave_graph_as_triggered()
 {
-
 }
 
 void MainWindow::on_actionPrint_Graph_triggered()
@@ -2105,7 +2025,9 @@ void MainWindow::on_pushButtonLoadPath_clicked()
         return;
     }
 
-    getFileTimeRange(&file);
+    QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+    ui->timeEditMinParsingTime->setTime(timeRange.first());
+    ui->timeEditMaxParsingTime->setTime(timeRange.last());
 
     QString info = "Size: " + QString::number(file.size());
     ui->lineEditFileInfo->setText(info);
@@ -2529,7 +2451,9 @@ void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &arg1)
         return;
     }
 
-    getFileTimeRange(&file);
+    QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+    ui->timeEditMinParsingTime->setTime(timeRange.first());
+    ui->timeEditMaxParsingTime->setTime(timeRange.last());
 
     QString info = "Size: " + QString::number(file.size());
     ui->lineEditFileInfo->setText(info);
@@ -2555,8 +2479,6 @@ void MainWindow::on_actionImage_triggered()
     writer.write(bitmap);
     qDebug() << "Wrote image to file";
 }
-
-
 
 //void MainWindow::on_actionto_csv_triggered()
 //{
@@ -2585,10 +2507,10 @@ void MainWindow::on_actionImage_triggered()
 
 void MainWindow::on_actionto_csv_triggered()
 {
-        QStringList columnNames;
-        QList<QList<double>> columnsData;
+    QStringList columnNames;
+    QList<QList<double>> columnsData;
 
-        parser.getCSVReadyData(&columnNames, &columnsData);
+    parser.getCSVReadyData(&columnNames, &columnsData);
 
-        this->exportArraysToCSV(columnNames, columnsData, ',');
+    this->exportArraysToCSV(columnNames, columnsData, ',');
 }

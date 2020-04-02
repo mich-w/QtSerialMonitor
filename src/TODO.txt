@@ -1,3 +1,11 @@
 - void MainWindow::getFileTimeRange(QFile *file) // TODO move to reader !
-- truncate is still buggy
+-     if (mode == 0)
+sendSerial(ui->comboBoxSend->currentText());
+else if (mode == 1)
+sendUDPDatagram(ui->comboBoxSend->currentText());
+else
+{
+sendSerial(ui->comboBoxSend->currentText()); // TODO
+sendUDPDatagram(ui->comboBoxSend->currentText());
+}
 

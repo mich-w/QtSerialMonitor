@@ -62,8 +62,10 @@ private slots:
     void on_action50_50_view_triggered();
     void on_actionAbout_Qt_triggered();
     void on_actionFull_chart_triggered();
+    void on_actionFull_parser_data_triggered();
     void on_actionFull_text_view_triggered();
     void on_actionHide_parser_data_triggered();
+    void on_actionImage_triggered();
     void on_actionInfo_triggered();
     void on_actionPlotter_triggered();
     void on_actionPrint_Graph_triggered();
@@ -72,6 +74,7 @@ private slots:
     void on_actionSave_As_triggered();
     void on_actionSave_graph_as_triggered();
     void on_actionShow_parser_data_triggered();
+    void on_actionto_csv_triggered();
     void on_actionWhat_s_new_triggered();
     void on_actionWhats_this_triggered();
     void on_chartBeforeReplotSlot();
@@ -108,6 +111,7 @@ private slots:
     void on_lineEditExternalClockLabel_editingFinished();
     void on_lineEditHighlight_returnPressed();
     void on_lineEditLoadFilePath_customContextMenuRequested(const QPoint &pos);
+    void on_lineEditLoadFilePath_textChanged(const QString &arg1);
     void on_lineEditSaveFileName_editingFinished();
     void on_printIntroChangelog();
     void on_printLog(QPrinter *printer);
@@ -122,6 +126,7 @@ private slots:
     void on_pushButtonClearLogTable_clicked();
     void on_pushButtonClearTable_clicked();
     void on_pushButtonEnablePlot_toggled(bool checked);
+    void on_pushButtonEnableTableLog_toggled(bool checked);
     void on_pushButtonExportLogTableToCSV_clicked();
     void on_pushButtonLoadFile_clicked();
     void on_pushButtonLoadPath_clicked();
@@ -151,12 +156,6 @@ private slots:
     void on_toolButtonHideTable_clicked();
     void on_tracerShowPointValue(QMouseEvent *event);
     void on_updateSerialDeviceList();
-    void on_pushButtonEnableTableLog_toggled(bool checked);
-    void on_lineEditLoadFilePath_textChanged(const QString &arg1);
-    void on_actionFull_parser_data_triggered();
-    void on_actionImage_triggered();
-
-    void on_actionto_csv_triggered();
 
 private:
     // QCompleter *completer;
@@ -186,7 +185,6 @@ private:
     void createChartTracer();
     void createTimers();
     void exportTableLogToCSV(QTableView *table, QChar sep = ',');
-    void getFileTimeRange(QFile *file);
     void loadFromRAM(bool loadText);
     void menageAutoCompleteList(QString input);
     void processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList);
