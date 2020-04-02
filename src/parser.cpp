@@ -161,7 +161,7 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
         // Look for time reference
         for (auto i = 0; i < inputStringSplitArray.count(); ++i)
         {
-            if  (useExternalLabel == true && externalClockLabel.isEmpty() == false  && i == csvLabels.indexOf(externalClockLabel))
+            if (useExternalLabel == true && externalClockLabel.isEmpty() == false && i == csvLabels.indexOf(externalClockLabel))
             {
                 qDebug() << "inputStringSplitArray: " + QString::number(inputStringSplitArray[i].toFloat());
 
@@ -169,7 +169,6 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
                 qDebug() << "TIME: " + QString::number(inputStringSplitArray[i].toFloat());
                 qDebug() << "latestTimeStamp: " + latestTimeStamp.toString();
                 break;
-
             }
             else if (useExternalLabel == false)
             {
@@ -179,7 +178,6 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
                     {
                         latestTimeStamp = QTime::fromString(inputStringSplitArray[i], timeFormat);
 
-
                         if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
                         {
                             if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
@@ -187,8 +185,6 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
                                 continue;
                             }
                         }
-
-
 
                         break;
                     }
@@ -234,36 +230,16 @@ void Parser::getCSVReadyData(QStringList *columnNames, QList<QList<double>> *dat
     *dataColumns = tempColumnsData;
 }
 
-QStringList Parser::getStringListNumericData()
-{
-    return stringListNumericData;
-}
-
-QStringList Parser::getStringListLabels()
-{
-    return stringListLabels;
-}
-
-QList<double> Parser::getListNumericValues()
-{
-    return listNumericData;
-}
-
-QList<long> Parser::getListTimeStamp()
-{
-    return listTimeStamp;
-}
-
-void Parser::clearExternalClock()
-{
-    latestTimeStamp.setHMS(0, 0, 0, 0);
-}
-
-void Parser::restartChartTimer()
-{
-    parserClock->restart();
-}
-
+QList<double> Parser::getDataStorage() { return dataStorage; }
+QList<double> Parser::getListNumericValues() { return listNumericData; }
+QList<long> Parser::getListTimeStamp() { return listTimeStamp; }
+QList<long> Parser::getTimeStorage() { return timeStampStorage; }
+QStringList Parser::getLabelStorage() { return labelStorage; }
+QStringList Parser::getStringListLabels() { return stringListLabels; }
+QStringList Parser::getStringListNumericData() { return stringListNumericData; }
+QStringList Parser::getTextList() { return textStorage; }
+void Parser::clearExternalClock() { latestTimeStamp.setHMS(0, 0, 0, 0); }
+void Parser::restartChartTimer() { parserClock->restart(); }
 void Parser::parserClockAddMSecs(int millis)
 {
     parserClock->addMSecs(millis);
@@ -278,26 +254,6 @@ void Parser::appendSetToMemory(QStringList newlabelList, QList<double> newDataLi
 
     if (!text.isEmpty())
         textStorage.append(text);
-}
-
-QStringList Parser::getLabelStorage()
-{
-    return labelStorage;
-}
-
-QList<double> Parser::getDataStorage()
-{
-    return dataStorage;
-}
-
-QList<long> Parser::getTimeStorage()
-{
-    return timeStampStorage;
-}
-
-QStringList Parser::getTextList()
-{
-    return textStorage;
 }
 
 void Parser::clearStorage()
@@ -327,12 +283,5 @@ void Parser::resetTimeRange()
     maximumTime.setHMS(0, 0, 0);
 }
 
-void Parser::abort()
-{
-    abortFlag = true;
-}
-
-void Parser::setReportProgress(bool isEnabled)
-{
-    canReportProgress = isEnabled;
-}
+void Parser::abort() { abortFlag = true; }
+void Parser::setReportProgress(bool isEnabled) { canReportProgress = isEnabled; }

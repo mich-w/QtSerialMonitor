@@ -93,12 +93,6 @@ QList<QTime> FileReader::getFileTimeRange(QFile *file)
     }
 }
 
-void FileReader::setReadInterval(int newVal)
-{
-    readInterval = newVal;
-}
+void FileReader::setReadInterval(int newVal) { readInterval = newVal; }
 
-void FileReader::abortRead()
-{
-    fileReadTimer.stop(); // ...
-}
+void FileReader::abortRead() { fileReadTimer.stop(); }
