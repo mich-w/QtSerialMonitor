@@ -1356,7 +1356,9 @@ void MainWindow::loadFromRAM(bool loadText)
     if (RAMLabels.isEmpty() || RAMData.isEmpty() || RAMTime.isEmpty())
         return;
 
-    processChart(RAMLabels, RAMData, RAMTime);
+    this->processChart(RAMLabels, RAMData, RAMTime);
+    this->processTable(RAMLabels,RAMData);
+    this->processLogTable(RAMTime, RAMLabels, RAMData);
 }
 
 void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
