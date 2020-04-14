@@ -79,7 +79,7 @@ void MainWindow::setupGUI()
 
     // ----------------------- standardBaudRates ----------------------- //
     {
-        foreach (auto item, QSerialPortInfo::standardBaudRates())
+        foreach (auto item, serial.getAvailibleBaudRates())
             ui->comboBoxBaudRates->addItem(QString::number(item));
 
         ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2); // select middle
@@ -1583,7 +1583,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 {
     if (checked)
     {
-        if (serial.getAvailiblePortsCount() < 1)
+        if (serial.getAvailiblePorts().count() < 1)
         {
             addLog("App >>\t No devices available", true);
             addLog("App >>\t Unable to open serial port!", true);
