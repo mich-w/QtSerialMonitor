@@ -109,36 +109,137 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
     }
 }
 
-QStringList Parser::getStringListNumericData()
+void Parser::parseCSV(QString inputString, bool useExternalLabel, QString externalClockLabel)
 {
-    return stringListNumericData;
+    listNumericData.clear();
+    stringListLabels.clear();
+    listTimeStamp.clear();
+    lineCount = 0;
+
+    QStringList inputStringSplitArrayLines = inputString.split(QRegExp("[\\n+\\r+]"), QString::SplitBehavior::SkipEmptyParts);
+    lineCount = inputStringSplitArrayLines.count();
+
+    QStringList csvLabels; // !
+
+    for (auto l = 0; l < lineCount; ++l)
+    {
+        parsingProgressPercent = (float)l / lineCount * 100.0F;
+        if (l % 50 == 0 && canReportProgress)
+        {
+            emit updateProgress(&parsingProgressPercent);
+            QApplication::processEvents(); // Prevents app for freeezeng during processing large files and allows to udpate progress percent. A very cheap trick...
+        }
+
+        if (abortFlag)
+        {
+            abortFlag = false;
+            break;
+        }
+
+        QRegExp mainSymbols("[+-]?\\d*\\.?\\d+"); // float only   //  QRegExp mainSymbols("[-+]?[0-9]*\.?[0-9]+");
+        QRegExp alphanumericSymbols("\\w+");
+        QRegExp sepSymbols("[=,]");
+
+        inputStringSplitArrayLines[l].replace(sepSymbols, " ");
+        inputStringSplitArrayLines[l].remove("\"");
+
+        QStringList inputStringSplitArray = inputStringSplitArrayLines[l].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
+
+        // Look for labels
+        if (l == 0)
+        {
+            for (auto i = 0; i < inputStringSplitArray.count(); ++i)
+            {
+                if (!mainSymbols.exactMatch(inputStringSplitArray[i]))
+                {
+                    if (!csvLabels.contains(inputStringSplitArray[i]))
+                        csvLabels.append(inputStringSplitArray[i]);
+                }
+            }
+        }
+
+        // Look for time reference
+        for (auto i = 0; i < inputStringSplitArray.count(); ++i)
+        {
+            if (useExternalLabel == true && externalClockLabel.isEmpty() == false && i == csvLabels.indexOf(externalClockLabel))
+            {
+                qDebug() << "inputStringSplitArray: " + QString::number(inputStringSplitArray[i].toFloat());
+
+                latestTimeStamp = QTime::fromMSecsSinceStartOfDay((int)inputStringSplitArray[i].toFloat());
+                qDebug() << "TIME: " + QString::number(inputStringSplitArray[i].toFloat());
+                qDebug() << "latestTimeStamp: " + latestTimeStamp.toString();
+                break;
+            }
+            else if (useExternalLabel == false)
+            {
+                foreach (auto timeFormat, searchTimeFormatList)
+                {
+                    if (QTime::fromString(inputStringSplitArray[i], timeFormat).isValid())
+                    {
+                        latestTimeStamp = QTime::fromString(inputStringSplitArray[i], timeFormat);
+
+                        if (minimumTime != QTime(0, 0, 0) && maximumTime != QTime(0, 0, 0))
+                        {
+                            if (latestTimeStamp < minimumTime || latestTimeStamp > maximumTime)
+                            {
+                                continue;
+                            }
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Look for data
+        for (auto i = 0; i < inputStringSplitArray.count(); ++i)
+        {
+            if (mainSymbols.exactMatch(inputStringSplitArray[i]))
+            {
+                if (i >= csvLabels.count())
+                    continue; // TODO ERROR REPORTING
+                stringListLabels.append(csvLabels[i]);
+                listNumericData.append(inputStringSplitArray[i].toDouble());
+                listTimeStamp.append(latestTimeStamp.msecsSinceStartOfDay());
+            }
+        }
+    }
 }
 
-QStringList Parser::getStringListLabels()
+void Parser::getCSVReadyData(QStringList *columnNames, QList<QList<double>> *dataColumns)
 {
-    return stringListLabels;
+    QStringList labelStorage = this->getLabelStorage();
+    QStringList tempColumnNames = labelStorage;
+    tempColumnNames.removeDuplicates();
+    QList<QList<double>> tempColumnsData;
+    QList<double> numericDataList = this->getDataStorage();
+
+    for (auto i = 0; i < tempColumnNames.count(); ++i)
+    {
+        tempColumnsData.append(*new QList<double>);
+
+        while (labelStorage.contains(tempColumnNames[i]))
+        {
+            tempColumnsData[tempColumnsData.count() - 1].append(numericDataList.takeAt(labelStorage.indexOf(tempColumnNames[i])));
+            labelStorage.removeAt(labelStorage.indexOf(tempColumnNames[i]));
+        }
+    }
+
+    *columnNames = tempColumnNames;
+    *dataColumns = tempColumnsData;
 }
 
-QList<double> Parser::getListNumericValues()
-{
-    return listNumericData;
-}
-
-QList<long> Parser::getListTimeStamp()
-{
-    return listTimeStamp;
-}
-
-void Parser::clearExternalClock()
-{
-    latestTimeStamp.setHMS(0, 0, 0, 0);
-}
-
-void Parser::restartChartTimer()
-{
-    parserClock->restart();
-}
-
+QList<double> Parser::getDataStorage() { return dataStorage; }
+QList<double> Parser::getListNumericValues() { return listNumericData; }
+QList<long> Parser::getListTimeStamp() { return listTimeStamp; }
+QList<long> Parser::getTimeStorage() { return timeStampStorage; }
+QStringList Parser::getLabelStorage() { return labelStorage; }
+QStringList Parser::getStringListLabels() { return stringListLabels; }
+QStringList Parser::getStringListNumericData() { return stringListNumericData; }
+QStringList Parser::getTextList() { return textStorage; }
+void Parser::clearExternalClock() { latestTimeStamp.setHMS(0, 0, 0, 0); }
+void Parser::restartChartTimer() { parserClock->restart(); }
 void Parser::parserClockAddMSecs(int millis)
 {
     parserClock->addMSecs(millis);
@@ -153,26 +254,6 @@ void Parser::appendSetToMemory(QStringList newlabelList, QList<double> newDataLi
 
     if (!text.isEmpty())
         textStorage.append(text);
-}
-
-QStringList Parser::getLabelStorage()
-{
-    return labelStorage;
-}
-
-QList<double> Parser::getDataStorage()
-{
-    return dataStorage;
-}
-
-QList<long> Parser::getTimeStorage()
-{
-    return timeStampStorage;
-}
-
-QStringList Parser::getTextList()
-{
-    return textStorage;
 }
 
 void Parser::clearStorage()
@@ -202,12 +283,5 @@ void Parser::resetTimeRange()
     maximumTime.setHMS(0, 0, 0);
 }
 
-void Parser::abort()
-{
-    abortFlag = true;
-}
-
-void Parser::setReportProgress(bool isEnabled)
-{
-    canReportProgress = isEnabled;
-}
+void Parser::abort() { abortFlag = true; }
+void Parser::setReportProgress(bool isEnabled) { canReportProgress = isEnabled; }

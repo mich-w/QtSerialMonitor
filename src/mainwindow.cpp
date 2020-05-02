@@ -13,6 +13,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     settingsLoadAll();
 
+    infoDialog.setFixedSize(800, 600);
+
     connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(on_aboutToQuitSlot()));
 }
 
@@ -38,6 +40,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::on_aboutToQuitSlot()
 {
+    qDebug() << "on_aboutToQuitSlot";
     settingsSaveAll();
 }
 
@@ -54,11 +57,14 @@ void MainWindow::createTimers()
 
 void MainWindow::setupGUI()
 {
-    qDebug() << QDateTime::currentDateTime().toString("yyyy.MM.dd hh:mm:ss:zzz");
+    // ----------------------- MainWindow ----------------------- //
+    {
+        connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
+        this->setWindowTitle(this->windowTitle() + " " + VERSION);
+    }
+    // ---------------------------------------------------------- //
 
-    this->setWindowTitle(this->windowTitle() + " " + VERSION);
-
-    // ui->textBrowserLogs
+    // ----------------------- textBrowserLogs ----------------------- //
     {
         ui->textBrowserLogs->document()->setMaximumBlockCount(ui->spinBoxMaxLines->value());
 
@@ -69,63 +75,16 @@ void MainWindow::setupGUI()
 
         //   highlighter = new Highlighter(ui->textBrowserLogs->document());
     }
+    // ---------------------------------------------------------------- //
 
-    // ui->comboBoxBaudRates
+    // ----------------------- standardBaudRates ----------------------- //
     {
-        foreach (auto item, QSerialPortInfo::standardBaudRates())
+        foreach (auto item, serial.getAvailibleBaudRates())
             ui->comboBoxBaudRates->addItem(QString::number(item));
 
-        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2);
+        ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2); // select middle
     }
-
-    connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
-
-    ui->comboBoxTracerStyle->addItem("Crosshair");
-    ui->comboBoxTracerStyle->addItem("Circle");
-    ui->comboBoxTracerStyle->setCurrentIndex(0);
-
-    ui->comboBoxDataBits->addItem("Data5");
-    ui->comboBoxDataBits->addItem("Data6");
-    ui->comboBoxDataBits->addItem("Data7");
-    ui->comboBoxDataBits->addItem("Data8");
-    ui->comboBoxDataBits->setCurrentIndex(3);
-
-    ui->comboBoxParity->addItem("NoParity");
-    ui->comboBoxParity->addItem("EvenParity");
-    ui->comboBoxParity->addItem("OddParity");
-    ui->comboBoxParity->addItem("SpaceParity");
-    ui->comboBoxParity->addItem("MarkParity");
-    ui->comboBoxParity->setCurrentIndex(0);
-
-    ui->comboBoxStopBits->addItem("OneStop");
-    ui->comboBoxStopBits->addItem("OneAndHalfStop");
-    ui->comboBoxStopBits->addItem("TwoStop");
-    ui->comboBoxStopBits->setCurrentIndex(0);
-
-    ui->comboBoxFlowControl->addItem("NoFlowControl");
-    ui->comboBoxFlowControl->addItem("HardwareControl");
-    ui->comboBoxFlowControl->addItem("SoftwareControl");
-    ui->comboBoxFlowControl->setCurrentIndex(0);
-
-    ui->comboBoxSerialReadMode->addItem("canReadLine | readLine");
-    ui->comboBoxSerialReadMode->addItem("canReadLine | readAll");
-    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readLine");
-    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readAll");
-    ui->comboBoxSerialReadMode->setCurrentIndex(0);
-
-    on_updateSerialDeviceList();
-
-    ui->comboBoxUDPReceiveMode->addItem("Any");
-    ui->comboBoxUDPReceiveMode->addItem("LocalHost");
-    ui->comboBoxUDPReceiveMode->addItem("SpecialAddress");
-    ui->comboBoxUDPReceiveMode->setCurrentIndex(0);
-
-    ui->comboBoxUDPSendMode->addItem("Broadcast");
-    ui->comboBoxUDPSendMode->addItem("LocalHost");
-    ui->comboBoxUDPSendMode->addItem("SpecialAddress");
-    ui->comboBoxUDPSendMode->setCurrentIndex(0);
-
-    // ui->lineEditUDPTargetIP->setInputMask( "000.000.000.000" );
+    // ----------------------------------------------------------------- //
 
     if (ui->checkBoxAutoRefresh->isChecked())
     {
@@ -137,27 +96,27 @@ void MainWindow::setupGUI()
         ui->pushButtonRefresh->setEnabled(true);
     }
 
-    ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
-    ui->lineEditSaveFileName->setText("Log.txt");
-
-    ui->splitterGraphTable->setSizes({this->height(), 0});
+    // ----------------------- comboBoxGraphDisplayMode ----------------------- //
+    {
+        if (ui->comboBoxGraphDisplayMode->currentIndex() == 0)
+            ui->lineEditCustomParsingRules->setEnabled(false);
+        else
+            ui->lineEditCustomParsingRules->setEnabled(true);
+    }
+    // ----------------------------------------------------------------- //
 
     ui->comboBoxExternalTimeFormat->addItem("[ms]");
     ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
-
-    ui->comboBoxRAMSaveMode->addItem("Save Data Only");
-    ui->comboBoxRAMSaveMode->addItem("Save Data & Text");
-    ui->comboBoxRAMSaveMode->setCurrentIndex(0);
-
-    ui->comboBoxRAMLoadMode->addItem("Load Data Only");
-    ui->comboBoxRAMLoadMode->addItem("Load Data & Text");
-    ui->comboBoxRAMLoadMode->setCurrentIndex(0);
-
     ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    ui->lineEditSaveFileName->setText("Log.txt");
+    ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
+    ui->splitterGraphTable->setSizes({this->height(), 0});
 
     emit on_checkBoxAutoLogging_toggled(ui->checkBoxAutoLogging->isChecked());
     emit on_checkBoxShowLegend_toggled(ui->checkBoxShowLegend->isChecked());
     emit on_comboBoxClockSource_currentIndexChanged(ui->comboBoxClockSource->currentIndex());
+
+    on_updateSerialDeviceList();
 }
 
 void MainWindow::createChart()
@@ -231,6 +190,12 @@ void MainWindow::setupTable()
     ui->tableWidgetParsedData->setHorizontalHeaderItem(1, new QTableWidgetItem("Current Value"));
     //    ui->tableWidgetParsedData->setHorizontalHeaderItem(2, new QTableWidgetItem("Max"));
     //    ui->tableWidgetParsedData->setHorizontalHeaderItem(3, new QTableWidgetItem("Min"));
+
+    ui->tableWidgetLogTable->clear();
+    ui->tableWidgetLogTable->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    ui->tableWidgetLogTable->setColumnCount(1);
+    ui->tableWidgetLogTable->setHorizontalHeaderItem(0, new QTableWidgetItem("Time:"));
+    ui->tableWidgetLogTable->setSortingEnabled(true);
 }
 
 void MainWindow::settingsLoadAll()
@@ -250,7 +215,7 @@ void MainWindow::settingsLoadAll()
                 appSettings.value("Info/applicationName").value<QString>() != appSettings.applicationName())
         {
             qDebug() << "Abort loading settings ! organizationName or applicationName incorrect. Config file might be missing.";
-            addLog("App >>\t Error loading settings. Config file incorrect !",true);
+            addLog("App >>\t Error loading settings. Config file incorrect !", true);
             return;
         }
     }
@@ -294,64 +259,69 @@ void MainWindow::settingsLoadAll()
 
     // ----- Other GUI Elements ----- //
     {
-        ui->spinBoxProcessingDelay->setValue(appSettings.value("layout/spinBoxProcessingDelay.value").value<int>());
-        ui->spinBoxMaxLines->setValue(appSettings.value("layout/spinBoxMaxLines.value").value<int>());
-        ui->spinBoxMaxGraphs->setValue(appSettings.value("layout/spinBoxMaxGraphs.value").value<int>());
-        ui->spinBoxMaxTimeRange->setValue(appSettings.value("layout/spinBoxMaxTimeRange.value").value<int>());
-        ui->spinBoxScrollingTimeRange->setValue(appSettings.value("layout/spinBoxScrollingTimeRange.value").value<int>());
-        ui->spinBoxRemoveOldLabels->setValue(appSettings.value("layout/spinBoxRemoveOldLabels.value").value<int>());
-        ui->spinBoxUDPTargetPort->setValue(appSettings.value("layout/spinBoxUDPTargetPort.value").value<int>());
-        ui->spinBoxUDPReceivePort->setValue(appSettings.value("layout/spinBoxUDPReceivePort.value").value<int>());
-
-        ui->comboBoxParity->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxParity.currentIndex").value<int>());
-        ui->comboBoxDataBits->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxDataBits.currentIndex").value<int>());
-        ui->comboBoxStopBits->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxStopBits.currentIndex").value<int>());
-        ui->comboBoxBaudRates->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxBaudRates.currentIndex").value<int>());
-        ui->comboBoxFlowControl->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxFlowControl.currentIndex").value<int>());
-        ui->comboBoxGraphDisplayMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxGraphDisplayMode.currentIndex").value<int>());
-        ui->comboBoxTracerStyle->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTracerStyle.currentIndex").value<int>());
-        ui->comboBoxSerialReadMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxSerialReadMode.currentIndex").value<int>());
-        ui->comboBoxUDPSendMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxUDPSendMode.currentIndex").value<int>());
-        ui->comboBoxUDPReceiveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxUDPReceiveMode.currentIndex").value<int>());
-        ui->comboBoxExternalTimeFormat->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxExternalTimeFormat.currentIndex").value<int>());
-        ui->comboBoxRAMLoadMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMLoadMode.currentIndex").value<int>());
-        ui->comboBoxRAMSaveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMSaveMode.currentIndex").value<int>());
-        ui->comboBoxLoggingMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLoggingMode.currentIndex").value<int>());
-        ui->comboBoxTextProcessing->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTextProcessing.currentIndex").value<int>());
-        ui->comboBoxClockSource->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxClockSource.currentIndex").value<int>());
-        ui->comboBoxAddTextMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxAddTextMode.currentIndex").value<int>());
-
-        ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
-        ui->checkBoxSendKey->setChecked(appSettings.value("GUI_Elements/checkBoxSendKey.isChecked").value<bool>());
-        ui->checkBoxWrapText->setChecked(appSettings.value("GUI_Elements/checkBoxWrapText.isChecked").value<bool>());
-        ui->checkBoxAutoTrack->setChecked(appSettings.value("GUI_Elements/checkBoxAutoTrack.isChecked").value<bool>());
+        ui->checkBoxAppendDate->setChecked(appSettings.value("GUI_Elements/checkBoxAppendDate.isChecked").value<bool>());
+        ui->checkBoxAutoLogging->setChecked(appSettings.value("GUI_Elements/checkBoxAutoLogging.isChecked").value<bool>());
         ui->checkBoxAutoRefresh->setChecked(appSettings.value("GUI_Elements/checkBoxAutoRefresh.isChecked").value<bool>());
         ui->checkBoxAutoRescaleY->setChecked(appSettings.value("GUI_Elements/checkBoxAutoRescaleY.isChecked").value<bool>());
-        ui->checkBoxEnableTracer->setChecked(appSettings.value("GUI_Elements/checkBoxEnableTracer.isChecked").value<bool>());
-        ui->checkBoxAutoLogging->setChecked(appSettings.value("GUI_Elements/checkBoxAutoLogging.isChecked").value<bool>());
-        ui->checkBoxAppendDate->setChecked(appSettings.value("GUI_Elements/checkBoxAppendDate.isChecked").value<bool>());
-        ui->checkBoxSimplifyLog->setChecked(appSettings.value("GUI_Elements/checkBoxSimplifyLog.isChecked").value<bool>());
-        ui->checkBoxRAMClearChart->setChecked(appSettings.value("GUI_Elements/checkBoxRAMClearChart.isChecked").value<bool>());
         ui->checkBoxAutoSaveBuffer->setChecked(appSettings.value("GUI_Elements/checkBoxAutoSaveBuffer.isChecked", true).value<bool>());
-        ui->checkBoxTableAutoResize->setChecked(appSettings.value("GUI_Elements/checkBoxTableAutoResize.isChecked", true).value<bool>()); // default value set to true !
-
-        ui->pushButtonEnablePlot->setChecked(appSettings.value("GUI_Elements/pushButtonEnablePlot.isChecked", false).value<bool>());
-
-        ui->tabWidgetControlSection->setCurrentIndex(appSettings.value("GUI_Elements/tabWidgetControlSection.currentIndex").value<int>());
-
+        ui->checkBoxAutoTrack->setChecked(appSettings.value("GUI_Elements/checkBoxAutoTrack.isChecked").value<bool>());
+        ui->checkBoxDTR->setChecked(appSettings.value("GUI_Elements/checkBoxDTR.isChecked").value<bool>());
+        ui->checkBoxEnableTracer->setChecked(appSettings.value("GUI_Elements/checkBoxEnableTracer.isChecked").value<bool>());
+        ui->checkBoxRAMClearChart->setChecked(appSettings.value("GUI_Elements/checkBoxRAMClearChart.isChecked").value<bool>());
         ui->checkBoxScrollToButtom->setChecked(appSettings.value("GUI_Elements/checkBoxScrollToButtom.isChecked").value<bool>());
-
+        ui->checkBoxSendKey->setChecked(appSettings.value("GUI_Elements/checkBoxSendKey.isChecked").value<bool>());
+        ui->checkBoxShowControlChars->setChecked(appSettings.value("GUI_Elements/checkBoxShowControlChars.isChecked", false).value<bool>());
+        ui->checkBoxSimplifyLog->setChecked(appSettings.value("GUI_Elements/checkBoxSimplifyLog.isChecked").value<bool>());
+        ui->checkBoxTableAutoResize->setChecked(appSettings.value("GUI_Elements/checkBoxTableAutoResize.isChecked", true).value<bool>());
+        ui->checkBoxTruncateFileOnSave->setChecked(appSettings.value("GUI_Elements/checkBoxTruncateFileOnSave.isChecked", false).value<bool>());
+        ui->checkBoxWrapText->setChecked(appSettings.value("GUI_Elements/checkBoxWrapText.isChecked").value<bool>());
+        ui->checkBoxAutoScrollLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", true).value<bool>());
+        ui->checkBoxAutoSizeColumnsLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", true).value<bool>());
+        ui->checkBoxScrollLogEnableSorting->setChecked(appSettings.value("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", true).value<bool>());        ui->checkBoxScrollLogEnableSorting->setChecked(appSettings.value("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", true).value<bool>());
+        ui->comboBoxAddTextMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxAddTextMode.currentIndex").value<int>());
+        ui->comboBoxBaudRates->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxBaudRates.currentIndex").value<int>());
+        ui->comboBoxClockSource->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxClockSource.currentIndex").value<int>());
+        ui->comboBoxDataBits->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxDataBits.currentIndex").value<int>());
+        ui->comboBoxExternalTimeFormat->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxExternalTimeFormat.currentIndex").value<int>());
+        ui->comboBoxFlowControl->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxFlowControl.currentIndex").value<int>());
+        ui->comboBoxGraphDisplayMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxGraphDisplayMode.currentIndex").value<int>());
+        ui->comboBoxLoggingMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLoggingMode.currentIndex").value<int>());
+        ui->comboBoxMessagesDisplayMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxMessagesDisplayMode.currentIndex").value<int>());
+        ui->comboBoxParity->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxParity.currentIndex").value<int>());
+        ui->comboBoxRAMLoadMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMLoadMode.currentIndex").value<int>());
+        ui->comboBoxRAMSaveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxRAMSaveMode.currentIndex").value<int>());
+        ui->comboBoxSerialReadMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxSerialReadMode.currentIndex").value<int>());
+        ui->comboBoxStopBits->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxStopBits.currentIndex").value<int>());
+        ui->comboBoxTextProcessing->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTextProcessing.currentIndex").value<int>());
+        ui->comboBoxTracerStyle->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxTracerStyle.currentIndex").value<int>());
+        ui->comboBoxUDPReceiveMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxUDPReceiveMode.currentIndex").value<int>());
+        ui->comboBoxUDPSendMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxUDPSendMode.currentIndex").value<int>());
+        ui->tabWidgetTableView->setCurrentIndex(appSettings.value("GUI_Elements/tabWidgetTableView.currentIndex").value<int>());
         ui->lineEditCustomParsingRules->setText(appSettings.value("data/lineEditCustomParsingRules.text").value<QString>());
-        ui->lineEditUDPTargetIP->setText(appSettings.value("data/lineEditUDPTargetIP.text").value<QString>());
-        ui->lineEditSaveLogPath->setText(appSettings.value("data/lineEditSaveLogPath.text").value<QString>());
+        ui->lineEditExternalClockLabel->setText(appSettings.value("data/lineEditExternalClockLabel.text").value<QString>());
         ui->lineEditLoadFilePath->setText(appSettings.value("data/lineEditLoadFilePath.text").value<QString>());
         ui->lineEditSaveFileName->setText(appSettings.value("data/lineEditSaveFileName.text").value<QString>());
-        ui->lineEditExternalClockLabel->setText(appSettings.value("data/lineEditExternalClockLabel.text").value<QString>());
+        ui->lineEditSaveLogPath->setText(appSettings.value("data/lineEditSaveLogPath.text").value<QString>());
+        ui->lineEditUDPTargetIP->setText(appSettings.value("data/lineEditUDPTargetIP.text").value<QString>());
+        ui->pushButtonEnablePlot->setChecked(appSettings.value("GUI_Elements/pushButtonEnablePlot.isChecked", false).value<bool>());
+        ui->pushButtonEnableTableLog->setChecked(appSettings.value("GUI_Elements/pushButtonEnableTableLog.isChecked", true).value<bool>());
+        ui->spinBoxMaxGraphs->setValue(appSettings.value("layout/spinBoxMaxGraphs.value").value<int>());
+        ui->spinBoxMaxLines->setValue(appSettings.value("layout/spinBoxMaxLines.value").value<int>());
+        ui->spinBoxMaxTimeRange->setValue(appSettings.value("layout/spinBoxMaxTimeRange.value").value<int>());
+        ui->spinBoxProcessingDelay->setValue(appSettings.value("layout/spinBoxProcessingDelay.value").value<int>());
+        ui->spinBoxRemoveOldLabels->setValue(appSettings.value("layout/spinBoxRemoveOldLabels.value").value<int>());
+        ui->spinBoxScrollingTimeRange->setValue(appSettings.value("layout/spinBoxScrollingTimeRange.value").value<int>());
+        ui->spinBoxUDPReceivePort->setValue(appSettings.value("layout/spinBoxUDPReceivePort.value").value<int>());
+        ui->spinBoxUDPTargetPort->setValue(appSettings.value("layout/spinBoxUDPTargetPort.value").value<int>());
+        ui->spinBoxMaxRowsLogTable->setValue(appSettings.value("layout/spinBoxMaxRowsLogTable.value").value<int>());
+        ui->tabWidgetControlSection->setCurrentIndex(appSettings.value("GUI_Elements/tabWidgetControlSection.currentIndex").value<int>());
 
         if (ui->lineEditLoadFilePath->text().isEmpty() == false)
         {
             QFile file(ui->lineEditLoadFilePath->text());
-            getFileTimeRange(&file);
+            QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+            ui->timeEditMinParsingTime->setTime(timeRange.first());
+            ui->timeEditMaxParsingTime->setTime(timeRange.last());
         }
 
         qDebug() << "Loaded settings";
@@ -394,60 +364,62 @@ void MainWindow::settingsSaveAll()
 
     // ----- GUI Elements ----- //
     {
-        appSettings.setValue("layout/spinBoxProcessingDelay.value", ui->spinBoxProcessingDelay->value());
-        appSettings.setValue("layout/spinBoxMaxLines.value", ui->spinBoxMaxLines->value());
-        appSettings.setValue("layout/spinBoxMaxGraphs.value", ui->spinBoxMaxGraphs->value());
-        appSettings.setValue("layout/spinBoxMaxTimeRange.value", ui->spinBoxMaxTimeRange->value());
-        appSettings.setValue("layout/spinBoxScrollingTimeRange.value", ui->spinBoxScrollingTimeRange->value());
-        appSettings.setValue("layout/spinBoxRemoveOldLabels.value", ui->spinBoxRemoveOldLabels->value());
-        appSettings.setValue("layout/spinBoxUDPTargetPort.value", ui->spinBoxUDPTargetPort->value());
-        appSettings.setValue("layout/spinBoxUDPReceivePort.value", ui->spinBoxUDPReceivePort->value());
-
-        appSettings.setValue("GUI_Elements/comboBoxParity.currentIndex", ui->comboBoxParity->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxDataBits.currentIndex", ui->comboBoxDataBits->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxStopBits.currentIndex", ui->comboBoxStopBits->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxBaudRates.currentIndex", ui->comboBoxBaudRates->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxFlowControl.currentIndex", ui->comboBoxFlowControl->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxGraphDisplayMode.currentIndex", ui->comboBoxGraphDisplayMode->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxTracerStyle.currentIndex", ui->comboBoxTracerStyle->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxSerialReadMode.currentIndex", ui->comboBoxSerialReadMode->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxUDPSendMode.currentIndex", ui->comboBoxUDPSendMode->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxUDPReceiveMode.currentIndex", ui->comboBoxUDPReceiveMode->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxExternalTimeFormat.currentIndex", ui->comboBoxExternalTimeFormat->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxRAMLoadMode.currentIndex", ui->comboBoxRAMLoadMode->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxRAMSaveMode.currentIndex", ui->comboBoxRAMSaveMode->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxLoggingMode.currentIndex", ui->comboBoxLoggingMode->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxTextProcessing.currentIndex", ui->comboBoxTextProcessing->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxClockSource.currentIndex", ui->comboBoxClockSource->currentIndex());
-        appSettings.setValue("GUI_Elements/comboBoxAddTextMode.currentIndex", ui->comboBoxAddTextMode->currentIndex());
-
-        appSettings.setValue("GUI_Elements/checkBoxDTR.isChecked", ui->checkBoxDTR->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxSendKey.isChecked", ui->checkBoxSendKey->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxWrapText.isChecked", ui->checkBoxWrapText->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxAutoTrack.isChecked", ui->checkBoxAutoTrack->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxAutoRefresh.isChecked", ui->checkBoxAutoRefresh->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxAutoRescaleY.isChecked", ui->checkBoxAutoRescaleY->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxEnableTracer.isChecked", ui->checkBoxEnableTracer->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxAutoLogging.isChecked", ui->checkBoxAutoLogging->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxAppendDate.isChecked", ui->checkBoxAppendDate->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxSimplifyLog.isChecked", ui->checkBoxSimplifyLog->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxRAMClearChart.isChecked", ui->checkBoxRAMClearChart->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxAutoSaveBuffer.isChecked", ui->checkBoxAutoSaveBuffer->isChecked());
-        appSettings.setValue("GUI_Elements/checkBoxTableAutoResize.isChecked", ui->checkBoxTableAutoResize->isChecked());
-
-        appSettings.setValue("GUI_Elements/pushButtonEnablePlot.isChecked", ui->pushButtonEnablePlot->isChecked());
-
-        appSettings.setValue("GUI_Elements/tabWidgetControlSection.currentIndex", ui->tabWidgetControlSection->currentIndex());
-
-        appSettings.setValue("GUI_Elements/checkBoxScrollToButtom.isChecked", ui->checkBoxScrollToButtom->isChecked());
-
-
         appSettings.setValue("data/lineEditCustomParsingRules.text", ui->lineEditCustomParsingRules->text());
-        appSettings.setValue("data/lineEditUDPTargetIP.text", ui->lineEditUDPTargetIP->text());
-        appSettings.setValue("data/lineEditSaveLogPath.text", ui->lineEditSaveLogPath->text());
+        appSettings.setValue("data/lineEditExternalClockLabel.text", ui->lineEditExternalClockLabel->text());
         appSettings.setValue("data/lineEditLoadFilePath.text", ui->lineEditLoadFilePath->text());
         appSettings.setValue("data/lineEditSaveFileName.text", ui->lineEditSaveFileName->text());
-        appSettings.setValue("data/lineEditExternalClockLabel.text", ui->lineEditExternalClockLabel->text());
+        appSettings.setValue("data/lineEditSaveLogPath.text", ui->lineEditSaveLogPath->text());
+        appSettings.setValue("data/lineEditUDPTargetIP.text", ui->lineEditUDPTargetIP->text());
+        appSettings.setValue("GUI_Elements/checkBoxAppendDate.isChecked", ui->checkBoxAppendDate->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoLogging.isChecked", ui->checkBoxAutoLogging->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoRefresh.isChecked", ui->checkBoxAutoRefresh->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoRescaleY.isChecked", ui->checkBoxAutoRescaleY->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoSaveBuffer.isChecked", ui->checkBoxAutoSaveBuffer->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoTrack.isChecked", ui->checkBoxAutoTrack->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxDTR.isChecked", ui->checkBoxDTR->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxEnableTracer.isChecked", ui->checkBoxEnableTracer->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxRAMClearChart.isChecked", ui->checkBoxRAMClearChart->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxScrollToButtom.isChecked", ui->checkBoxScrollToButtom->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxSendKey.isChecked", ui->checkBoxSendKey->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxShowControlChars.isChecked", ui->checkBoxShowControlChars->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxSimplifyLog.isChecked", ui->checkBoxSimplifyLog->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxTableAutoResize.isChecked", ui->checkBoxTableAutoResize->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxTruncateFileOnSave.isChecked", ui->checkBoxTruncateFileOnSave->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxWrapText.isChecked", ui->checkBoxWrapText->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", ui->checkBoxScrollLogEnableSorting->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", ui->checkBoxAutoSizeColumnsLogTable->isChecked());
+        appSettings.setValue("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", ui->checkBoxAutoScrollLogTable->isChecked());
+        appSettings.setValue("GUI_Elements/comboBoxAddTextMode.currentIndex", ui->comboBoxAddTextMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxBaudRates.currentIndex", ui->comboBoxBaudRates->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxClockSource.currentIndex", ui->comboBoxClockSource->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxDataBits.currentIndex", ui->comboBoxDataBits->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxExternalTimeFormat.currentIndex", ui->comboBoxExternalTimeFormat->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxFlowControl.currentIndex", ui->comboBoxFlowControl->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxGraphDisplayMode.currentIndex", ui->comboBoxGraphDisplayMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxLoggingMode.currentIndex", ui->comboBoxLoggingMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxMessagesDisplayMode.currentIndex", ui->comboBoxMessagesDisplayMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxParity.currentIndex", ui->comboBoxParity->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxRAMLoadMode.currentIndex", ui->comboBoxRAMLoadMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxRAMSaveMode.currentIndex", ui->comboBoxRAMSaveMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxSerialReadMode.currentIndex", ui->comboBoxSerialReadMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxStopBits.currentIndex", ui->comboBoxStopBits->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxTextProcessing.currentIndex", ui->comboBoxTextProcessing->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxTracerStyle.currentIndex", ui->comboBoxTracerStyle->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxUDPReceiveMode.currentIndex", ui->comboBoxUDPReceiveMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxUDPSendMode.currentIndex", ui->comboBoxUDPSendMode->currentIndex());
+        appSettings.setValue("GUI_Elements/tabWidgetTableView.currentIndex", ui->tabWidgetTableView->currentIndex());
+        appSettings.setValue("GUI_Elements/pushButtonEnablePlot.isChecked", ui->pushButtonEnablePlot->isChecked());
+        appSettings.setValue("GUI_Elements/tabWidgetControlSection.currentIndex", ui->tabWidgetControlSection->currentIndex());
+        appSettings.setValue("layout/spinBoxMaxGraphs.value", ui->spinBoxMaxGraphs->value());
+        appSettings.setValue("layout/spinBoxMaxLines.value", ui->spinBoxMaxLines->value());
+        appSettings.setValue("layout/spinBoxMaxTimeRange.value", ui->spinBoxMaxTimeRange->value());
+        appSettings.setValue("layout/spinBoxProcessingDelay.value", ui->spinBoxProcessingDelay->value());
+        appSettings.setValue("layout/spinBoxRemoveOldLabels.value", ui->spinBoxRemoveOldLabels->value());
+        appSettings.setValue("layout/spinBoxScrollingTimeRange.value", ui->spinBoxScrollingTimeRange->value());
+        appSettings.setValue("layout/spinBoxUDPReceivePort.value", ui->spinBoxUDPReceivePort->value());
+        appSettings.setValue("layout/spinBoxUDPTargetPort.value", ui->spinBoxUDPTargetPort->value());
+        appSettings.setValue("layout/spinBoxMaxRowsLogTable.value", ui->spinBoxMaxRowsLogTable->value());
+        appSettings.setValue("layout/pushButtonEnableTableLog.isChecked", ui->pushButtonEnableTableLog->isChecked());
     }
     // ------------------------- //
 
@@ -516,6 +488,58 @@ void MainWindow::processTable(QStringList labels, QList<double> values)
     }
 }
 
+void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable)
+{
+    if (ui->pushButtonEnableTableLog->isChecked())
+        return;
+
+    //    static QList<int> tableMissingCount;
+    unsigned long oldRowCount = ui->tableWidgetLogTable->rowCount();
+
+    QStringList firstRow;
+    for (auto i = 0; i < ui->tableWidgetLogTable->columnCount(); ++i)
+        firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text().trimmed());
+
+    bool resizeFlag = false;
+
+    foreach (auto label, labelTable)
+    {
+        if (firstRow.contains(label) == false) // optimise
+        {
+            ui->tableWidgetLogTable->setColumnCount(ui->tableWidgetLogTable->columnCount() + 1);
+            ui->tableWidgetLogTable->setHorizontalHeaderItem(ui->tableWidgetLogTable->columnCount() - 1, new QTableWidgetItem(label.trimmed()));
+
+            firstRow.clear();
+            for (auto i = 0; i < ui->tableWidgetLogTable->columnCount(); ++i)
+                firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text().trimmed());
+
+            resizeFlag = true;
+        }
+        else
+        {
+            if (oldRowCount == ui->tableWidgetLogTable->rowCount())
+                ui->tableWidgetLogTable->setRowCount(oldRowCount + 1);
+
+            ui->tableWidgetLogTable->setItem(oldRowCount, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[labelTable.indexOf(label)]).toString(parser.searchTimeFormatList[0])));
+            ui->tableWidgetLogTable->setItem(oldRowCount, firstRow.indexOf(label), new QTableWidgetItem(QString::number(valueTable[labelTable.indexOf(label)])));
+        }
+    }
+
+    if (ui->checkBoxAutoScrollLogTable->isChecked())
+        ui->tableWidgetLogTable->scrollToBottom();
+
+    if (ui->checkBoxAutoSizeColumnsLogTable->isChecked() && resizeFlag)
+        ui->tableWidgetLogTable->resizeColumnsToContents();
+
+    if (ui->spinBoxMaxRowsLogTable->value() > 0)
+    {
+        while (ui->tableWidgetLogTable->rowCount() > ui->spinBoxMaxRowsLogTable->value())
+        {
+            ui->tableWidgetLogTable->removeRow(0);
+        }
+    }
+}
+
 void MainWindow::on_printIntroChangelog() // TODO
 {
     ui->pushButtonTextLogToggle->setChecked(false);
@@ -527,10 +551,23 @@ void MainWindow::on_printIntroChangelog() // TODO
 
 void MainWindow::on_comboBoxSendReturnPressedSlot()
 {
-    if (ui->pushButtonSerialConnect->isChecked())
+    sendMessageLineEdit(ui->tabWidgetControlSection->currentIndex());
+}
+
+void MainWindow::sendMessageLineEdit(int mode)
+{
+    if (mode == 0)
         sendSerial(ui->comboBoxSend->currentText());
-    if (ui->pushButtonUDPConnect->isChecked())
+    else if (mode == 1)
         sendUDPDatagram(ui->comboBoxSend->currentText());
+    else
+    {
+        sendSerial(ui->comboBoxSend->currentText()); // TODO
+        sendUDPDatagram(ui->comboBoxSend->currentText());
+    }
+
+    if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
+        addLog("\n >> " + ui->comboBoxSend->currentText(), ui->comboBoxAddTextMode->currentIndex());
 
     ui->comboBoxSend->setCurrentText("");
     ui->comboBoxSend->model()->sort(0, Qt::SortOrder::AscendingOrder); // sort alphabetically
@@ -793,6 +830,7 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
                        ui->widgetChart, ui->widgetChart->rect());
 }
 
+// Activates rect mode on middle button press
 void MainWindow::on_chartMousePressHandler(QMouseEvent *event)
 {
     if (event->button() == Qt::MiddleButton)
@@ -859,7 +897,7 @@ void MainWindow::on_updateSerialDeviceList()
 void MainWindow::on_pushButtonRefresh_clicked()
 {
     qDebug() << "Refreshing serial device list...";
-    this->addLog("App >>\t Searching for COM ports...",true);
+    this->addLog("App >>\t Searching for COM ports...", true);
     this->on_updateSerialDeviceList();
 }
 
@@ -886,11 +924,10 @@ void MainWindow::addLog(QString text, bool appendAsLine)
 
             ui->textBrowserLogs->horizontalScrollBar()->setValue(sliderPosHorizontal);
 
-
             if (!ui->checkBoxScrollToButtom->isChecked())
                 ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPosVertical);
             else
-                ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
+                ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
         }
         else
         {
@@ -947,8 +984,7 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLi
             if (!ui->checkBoxScrollToButtom->isChecked())
                 ui->textBrowserLogs->verticalScrollBar()->setValue(sliderPosVertical);
             else
-                ui->textBrowserLogs->verticalScrollBar()->setValue( ui->textBrowserLogs->verticalScrollBar()->maximum());
-
+                ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
         }
         else
         {
@@ -957,21 +993,20 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLi
     }
 }
 
-// TODO
-void MainWindow::writeLogToFile(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
+void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
 {
     if (ui->pushButtonLogging->isChecked()) // Write log into file
     {
         if (ui->comboBoxLogFormat->currentIndex() == 1)
         {
             if (ui->comboBoxLoggingMode->currentIndex() == 0)
-                fileLogger.writeLogLine(rawLine, ui->checkBoxSimplifyLog->isChecked(), ui->checkBoxAppendDate->isChecked());
+                fileLogger.writeLogTXTLine(rawLine, ui->checkBoxSimplifyLog->isChecked());
             else if (ui->comboBoxLoggingMode->currentIndex() == 1)
-                fileLogger.writeLogParsedData(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+                fileLogger.writeLogTXTParsedData(labelList, dataList);
         }
         else if (ui->comboBoxLogFormat->currentIndex() == 0)
         {
-            fileLogger.writeLogCSV(labelList, dataList, ui->checkBoxAppendDate->isChecked());
+            fileLogger.writeLogCSV(labelList, dataList);
         }
     }
 }
@@ -1006,10 +1041,16 @@ void MainWindow::on_processSerial()
         QList<double> numericDataList = parser.getListNumericValues();
         QList<long> timeStamps = parser.getListTimeStamp();
 
-        this->writeLogToFile(serialInput, labelList, numericDataList, timeStamps);
         this->processChart(labelList, numericDataList, timeStamps);
+        this->processLogWrite(serialInput, labelList, numericDataList, timeStamps);
         this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), serialInput);
-        this->processTable(labelList, numericDataList); // Fill tableWidget
+        this->processTable(labelList, numericDataList);
+        this->processLogTable(timeStamps, labelList, numericDataList);
+
+//        QFuture<void> future = QtConcurrent::run([=]() // Cool !
+//        {
+
+//        });
     }
 }
 
@@ -1041,7 +1082,7 @@ void MainWindow::on_processUDP()
     }
     else if (ui->comboBoxFormat->currentIndex() == 1 && udpInput.length() > 0)
     {
-        addLogBytes(udpInput.toUtf8(),false, ui->comboBoxAddTextMode->currentIndex());
+        addLogBytes(udpInput.toUtf8(), false, ui->comboBoxAddTextMode->currentIndex());
     }
     else if (ui->comboBoxFormat->currentIndex() == 2 && udpInput.length() > 0)
     {
@@ -1055,10 +1096,11 @@ void MainWindow::on_processUDP()
         QList<double> numericDataList = parser.getListNumericValues();
         QList<long> timeStamps = parser.getListTimeStamp();
 
-        this->writeLogToFile(udpInput, labelList, numericDataList, timeStamps);
+        this->processLogWrite(udpInput, labelList, numericDataList, timeStamps);
         this->processChart(labelList, numericDataList, timeStamps);
         this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), udpInput);
         this->processTable(labelList, numericDataList); // Fill tableWidget
+        this->processLogTable(timeStamps, labelList, numericDataList);
     }
 }
 
@@ -1233,10 +1275,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         else if (ui->checkBoxSendKey->isChecked())
         {
-            if (ui->pushButtonSerialConnect->isChecked())
-                sendSerial(event->text());
-            if (ui->pushButtonUDPConnect->isChecked())
-                sendUDPDatagram(event->text());
+            sendMessageKeyEvent(event);
+
+            if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
+                addLog(">>\n\t" + event->text(), ui->comboBoxAddTextMode->currentIndex());
         }
     }
     else if (ui->widgetChart->hasFocus())
@@ -1265,7 +1307,20 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     }
 }
 
-void MainWindow::sendSerial(QString message)
+void MainWindow::sendMessageKeyEvent(QKeyEvent *event)
+{
+    if (ui->tabWidgetControlSection->currentIndex() == 0)
+        sendSerial(event->text());
+    else if (ui->tabWidgetControlSection->currentIndex() == 1)
+        sendUDPDatagram(event->text());
+    else
+    {
+        sendSerial(event->text());
+        sendUDPDatagram(event->text());
+    }
+}
+
+void MainWindow::sendSerial(QString message) // TODO - move to serial - error via signal/slot
 {
     if (!serial.send(message))
         this->addLog("App >>\t Unable to send! Serial port closed !", true);
@@ -1298,63 +1353,9 @@ void MainWindow::loadFromRAM(bool loadText)
     if (RAMLabels.isEmpty() || RAMData.isEmpty() || RAMTime.isEmpty())
         return;
 
-    processChart(RAMLabels, RAMData, RAMTime);
-}
-
-void MainWindow::getFileTimeRange(QFile *file)
-{
-    if (file->open(QIODevice::ReadOnly))
-    {
-        QString allData = file->readAll();
-        file->close();
-
-        QStringList readFileSplitLines = allData.split(QRegExp("[\n\r]"), QString::SplitBehavior::SkipEmptyParts);
-
-        for (auto i = 0; i < readFileSplitLines.count(); ++i)
-        {
-            QStringList inputStringSplitArrayTopLine = readFileSplitLines[i].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);                                     // rozdzielamy traktująac spacje jako separator
-            QStringList inputStringSplitArrayButtomLine = readFileSplitLines[readFileSplitLines.count() - 1 - i].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
-            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z"};
-
-            bool foundTime[2] = {false};
-
-            for (auto j = 0; j < inputStringSplitArrayTopLine.count(); ++j)
-            {
-                foreach (auto timeFormat, searchTimeFormatList)
-                {
-                    if (QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat).isValid())
-                    {
-                        ui->timeEditMinParsingTime->setTime(QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat));
-                        foundTime[0] = true;
-                        break;
-                    }
-                }
-            }
-
-            for (auto j = 0; j < inputStringSplitArrayButtomLine.count(); ++j)
-            {
-                foreach (auto timeFormat, searchTimeFormatList)
-                {
-                    if (QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat).isValid())
-                    {
-                        ui->timeEditMaxParsingTime->setTime(QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat));
-                        foundTime[1] = true;
-
-                        break;
-                    }
-                }
-            }
-
-            if (foundTime[0] && foundTime[1])
-                return;
-        }
-    }
-    else
-    {
-        qDebug() << "Get file time range - invalid file ?";
-        ui->timeEditMaxParsingTime->setTime(QTime());
-        ui->timeEditMinParsingTime->setTime(QTime());
-    }
+    this->processChart(RAMLabels, RAMData, RAMTime);
+    this->processTable(RAMLabels,RAMData);
+    this->processLogTable(RAMTime, RAMLabels, RAMData);
 }
 
 void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
@@ -1462,8 +1463,11 @@ void MainWindow::on_pushButtonClearAll_clicked()
     parser.restartChartTimer();
     parser.clearExternalClock();
     clearGraphs(true);
+
     ui->tableWidgetParsedData->clearContents();
     ui->tableWidgetParsedData->setRowCount(0);
+    ui->tableWidgetLogTable->setRowCount(0);
+    ui->tableWidgetLogTable->setColumnCount(1);
 
     if (ui->checkBoxRAMClearChart->isChecked())
         parser.clearStorage();
@@ -1497,8 +1501,8 @@ void MainWindow::on_pushButtonClearGraphs_clicked()
 
 void MainWindow::on_lineEditCustomParsingRules_editingFinished()
 {
-    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().replace(" && ", " "));
-    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().simplified().replace(" ", " && "));
+    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().replace(" || ", " "));
+    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().simplified().replace(" ", " || "));
     clearGraphs(true);
     loadFromRAM(false);
 }
@@ -1576,7 +1580,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 {
     if (checked)
     {
-        if (serial.getAvailiblePortsCount() < 1)
+        if (serial.getAvailiblePorts().count() < 1)
         {
             addLog("App >>\t No devices available", true);
             addLog("App >>\t Unable to open serial port!", true);
@@ -1685,7 +1689,7 @@ void MainWindow::on_actionQuit_triggered()
 
 void MainWindow::on_actionPlotter_triggered()
 {
-    ui->stackedWidget->setCurrentIndex(0);
+    ui->stackedWidgetGraphView->setCurrentIndex(0);
 }
 
 void MainWindow::on_action3D_orientation_triggered()
@@ -1721,18 +1725,6 @@ void MainWindow::on_checkBoxShowLegend_toggled(bool checked)
 
 void MainWindow::on_actionSave_graph_as_triggered()
 {
-    QString default_name = "export.png";
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::homePath() + "/" + default_name, tr("Image Files (*.png *.jpg *.bmp)"));
-
-    if (filename.isEmpty())
-        return;
-
-    QImage bitmap(ui->widgetChart->size(), QImage::Format_ARGB32_Premultiplied);
-    QPainter painter(&bitmap);
-    ui->widgetChart->render(&painter, QPoint(), QRegion(), QWidget::DrawChildren);
-    QImageWriter writer(filename, "png");
-    writer.write(bitmap);
-    qDebug() << "Wrote image to file";
 }
 
 void MainWindow::on_actionPrint_Graph_triggered()
@@ -1792,7 +1784,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
         }
         else
         {
-            addLog("App >>\t UDP error. Unable to bind",true);
+            addLog("App >>\t UDP error. Unable to bind", true);
         }
     }
     else
@@ -1801,7 +1793,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
         {
             udpStringProcessingTimer->stop();
 
-            addLog("App >>\t UDP port closed.",true);
+            addLog("App >>\t UDP port closed.", true);
 
             disconnect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
@@ -1856,8 +1848,6 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
             return;
         }
 
-        ui->pushButtonLogging->setText("Disable Logging");
-
         if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
         {
             if (!fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text()), ui->checkBoxTruncateFileOnSave->isChecked())
@@ -1867,9 +1857,13 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
                 return;
             }
         }
+
+        ui->comboBoxLogFormat->setEnabled(false);
+        ui->pushButtonLogging->setText("Disable Logging");
     }
     else
     {
+        ui->comboBoxLogFormat->setEnabled(true);
         ui->pushButtonLogging->setText("Enable Logging");
         fileLogger.closeFile();
     }
@@ -1882,6 +1876,7 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->pushButtonLogging->setEnabled(false);
         ui->lineEditSaveFileName->setEnabled(false);
         ui->pushButtonAddDateTime->setEnabled(false);
+        ui->comboBoxLogFormat->setEnabled(false);
 
         ui->lineEditSaveFileName->setText("%DateTime%_Log" + ui->comboBoxLogFormat->currentText());
 
@@ -1898,6 +1893,7 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->pushButtonLogging->setText("Enable Logging");
 
         ui->lineEditSaveFileName->clear();
+        ui->comboBoxLogFormat->setEnabled(true);
     }
 }
 
@@ -2018,12 +2014,20 @@ void MainWindow::on_pushButtonLoadPath_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Open Log File:"), "",
-                                                    tr("(*.txt);;All Files (*)"));
+                                                    tr("(*.txt *.csv);;All Files (*)"));
 
     ui->lineEditLoadFilePath->setText(fileName);
     QFile file(fileName);
 
-    getFileTimeRange(&file);
+    if (!file.exists())
+    {
+        ui->lineEditFileInfo->setText("File doesnt exist !");
+        return;
+    }
+
+    QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+    ui->timeEditMinParsingTime->setTime(timeRange.first());
+    ui->timeEditMaxParsingTime->setTime(timeRange.last());
 
     QString info = "Size: " + QString::number(file.size());
     ui->lineEditFileInfo->setText(info);
@@ -2052,28 +2056,39 @@ void MainWindow::on_updateProgressBar(float *percent)
 void MainWindow::on_processLoadedFile(QString *text)
 {
     disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
-
     connect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
-    parser.setReportProgress(true);
 
+    parser.setReportProgress(true);
     parser.clearStorage();
     parser.setParsingTimeRange(ui->timeEditMinParsingTime->time(), ui->timeEditMaxParsingTime->time());
-    parser.parse(*text, false, true, "");
-    parser.resetTimeRange();
 
+    // Select file type
+    if (ui->comboBoxLogFormat->currentIndex() == 0)
+        parser.parseCSV(*text, (bool)ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text());
+    else
+        parser.parse(*text, false, true, "");
+
+    // disconnect events, reset parser
+    parser.resetTimeRange();
     parser.setReportProgress(false);
     disconnect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
 
-    QStringList labelList = parser.getStringListLabels();
-    QList<double> numericDataList = parser.getListNumericValues();
-    QList<long> timeStampList = parser.getListTimeStamp();
+    // Parsing
+    {
+        QStringList labelList = parser.getStringListLabels();
+        QList<double> numericDataList = parser.getListNumericValues();
+        QList<long> timeStampList = parser.getListTimeStamp();
 
-    this->processChart(labelList, numericDataList, timeStampList);
-    this->processTable(labelList, numericDataList);
-    this->saveToRAM(labelList, numericDataList, timeStampList);
+        this->processChart(labelList, numericDataList, timeStampList);
+        this->processTable(labelList, numericDataList);
+        this->saveToRAM(labelList, numericDataList, timeStampList);
+    }
 
-    if (ui->checkBoxAppendLoadedTextToLog->isChecked() == true)
-        this->ui->textBrowserLogs->appendPlainText(*text);
+    // Add text to log
+    {
+        if (ui->checkBoxAppendLoadedTextToLog->isChecked() == true)
+            this->ui->textBrowserLogs->appendPlainText(*text);
+    }
 }
 
 void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
@@ -2096,8 +2111,8 @@ void MainWindow::on_pushButtonLoadFile_clicked()
     if (ui->pushButtonLoadFile->text().contains("Load"))
     {
         this->clearGraphs(true);
-
         ui->pushButtonLoadFile->setText("Cancel");
+
         if (QDir(ui->lineEditLoadFilePath->text().trimmed()).isReadable())
         {
             QFile inputFile(ui->lineEditLoadFilePath->text().trimmed());
@@ -2110,18 +2125,18 @@ void MainWindow::on_pushButtonLoadFile_clicked()
 
             if (fileReader.readAllAtOnce(&inputFile))
             {
-                addLog("App >>\t Read file succesfully... ",true);
+                addLog("App >>\t Read file succesfully... ", true);
             }
             else
             {
-                addLog("App >>\t invalid file !",true);
+                addLog("App >>\t Error - invalid file !", true);
                 ui->pushButtonLoadFile->setText("Load File");
                 ui->progressBarLoadFile->setValue(0);
             }
         }
         else
         {
-            addLog("App >>\t file reader error - invalid file path !",true);
+            addLog("App >>\t Error - invalid file path !", true);
             ui->pushButtonLoadFile->setText("Load File");
             ui->progressBarLoadFile->setValue(0);
         }
@@ -2237,6 +2252,7 @@ void MainWindow::on_comboBoxFormat_currentIndexChanged(int index)
 void MainWindow::on_toolButtonHideTable_clicked()
 {
     ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), 0});
+    ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::UpArrow);
 }
 
 void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)
@@ -2271,7 +2287,7 @@ void MainWindow::on_comboBoxLogFormat_currentIndexChanged(int index)
 {
     ui->comboBoxLoggingMode->setEnabled((bool)index);
     ui->checkBoxSimplifyLog->setEnabled((bool)index);
-    ui->pushButtonLoadFile->setEnabled((bool)index);
+    // ui->pushButtonLoadFile->setEnabled((bool)index);
 
     if (ui->comboBoxLogFormat->currentText().contains("txt"))
         ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("csv", "txt"));
@@ -2299,4 +2315,197 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
         ui->labelParsingRules->setEnabled(true);
         ui->comboBoxGraphDisplayMode->setPalette(*paletteRed);
     }
+}
+
+void MainWindow::on_pushButtonClearLogTable_clicked()
+{
+    ui->tableWidgetLogTable->setRowCount(0);
+    ui->tableWidgetLogTable->setColumnCount(1);
+}
+
+void MainWindow::on_checkBoxScrollLogEnableSorting_toggled(bool checked)
+{
+    ui->tableWidgetLogTable->setSortingEnabled(checked);
+}
+
+// https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
+void MainWindow::exportTableLogToCSV(QTableView *table, QChar sep)
+{
+    QString filters("CSV files (*.csv);;All files (*.*)");
+    QString defaultFilter("CSV files (*.csv)");
+    QString fileName = QFileDialog::getSaveFileName(0, "Save file", QCoreApplication::applicationDirPath(),
+                                                    filters, &defaultFilter);
+    QFile file(fileName);
+
+    QAbstractItemModel *model = table->model();
+
+    if (file.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        QTextStream data(&file);
+        QStringList strList;
+        for (int i = 0; i < model->columnCount(); ++i)
+        {
+            if (model->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString().length() > 0)
+                strList.append("\"" + model->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() + "\"");
+            else
+                strList.append("");
+        }
+
+        data << strList.join(sep) << "\n";
+
+        for (int i = 0; i < model->rowCount(); ++i)
+        {
+            strList.clear();
+            for (int j = 0; j < model->columnCount(); ++j)
+            {
+                if (model->data(model->index(i, j)).toString().length() > 0)
+                    strList.append("\"" + model->data(model->index(i, j)).toString() + "\"");
+                else
+                    strList.append("");
+            }
+            data << strList.join(sep) + "\n";
+        }
+        file.close();
+    }
+}
+
+void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep)
+{
+    QString filters("CSV files (*.csv);;All files (*.*)");
+    QString defaultFilter("CSV files (*.csv)");
+    QString fileName = QFileDialog::getSaveFileName(0, "Save file", QCoreApplication::applicationDirPath(),
+                                                    filters, &defaultFilter);
+    QFile file(fileName);
+
+    if (file.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        QTextStream data(&file);
+        QStringList strList;
+
+        foreach (auto label, labelList)
+        {
+            if (label.length() > 0)
+                strList.append("\"" + label + "\"");
+            else
+                strList.append("");
+        }
+
+        data << strList.join(sep) << "\n";
+
+        int maxRowCount = 0;
+        foreach (auto column, dataColums)
+            maxRowCount = qMax(maxRowCount, column.count());
+
+        for (int i = 0; i < maxRowCount; ++i) // rows
+        {
+            strList.clear();
+            for (int j = 0; j < dataColums.count(); ++j) // columns
+            {
+                if (i < dataColums[j].count())
+                    strList.append(QString::number(dataColums[j][i], 'f'));
+                else
+                    strList.append("\"\"");
+            }
+            data << strList.join(sep) + "\n";
+        }
+        file.close();
+    }
+}
+
+void MainWindow::on_pushButtonExportLogTableToCSV_clicked()
+{
+    this->exportTableLogToCSV(ui->tableWidgetLogTable);
+}
+
+void MainWindow::on_pushButtonSerialLogScrollown_clicked()
+{
+    ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
+}
+
+void MainWindow::on_pushButtonEnableTableLog_toggled(bool checked)
+{
+    if (checked)
+    {
+        ui->pushButtonEnableTableLog->setChecked(true);
+        ui->pushButtonEnableTableLog->setText("Enable");
+    }
+    else
+    {
+        ui->pushButtonEnableTableLog->setChecked(false);
+        ui->pushButtonEnableTableLog->setText("Disable");
+    }
+}
+
+void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &arg1)
+{
+    QFile file(ui->lineEditLoadFilePath->text());
+
+    if (!file.exists())
+    {
+        ui->lineEditFileInfo->setText("File doesnt exist !");
+        return;
+    }
+
+    QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+    ui->timeEditMinParsingTime->setTime(timeRange.first());
+    ui->timeEditMaxParsingTime->setTime(timeRange.last());
+
+    QString info = "Size: " + QString::number(file.size());
+    ui->lineEditFileInfo->setText(info);
+}
+
+void MainWindow::on_actionFull_parser_data_triggered()
+{
+    ui->splitterGraphTable->setSizes({0, ui->splitterGraphTable->height()});
+}
+
+void MainWindow::on_actionImage_triggered()
+{
+    QString default_name = "export.png";
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::homePath() + "/" + default_name, tr("Image Files (*.png *.jpg *.bmp)"));
+
+    if (filename.isEmpty())
+        return;
+
+    QImage bitmap(ui->widgetChart->size(), QImage::Format_ARGB32_Premultiplied);
+    QPainter painter(&bitmap);
+    ui->widgetChart->render(&painter, QPoint(), QRegion(), QWidget::DrawChildren);
+    QImageWriter writer(filename, "png");
+    writer.write(bitmap);
+    qDebug() << "Wrote image to file";
+}
+
+//void MainWindow::on_actionto_csv_triggered()
+//{
+
+//    //    QStringList labelList = parser.getLabelStorage();
+
+//    //    QStringList columnNames = labelList;
+//    //    QList<QList<double>> columnsData;
+
+//    //    QList<double> numericDataList = parser.getDataStorage();
+
+//    //    columnNames.removeDuplicates();
+
+//    //    for (auto i = 0; i < columnNames.count(); ++i)
+//    //    {
+//    //        columnsData.append(*new QList<double>);
+
+//    //        while (labelList.contains(columnNames[i]))
+//    //        {
+//    //            columnsData[columnsData.count() - 1].append(numericDataList.takeAt(labelList.indexOf(columnNames[i])));
+//    //            labelList.removeAt(labelList.indexOf(columnNames[i]));
+//    //        }
+//    //    }
+
+//}
+
+void MainWindow::on_actionto_csv_triggered()
+{
+    QStringList columnNames;
+    QList<QList<double>> columnsData;
+
+    parser.getCSVReadyData(&columnNames, &columnsData);
+
+    this->exportArraysToCSV(columnNames, columnsData, ',');
 }

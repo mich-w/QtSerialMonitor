@@ -20,17 +20,20 @@ public:
     QStringList getStringListLabels();
     QStringList getStringListNumericData();
     QStringList getTextList();
+    QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"};
     void abort();
     void appendSetToMemory(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, QString text = "");
     void clear();
     void clearExternalClock();
     void clearStorage();
     void parse(QString inputString, bool syncToSystemClock = true, bool useExternalClock = false, QString externalClockLabel = QString());
+    void parseCSV(QString inputString, bool useExternalLabel = false, QString externalClockLabel = "");
     void parserClockAddMSecs(int millis);
     void resetTimeRange();
     void restartChartTimer();
     void setParsingTimeRange(QTime minTime, QTime maxTime);
     void setReportProgress(bool isEnabled);
+    void getCSVReadyData(QStringList *columnNames, QList<QList<double> > *dataColumns);
 signals:
     void updateProgress(float *percent);
 public slots:
@@ -44,7 +47,6 @@ private:
     QList<long> listTimeStamp;
     QList<long> timeStampStorage;
     QStringList labelStorage;
-    QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z"};
     QStringList stringListNumericData, stringListLabels;
     QStringList textStorage;
     QTime *parserClock;

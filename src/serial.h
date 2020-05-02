@@ -32,6 +32,7 @@ public:
     QString getString(bool clearBuffer = true);
     void clearAll(bool clearHardwareBuffers = false);
     void clearString();
+    QList<int> getAvailibleBaudRates();
 signals:
 
 public slots:

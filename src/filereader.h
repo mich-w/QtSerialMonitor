@@ -5,6 +5,8 @@
 #include <QObject>
 #include <QTextStream>
 #include <QTimer>
+#include <QTime>
+#include <QDebug>
 
 class FileReader : public QObject
 {
@@ -12,9 +14,9 @@ class FileReader : public QObject
 public:
     explicit FileReader(QObject *parent = nullptr);
     bool readAllAtOnce(QFile *fileToRead);
-    bool startRead(QFile *fileToRead);
     void abortRead();
     void setReadInterval(int newVal);
+    QList<QTime> getFileTimeRange(QFile *file);
 signals:
     void fileReadFinished();
     void lineReady(QString *, int *);

@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define VERSION "1.4"
+#define VERSION "1.5"
 
 #define CHANGELOG_TEXT "" //"Changelog - version " VERSION ": \n"
 

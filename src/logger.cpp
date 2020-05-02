@@ -4,18 +4,22 @@ Logger::Logger(QObject *parent) : QObject(parent)
 {
 }
 
-void Logger::openFile(QString fileName, bool truncateFile)
+bool Logger::openFile(QString fileName, bool trunc)
 {
-    if (!fileName.isEmpty())
-    {
-        logFile = new QFile;
-        logFile->setFileName(fileName);
+    if (fileName.isEmpty())
+        return false;
 
-        if (truncateFile)
-            logFile->open(QIODevice::OpenModeFlag::Truncate | QFile::OpenModeFlag::ReadWrite | QIODevice::Text);
-        else
-            logFile->open(QIODevice::OpenModeFlag::ReadWrite | QIODevice::Text);
-    }
+    logFile = new QFile;
+    logFile->setFileName(fileName);
+    logFile->open(QFile::OpenModeFlag::ReadWrite | QFile::Text);
+
+    if (trunc)
+        logFile->resize(0);
+
+    if (logFile->isOpen())
+        return true;
+    else
+        return false;
 }
 
 void Logger::closeFile()
@@ -39,9 +43,17 @@ bool Logger::beginLog(QString path, bool autoLogging, QString fileName, bool tru
         qDebug() << "File open";
 
         if (autoLogging)
-            openFile(path + "/" + QDateTime::currentDateTime().toString("dd.MM.yyyy_hh.mm.ss.zzz_") + "Log" + fileName.right(fileName.length() - fileName.lastIndexOf('.')),truncateFile);
+            openFile(path + "/" + QDateTime::currentDateTime().toString("dd.MM.yyyy_hh.mm.ss.zzz_") + "Log" + fileName.right(fileName.length() - fileName.lastIndexOf('.')), truncateFile);
         else
             openFile(path + "/" + fileName, truncateFile);
+
+        if (fileName.contains("csv"))
+        {
+            csvLabelsBuffer.append(QString(logFile->readLine()).replace("\"", "").split(',', QString::SplitBehavior::SkipEmptyParts));
+
+            for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
+                qDebug() << csvLabelsBuffer[i] + "\n";
+        }
 
         return true;
     }
@@ -57,17 +69,14 @@ bool Logger::isOpen()
     return logFile != nullptr;
 }
 
-void Logger::writeLogLine(QString lineToAppend, bool simplifyText, bool appendDate)
+void Logger::writeLogTXTLine(QString lineToAppend, bool simplifyText)
 {
     QString text = lineToAppend; // + "";
 
     if (simplifyText)
         text = text.simplified();
 
-    if (appendDate)
-        text = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss:zzz ") + text;
-    else
-        text = QDateTime::currentDateTime().toString("hh:mm:ss:zzz ") + text;
+    text = QDateTime::currentDateTime().toString("hh:mm:ss:zzz ") + text;
 
     if (logFile != nullptr)
     {
@@ -78,7 +87,7 @@ void Logger::writeLogLine(QString lineToAppend, bool simplifyText, bool appendDa
     }
 }
 
-void Logger::writeLogParsedData(QStringList labelList, QList<double> dataList, bool appendDate)
+void Logger::writeLogTXTParsedData(QStringList labelList, QList<double> dataList)
 {
     QString text;
 
@@ -89,10 +98,7 @@ void Logger::writeLogParsedData(QStringList labelList, QList<double> dataList, b
 
     text = text.simplified();
 
-    if (appendDate)
-        text = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss:zzz ") + text;
-    else
-        text = QDateTime::currentDateTime().toString("hh:mm:ss:zzz ") + text;
+    text = QDateTime::currentDateTime().toString("hh:mm:ss:zzz ") + text;
 
     if (logFile != nullptr)
     {
@@ -103,56 +109,73 @@ void Logger::writeLogParsedData(QStringList labelList, QList<double> dataList, b
     }
 }
 
-void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool appendDate)
+void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool addTime)
 {
     QTextStream out(logFile);
 
-    if (labelList.count() == 0)
-        return;
-
-    bool canAdd = false;
-    for (auto i = 0; i <= labelList.count() - 1; ++i)
+    if (addTime)
     {
-        if(csvLabelsBuffer.count() == 0 || !csvLabelsBuffer.contains(labelList[i]))
-            canAdd = true;
+        if (csvLabelsBuffer.contains("time") == false)
+            csvLabelsBuffer.insert(0, "time");
+    }
 
-        if (canAdd)
+    if (labelList.count() == 0)
+    {
+        qDebug() << "Empty label list - abort csv write";
+        return;
+    }
+
+    bool canAddLabel = false;
+    for (auto i = 0; i < labelList.count(); ++i)
+    {
+        if (csvLabelsBuffer.count() == 0 || csvLabelsBuffer.contains(labelList[i]) == false)
         {
-            csvLabelsBuffer.append(labelList[i].toLatin1());
-
-            QStringList origFile = out.readAll().split(QRegExp("\r\n"), Qt::SplitBehaviorFlags::SkipEmptyParts);
-            logFile->resize(0);
-
-            for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
-                out << "\"" + csvLabelsBuffer[i] + "\",";
-
-            out << "\n";
-
-            for (auto i = 1; i < origFile.count(); ++i) // Start from second line (data without first line which contains labels)
-                out << origFile[i] + "\r";
-
-            break;
+            canAddLabel = true;
+            csvLabelsBuffer.append(labelList[i]);
         }
     }
 
-    if (canAdd)
-        out << "\r";
+    if (canAddLabel)
+    {
+        canAddLabel = false;
 
+        QStringList origFile = out.readAll().split(QRegExp("[\r\n]"), Qt::SplitBehaviorFlags::SkipEmptyParts);
 
+        for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
+            out << "\"" + csvLabelsBuffer[i] + "\",";
+
+        out << "\n";
+
+        if (origFile.length() > 0)
+        {
+            while (origFile.first().contains("\""))
+                origFile.removeFirst();
+        }
+
+        logFile->resize(0); // delete contents !
+
+        for (auto i = 0; i < origFile.count(); ++i) // Start from second line (data without first line which contains labels)
+            out << origFile[i] + "\n";
+
+        return;
+    }
+
+    // add Data !
     for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
     {
         out.atEnd(); // ???
 
-        int index = labelList.indexOf(csvLabelsBuffer[i]);
+        int index = labelList.indexOf(csvLabelsBuffer[i]); // TODO
         if (index >= 0 && index < dataList.count())
-            out << QString::number(dataList[index]) + ',';
+            out << QString::number(dataList[index], 'f') + ',';
+        else if (csvLabelsBuffer[i] == "time")
+            out << QTime::currentTime().toString("hh:mm:ss:zzz") + ',';
     }
 
-    out << "\r";
+    out << "\n";
 }
 
 void Logger::clearWriteBuffer()
 {
     csvLabelsBuffer.clear();
 }
-

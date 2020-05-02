@@ -184,9 +184,9 @@ QList<QSerialPortInfo> Serial::getAvailiblePorts()
     return QSerialPortInfo::availablePorts();
 }
 
-int Serial::getAvailiblePortsCount()
+QList<int> Serial::getAvailibleBaudRates()
 {
-    return QSerialPortInfo::availablePorts().count();
+    return QSerialPortInfo::standardBaudRates();
 }
 
 bool Serial::begin(QString parsedPortName, int parsedBaudRate, int dataBits, int parity, int stopBits, int flowControl, bool dtrOn)

@@ -75,12 +75,6 @@ void NetworkUDP::clearStringBuffer()
     udpReceiveStringBuffer.clear();
 }
 
-void NetworkUDP::clearAll()
-{
-    udpReceiveStringBuffer.clear();
-}
+void NetworkUDP::clearAll() { udpReceiveStringBuffer.clear(); }
 
-bool NetworkUDP::isOpen()
-{
-    return isBinded;
-}
+bool NetworkUDP::isOpen() { return isBinded; }
