@@ -20,7 +20,7 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 - Read/write ".csv", ".txt" data logs,
 - many more...
 
-<a href="https://github.com/mich-w/QtSerialMonitor/releases/download/v1.4/QtSerialMonitor_1.4_win_x64.zip" download>Download QtSerialMonitor_v1.4_win_x64</a> 
+<a href="https://github.com/mich-w/QtSerialMonitor/releases/download/v1.5/QtSerialMonitor_v1.5_win_x64.zip" download>Download QtSerialMonitor_v1.5_win_x64</a> 
 -
 ---
 
