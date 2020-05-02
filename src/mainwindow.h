@@ -37,6 +37,7 @@
 //#include <q3dsruntimeglobal.h>
 //#include <Q3DSWidget>
 //#include <Q3DSPresentation>
+//#include <QtConcurrent/QtConcurrent>
 
 namespace Ui
 {
@@ -100,7 +101,6 @@ private slots:
     void on_comboBoxLoggingMode_currentIndexChanged(int index);
     void on_comboBoxSendReturnPressedSlot();
     void on_comboBoxSerialReadMode_currentIndexChanged(int index);
-    void on_comboBoxTableViewMode_currentIndexChanged(int index);
     void on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1);
     void on_comboBoxUDPReceiveMode_currentIndexChanged(const QString &arg1);
     void on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1);
