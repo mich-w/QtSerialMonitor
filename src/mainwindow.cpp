@@ -9,7 +9,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     createChart();
     setupTable();
     setupGUI();
-    //  create3DView();
 
     settingsLoadAll();
 
@@ -164,21 +163,6 @@ void MainWindow::createChart()
 
     ui->textBrowserLogs->setHighlightEnabled(false);
     emit on_comboBoxLogFormat_currentIndexChanged(ui->comboBoxLogFormat->currentIndex());
-}
-
-void MainWindow::create3DView()
-{
-    //  QSurfaceFormat::setDefaultFormat(Q3DS::surfaceFormat());
-    // ui->widget3DView->presentation()->setProfilingEnabled(true);
-    //  ui->widget3DView->presentation()->setSource(QUrl("qrc:/presentation2/SampleProject.uia"));
-
-    //    QObject *object = ui->widget3DView->presentation();
-    //    QObject *rect = object->findChild<QObject*>("Body");
-    //   if (rect)
-    //   {
-    //        qDebug() << "Found rect ";
-    //        rect->setProperty("width", 500);
-    //   }
 }
 
 void MainWindow::setupTable()

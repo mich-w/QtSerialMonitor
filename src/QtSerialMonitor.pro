@@ -8,8 +8,6 @@ QT       += core gui
 QT       += serialport
 QT       += printsupport
 QT       += network
-QT       += 3dcore 3drender 3dquick 3dinput qml quick 3dquickextras quickwidgets
-#QT       += 3dstudioruntime2
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

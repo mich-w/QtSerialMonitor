@@ -219,8 +219,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>664</width>
-                <height>102</height>
+                <width>697</width>
+                <height>109</height>
                </rect>
               </property>
               <property name="sizePolicy">
@@ -734,8 +734,8 @@ p, li { white-space: pre-wrap; }
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1113</width>
-                     <height>108</height>
+                     <width>1062</width>
+                     <height>115</height>
                     </rect>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_24">
@@ -1254,38 +1254,6 @@ p, li { white-space: pre-wrap; }
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="page_2">
-               <layout class="QGridLayout" name="gridLayout_8">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_6">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>22</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>3D View</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QQuickWidget" name="quickWidget3DView">
-                  <property name="resizeMode">
-                   <enum>QQuickWidget::SizeRootObjectToView</enum>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
              </widget>
              <widget class="QWidget" name="verticalLayoutWidget">
               <layout class="QVBoxLayout" name="verticalLayout">
@@ -1294,7 +1262,7 @@ p, li { white-space: pre-wrap; }
                  <property name="currentIndex">
                   <number>0</number>
                  </property>
-                 <widget class="QWidget" name="tabWidgetTableViewPage1" native="true">
+                 <widget class="QWidget" name="tabWidgetTableViewPage1">
                   <attribute name="title">
                    <string>Labels</string>
                   </attribute>
@@ -1393,7 +1361,7 @@ p, li { white-space: pre-wrap; }
                    </item>
                   </layout>
                  </widget>
-                 <widget class="QWidget" name="tabWidgetTableViewPage2" native="true">
+                 <widget class="QWidget" name="tabWidgetTableViewPage2">
                   <attribute name="title">
                    <string>Samples</string>
                   </attribute>
@@ -2490,8 +2458,8 @@ p, li { white-space: pre-wrap; }
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>627</width>
-                <height>69</height>
+                <width>600</width>
+                <height>90</height>
                </rect>
               </property>
               <property name="sizePolicy">
@@ -3239,7 +3207,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1797</width>
-     <height>26</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -3466,11 +3434,6 @@ p, li { white-space: pre-wrap; }
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
-  <customwidget>
-   <class>QQuickWidget</class>
-   <extends>QWidget</extends>
-   <header location="global">QtQuickWidgets/QQuickWidget</header>
-  </customwidget>
   <customwidget>
    <class>QCustomPlot</class>
    <extends>QWidget</extends>

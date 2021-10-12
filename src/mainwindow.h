@@ -32,12 +32,6 @@
 #include <QTextStream>
 #include <QTime>
 #include <QTimer>
-#include <QtQuickWidgets/QQuickWidget>
-
-//#include <q3dsruntimeglobal.h>
-//#include <Q3DSWidget>
-//#include <Q3DSPresentation>
-//#include <QtConcurrent/QtConcurrent>
 
 namespace Ui
 {
@@ -180,7 +174,6 @@ private:
     void chartPrintPreview();
     void clearGraphData(bool replot);
     void clearGraphs(bool replot);
-    void create3DView();
     void createChart();
     void createChartTracer();
     void createTimers();
