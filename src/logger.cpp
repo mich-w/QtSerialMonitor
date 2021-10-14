@@ -139,7 +139,7 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
     {
         canAddLabel = false;
 
-        QStringList origFile = out.readAll().split(QRegExp("[\r\n]"), Qt::SplitBehaviorFlags::SkipEmptyParts);
+        QStringList origFile = out.readAll().split(QRegExp("[\r\n]"), QString::SplitBehavior::SkipEmptyParts);
 
         for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
             out << "\"" + csvLabelsBuffer[i] + "\",";
