@@ -236,7 +236,7 @@ void MainWindow::settingsLoadAll()
 
     // ----- comboBoxSendItems ----- //
     {
-        ui->comboBoxSend->addItems(QStringList(appSettings.value("data/comboBoxSendHistory").value<QString>().split(QRegExp("\\n+"), QString::SplitBehavior::SkipEmptyParts)));
+        ui->comboBoxSend->addItems(QStringList(appSettings.value("data/comboBoxSendHistory").value<QString>().split(QRegExp("\\n+"), Qt::SplitBehaviorFlags::SkipEmptyParts)));
         ui->comboBoxSend->lineEdit()->clear();
     }
     // ------------------------- //

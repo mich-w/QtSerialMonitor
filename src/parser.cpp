@@ -18,7 +18,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
     listTimeStamp.clear();
     lineCount = 0;
 
-    QStringList inputStringSplitArrayLines = inputString.split(QRegExp("[\\n+\\r+]"), QString::SplitBehavior::SkipEmptyParts);
+    QStringList inputStringSplitArrayLines = inputString.split(QRegExp("[\\n+\\r+]"), Qt::SplitBehaviorFlags::SkipEmptyParts);
     lineCount = inputStringSplitArrayLines.count();
 
     for (auto l = 0; l < inputStringSplitArrayLines.count(); ++l)
@@ -41,7 +41,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
         QRegExp sepSymbols("[=,]");
 
         inputStringSplitArrayLines[l].replace(sepSymbols, " ");
-        QStringList inputStringSplitArray = inputStringSplitArrayLines[l].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
+        QStringList inputStringSplitArray = inputStringSplitArrayLines[l].simplified().split(QRegExp("\\s+"), Qt::SplitBehaviorFlags::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
 
         for (auto i = 0; i < inputStringSplitArray.count(); ++i)
         {
@@ -116,7 +116,7 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
     listTimeStamp.clear();
     lineCount = 0;
 
-    QStringList inputStringSplitArrayLines = inputString.split(QRegExp("[\\n+\\r+]"), QString::SplitBehavior::SkipEmptyParts);
+    QStringList inputStringSplitArrayLines = inputString.split(QRegExp("[\\n+\\r+]"), Qt::SplitBehaviorFlags::SkipEmptyParts);
     lineCount = inputStringSplitArrayLines.count();
 
     QStringList csvLabels; // !
@@ -143,7 +143,7 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
         inputStringSplitArrayLines[l].replace(sepSymbols, " ");
         inputStringSplitArrayLines[l].remove("\"");
 
-        QStringList inputStringSplitArray = inputStringSplitArrayLines[l].simplified().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
+        QStringList inputStringSplitArray = inputStringSplitArrayLines[l].simplified().split(QRegExp("\\s+"), Qt::SplitBehaviorFlags::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
 
         // Look for labels
         if (l == 0)

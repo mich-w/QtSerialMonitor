@@ -49,7 +49,7 @@ bool Logger::beginLog(QString path, bool autoLogging, QString fileName, bool tru
 
         if (fileName.contains("csv"))
         {
-            csvLabelsBuffer.append(QString(logFile->readLine()).replace("\"", "").split(',', QString::SplitBehavior::SkipEmptyParts));
+            csvLabelsBuffer.append(QString(logFile->readLine()).replace("\"", "").split(',', Qt::SplitBehaviorFlags::SkipEmptyParts));
 
             for (auto i = 0; i < csvLabelsBuffer.count(); ++i)
                 qDebug() << csvLabelsBuffer[i] + "\n";
