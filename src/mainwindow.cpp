@@ -263,6 +263,7 @@ void MainWindow::settingsLoadAll()
         ui->checkBoxAutoSizeColumnsLogTable->setChecked(appSettings.value("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", true).value<bool>());
         ui->checkBoxScrollLogEnableSorting->setChecked(appSettings.value("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", true).value<bool>());        ui->checkBoxScrollLogEnableSorting->setChecked(appSettings.value("GUI_Elements/checkBoxScrollLogEnableSorting.isChecked", true).value<bool>());
         ui->comboBoxAddTextMode->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxAddTextMode.currentIndex").value<int>());
+        ui->comboBoxLineEnding->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxLineEnding.currentIndex").value<int>());
         ui->comboBoxBaudRates->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxBaudRates.currentIndex").value<int>());
         ui->comboBoxClockSource->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxClockSource.currentIndex").value<int>());
         ui->comboBoxDataBits->setCurrentIndex(appSettings.value("GUI_Elements/comboBoxDataBits.currentIndex").value<int>());
@@ -374,6 +375,7 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/checkBoxAutoSizeColumnsLogTable.isChecked", ui->checkBoxAutoSizeColumnsLogTable->isChecked());
         appSettings.setValue("GUI_Elements/checkBoxAutoScrollLogTable.isChecked", ui->checkBoxAutoScrollLogTable->isChecked());
         appSettings.setValue("GUI_Elements/comboBoxAddTextMode.currentIndex", ui->comboBoxAddTextMode->currentIndex());
+        appSettings.setValue("GUI_Elements/comboBoxLineEnding.currentIndex", ui->comboBoxLineEnding->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxBaudRates.currentIndex", ui->comboBoxBaudRates->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxClockSource.currentIndex", ui->comboBoxClockSource->currentIndex());
         appSettings.setValue("GUI_Elements/comboBoxDataBits.currentIndex", ui->comboBoxDataBits->currentIndex());
@@ -1306,6 +1308,18 @@ void MainWindow::sendMessageKeyEvent(QKeyEvent *event)
 
 void MainWindow::sendSerial(QString message) // TODO - move to serial - error via signal/slot
 {
+    if (ui->comboBoxLineEnding->currentIndex() == 1)
+    {
+         message = message + "\n";
+    }
+    else if (ui->comboBoxLineEnding->currentIndex() == 2)
+    {
+         message = message + "\r";
+    }
+    else if (ui->comboBoxLineEnding->currentIndex() == 3)
+    {
+         message = message + "\r\n";
+    }
     if (!serial.send(message))
         this->addLog("App >>\t Unable to send! Serial port closed !", true);
 }

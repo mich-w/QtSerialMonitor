@@ -42,7 +42,7 @@ SOURCES += \
         serial.cpp
 
 HEADERS += \
-        ../../../../../../Downloads/QCustomPlot.tar/qcustomplot/qcustomplot.h \
+        qcustomplot.h \
         codeeditor.h \
         config.h \
         filereader.h \
