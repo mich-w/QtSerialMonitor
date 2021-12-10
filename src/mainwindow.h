@@ -35,7 +35,7 @@
 
 namespace Ui
 {
-class MainWindow;
+    class MainWindow;
 }
 
 class MainWindow : public QMainWindow
@@ -177,6 +177,7 @@ private:
     void createChart();
     void createChartTracer();
     void createTimers();
+    void exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep = ',');
     void exportTableLogToCSV(QTableView *table, QChar sep = ',');
     void loadFromRAM(bool loadText);
     void menageAutoCompleteList(QString input);
@@ -193,7 +194,6 @@ private:
     void settingsSaveAll();
     void setupGUI();
     void setupTable();
-    void exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep = ',');
 
 protected:
     void keyPressEvent(QKeyEvent *event);
