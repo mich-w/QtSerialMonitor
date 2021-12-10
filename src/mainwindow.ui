@@ -76,7 +76,7 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="4">
+       <item row="1" column="5">
         <widget class="QPushButton" name="pushButtonClearHistory">
          <property name="minimumSize">
           <size>
@@ -114,7 +114,6 @@
          </property>
          <property name="font">
           <font>
-           <family>Consolas</family>
            <pointsize>9</pointsize>
           </font>
          </property>
@@ -124,6 +123,36 @@
          <property name="editable">
           <bool>true</bool>
          </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="QComboBox" name="comboBoxLineEnding">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <item>
+          <property name="text">
+           <string>No line ending</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>New line</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Carriage return</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Both CR &amp; NL</string>
+          </property>
+         </item>
         </widget>
        </item>
       </layout>
@@ -219,8 +248,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>586</width>
-                <height>116</height>
+                <width>648</width>
+                <height>108</height>
                </rect>
               </property>
               <property name="sizePolicy">
@@ -498,30 +527,6 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="6" column="1" colspan="11">
-                    <widget class="QComboBox" name="comboBoxLineEnding">
-                     <item>
-                      <property name="text">
-                       <string>No line ending</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>New line</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Carriage return</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>Both CR &amp; NL</string>
-                      </property>
-                     </item>
-                    </widget>
-                   </item>
                   </layout>
                  </item>
                  <item>
@@ -758,8 +763,8 @@ p, li { white-space: pre-wrap; }
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1177</width>
-                     <height>99</height>
+                     <width>1164</width>
+                     <height>103</height>
                     </rect>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_24">
@@ -1113,7 +1118,6 @@ p, li { white-space: pre-wrap; }
                           </property>
                           <property name="font">
                            <font>
-                            <weight>50</weight>
                             <italic>false</italic>
                             <bold>false</bold>
                             <underline>true</underline>
@@ -2913,7 +2917,6 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="font">
               <font>
-               <weight>50</weight>
                <bold>false</bold>
                <underline>true</underline>
               </font>
@@ -3231,7 +3234,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1797</width>
-     <height>21</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
