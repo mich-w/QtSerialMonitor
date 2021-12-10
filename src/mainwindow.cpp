@@ -1098,6 +1098,19 @@ void MainWindow::sendUDPDatagram(QString message)
         return;
     }
 
+    if (ui->comboBoxLineEnding->currentIndex() == 1)
+    {
+        message = message + "\n";
+    }
+    else if (ui->comboBoxLineEnding->currentIndex() == 2)
+    {
+        message = message + "\r";
+    }
+    else if (ui->comboBoxLineEnding->currentIndex() == 3)
+    {
+        message = message + "\r\n";
+    }
+
     if (ui->comboBoxUDPSendMode->currentText().contains("Broadcast", Qt::CaseSensitivity::CaseInsensitive))
     {
         networkUDP.write(message, QHostAddress::Broadcast, ui->spinBoxUDPTargetPort->value());
@@ -1320,6 +1333,7 @@ void MainWindow::sendSerial(QString message) // TODO - move to serial - error vi
     {
         message = message + "\r\n";
     }
+
     if (!serial.send(message))
         this->addLog("App >>\t Unable to send! Serial port closed !", true);
 }
