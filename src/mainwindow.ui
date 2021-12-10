@@ -219,8 +219,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>697</width>
-                <height>109</height>
+                <width>586</width>
+                <height>116</height>
                </rect>
               </property>
               <property name="sizePolicy">
@@ -249,23 +249,70 @@
                    <property name="verticalSpacing">
                     <number>3</number>
                    </property>
-                   <item row="0" column="1">
-                    <widget class="QPushButton" name="pushButtonTextLogToggle">
+                   <item row="0" column="4" colspan="8">
+                    <widget class="QCheckBox" name="checkBoxShowTime">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
-                     <property name="text">
-                      <string>Disable</string>
+                     <property name="whatsThis">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, received message will be displayed with system clock time in which it was received.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
-                     <property name="checkable">
-                      <bool>true</bool>
+                     <property name="text">
+                      <string>Timestamp</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="1" colspan="2">
+                   <item row="0" column="3">
+                    <widget class="QCheckBox" name="checkBoxWrapText">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wrap all text inside the text window - may work slowly with large text.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="text">
+                      <string>Wrap</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="3">
+                    <widget class="QComboBox" name="comboBoxFormat">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Change text format&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose message display format:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- text&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- hex (base 16)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- binary (base 2)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>TXT</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>HEX</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>BIN</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="5" column="1" colspan="2">
                     <widget class="QSpinBox" name="spinBoxProcessingDelay">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -305,41 +352,6 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="3">
-                    <widget class="QCheckBox" name="checkBoxWrapText">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="whatsThis">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wrap all text inside the text window - may work slowly with large text.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="text">
-                      <string>Wrap</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="4" colspan="8">
-                    <widget class="QLineEdit" name="lineEditHighlight">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="whatsThis">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Highlights the words in the main text window that matches the contents of this textbox&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="placeholderText">
-                      <string>Text to highlight...</string>
-                     </property>
-                     <property name="clearButtonEnabled">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
                    <item row="0" column="2">
                     <widget class="QCheckBox" name="checkBoxSendKey">
                      <property name="sizePolicy">
@@ -359,7 +371,58 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="2">
+                   <item row="2" column="4" colspan="8">
+                    <widget class="QCheckBox" name="checkBoxShowControlChars">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Control char's</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="3">
+                    <widget class="QLabel" name="label_4">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Highlight:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="4" colspan="8">
+                    <widget class="QLineEdit" name="lineEditHighlight">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Highlights the words in the main text window that matches the contents of this textbox&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="placeholderText">
+                      <string>Text to highlight...</string>
+                     </property>
+                     <property name="clearButtonEnabled">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="2">
                     <widget class="QComboBox" name="comboBoxTextProcessing">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -390,7 +453,23 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="1" column="1">
+                   <item row="0" column="1">
+                    <widget class="QPushButton" name="pushButtonTextLogToggle">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Disable</string>
+                     </property>
+                     <property name="checkable">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
                     <widget class="QComboBox" name="comboBoxAddTextMode">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -419,83 +498,28 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="0" column="4" colspan="8">
-                    <widget class="QCheckBox" name="checkBoxShowTime">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="whatsThis">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, received message will be displayed with system clock time in which it was received.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="text">
-                      <string>Timestamp</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="3">
-                    <widget class="QLabel" name="label_4">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>0</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>Highlight:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="3">
-                    <widget class="QComboBox" name="comboBoxFormat">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Change text format&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="whatsThis">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose message display format:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- text&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- hex (base 16)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;- binary (base 2)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
+                   <item row="6" column="1" colspan="11">
+                    <widget class="QComboBox" name="comboBoxLineEnding">
                      <item>
                       <property name="text">
-                       <string>TXT</string>
+                       <string>No line ending</string>
                       </property>
                      </item>
                      <item>
                       <property name="text">
-                       <string>HEX</string>
+                       <string>New line</string>
                       </property>
                      </item>
                      <item>
                       <property name="text">
-                       <string>BIN</string>
+                       <string>Carriage return</string>
                       </property>
                      </item>
-                    </widget>
-                   </item>
-                   <item row="1" column="4" colspan="8">
-                    <widget class="QCheckBox" name="checkBoxShowControlChars">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>Control char's</string>
-                     </property>
+                     <item>
+                      <property name="text">
+                       <string>Both CR &amp; NL</string>
+                      </property>
+                     </item>
                     </widget>
                    </item>
                   </layout>
@@ -734,8 +758,8 @@ p, li { white-space: pre-wrap; }
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1062</width>
-                     <height>115</height>
+                     <width>1177</width>
+                     <height>99</height>
                     </rect>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_24">
@@ -3207,7 +3231,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1797</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
