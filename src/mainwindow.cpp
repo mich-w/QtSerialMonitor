@@ -207,11 +207,10 @@ void MainWindow::settingsLoadAll()
 
     // ----- Window size ----- //
     {
-        //        QStringList windowSize;
-        //        windowSize = appSettings.value("layout/windowSize.size").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+        QStringList windowSize = appSettings.value("layout/windowSize.size").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
 
-        //        if (!windowSize.isEmpty())
-        //            this->resize(windowSize.first().trimmed().toInt(), windowSize.last().trimmed().toInt());
+        if (!windowSize.isEmpty())
+            this->resize(windowSize.first().trimmed().toInt(), windowSize.last().trimmed().toInt());
     }
     // ------------------------- //
 
@@ -329,9 +328,9 @@ void MainWindow::settingsSaveAll()
 
     // ----- Window size ----- //
     {
-        //        QString windowSize;
-        //        windowSize = QString::number(this->size().width()) + " " + QString::number(this->size().height());
-        //        appSettings.setValue("layout/windowSize.size", windowSize);
+        QString windowSize;
+        windowSize = QString::number(this->size().width()) + " " + QString::number(this->size().height());
+        appSettings.setValue("layout/windowSize.size", windowSize);
     }
     // ------------------------- //
 
