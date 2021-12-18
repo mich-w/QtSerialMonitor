@@ -1590,6 +1590,8 @@ void MainWindow::on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1)
 
 void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 {
+    bool inputError = false;
+
     if (checked)
     {
         if (serial.getAvailiblePorts().count() < 1)
@@ -1597,11 +1599,20 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
             addLog("App >>\t No devices available", true);
             addLog("App >>\t Unable to open serial port!", true);
             ui->pushButtonSerialConnect->setChecked(false);
-            return;
+            inputError = true;
         }
 
+        if (ui->comboBoxBaudRates->currentText().toInt() == 0)
+        {
+            addLog("App >>\t Invalid baud rate!", true);
+            inputError = true;
+        }
+
+        if (inputError)
+            return;
+
         QString parsedPortName = QSerialPortInfo::availablePorts().at(ui->comboBoxDevices->currentIndex()).portName();
-        qint32 parsedBaudRate = ui->comboBoxBaudRates->currentText().toInt();
+        uint parsedBaudRate = ui->comboBoxBaudRates->currentText().toInt();
         QString dataBits = ui->comboBoxDataBits->currentText();
         QString stopBits = ui->comboBoxStopBits->currentText();
         QString parity = ui->comboBoxParity->currentText();

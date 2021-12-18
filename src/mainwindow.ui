@@ -249,7 +249,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>648</width>
-                <height>108</height>
+                <height>100</height>
                </rect>
               </property>
               <property name="sizePolicy">
@@ -763,8 +763,8 @@ p, li { white-space: pre-wrap; }
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1164</width>
-                     <height>103</height>
+                     <width>1136</width>
+                     <height>106</height>
                     </rect>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_24">
@@ -1118,6 +1118,7 @@ p, li { white-space: pre-wrap; }
                           </property>
                           <property name="font">
                            <font>
+                            <weight>50</weight>
                             <italic>false</italic>
                             <bold>false</bold>
                             <underline>true</underline>
@@ -1919,6 +1920,12 @@ p, li { white-space: pre-wrap; }
                </property>
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This list contains baud rates supported by current hardware.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="editable">
+                <bool>true</bool>
+               </property>
+               <property name="insertPolicy">
+                <enum>QComboBox::NoInsert</enum>
                </property>
               </widget>
              </item>
@@ -2917,6 +2924,7 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="font">
               <font>
+               <weight>50</weight>
                <bold>false</bold>
                <underline>true</underline>
               </font>
@@ -3234,7 +3242,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1797</width>
-     <height>19</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
