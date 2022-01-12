@@ -43,7 +43,7 @@ bool Logger::beginLog(QString path, bool autoLogging, QString fileName, bool tru
         qDebug() << "File open";
 
         if (autoLogging)
-            openFile(path + "/" + QDateTime::currentDateTime().toString("dd.MM.yyyy_hh.mm.ss.zzz_") + "Log" + fileName.right(fileName.length() - fileName.lastIndexOf('.')), truncateFile);
+            openFile(path + "/" + QDateTime::currentDateTimeUtc().toString("dd.MM.yyyy_hh.mm.ss.zzzZ_") + "Log" + fileName.right(fileName.length() - fileName.lastIndexOf('.')), truncateFile);
         else
             openFile(path + "/" + fileName, truncateFile);
 
@@ -76,7 +76,7 @@ void Logger::writeLogTXTLine(QString lineToAppend, bool simplifyText)
     if (simplifyText)
         text = text.simplified();
 
-    text = QDateTime::currentDateTime().toString("hh:mm:ss:zzz ") + text;
+    text = QDateTime::currentDateTimeUtc().toString("yyyy-MM-ddTHH:MM:ss.zzzZ ") + text;
 
     if (logFile != nullptr)
     {
@@ -98,7 +98,7 @@ void Logger::writeLogTXTParsedData(QStringList labelList, QList<double> dataList
 
     text = text.simplified();
 
-    text = QDateTime::currentDateTime().toString("hh:mm:ss:zzz ") + text;
+    text = QDateTime::currentDateTimeUtc().toString("yyyy-MM-ddTHH:MM:ss.zzzZ ") + text;
 
     if (logFile != nullptr)
     {
@@ -169,7 +169,7 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
         if (index >= 0 && index < dataList.count())
             out << QString::number(dataList[index], 'f') + ',';
         else if (csvLabelsBuffer[i] == "time")
-            out << QTime::currentTime().toString("hh:mm:ss:zzz") + ',';
+            out << QDateTime::currentDateTimeUtc().toString("yyyy-MM-ddTHH:MM:ss.zzzZ") + ',';
     }
 
     out << "\n";
