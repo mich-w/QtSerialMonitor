@@ -1,5 +1,6 @@
 #include "filereader.h"
 
+#include <QDateTime>
 #include <QRegularExpression>
 
 FileReader::FileReader(QObject *parent) : QObject(parent)
@@ -46,6 +47,13 @@ static QTime findTimeInLine(const QString &line)
     const QStringList tokens = line.split(tokenSeparators, Qt::SkipEmptyParts);
     for (const QString &token : tokens)
     {
+        if (token.contains('T')) // ISO 8601 date-time, as written by Logger
+        {
+            QDateTime dateTime = QDateTime::fromString(token, Qt::ISODateWithMs);
+            if (dateTime.isValid())
+                return dateTime.time();
+        }
+
         for (const QString &timeFormat : searchTimeFormatList)
         {
             QTime time = QTime::fromString(token, timeFormat);
