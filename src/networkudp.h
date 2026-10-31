@@ -9,14 +9,14 @@ class NetworkUDP : public QObject
     Q_OBJECT
 public:
     explicit NetworkUDP(QObject *parent = nullptr);
-    bool begin(QHostAddress ip, qint16 port);
-    bool bind(QHostAddress ip, qint16 port);
+    bool begin(QHostAddress ip, quint16 port);
+    bool bind(QHostAddress ip, quint16 port);
     bool end();
     bool isOpen();
-    QString readString(bool clearBuffer = true);
+    QByteArray readBytes(bool clearBuffer = true);
     void clearAll();
     void clearStringBuffer();
-    void write(QString message, QHostAddress ip, qint16 port);
+    void write(QString message, QHostAddress ip, quint16 port);
 signals:
 
 public slots:
@@ -25,7 +25,7 @@ private slots:
 
 private:
     bool isBinded = false;
-    QString udpReceiveStringBuffer;
+    QByteArray udpReceiveBuffer;
     QUdpSocket *udpSocket;
 };
 

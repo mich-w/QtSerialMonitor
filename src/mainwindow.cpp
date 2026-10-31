@@ -935,16 +935,29 @@ void MainWindow::addLog(QString text, bool appendAsLine)
 
 QString MainWindow::controlCharactersVisibleConvert(QString text)
 {
-    if (text.replace("\r\n", "\\r\\n\r\n").isEmpty())
+    QString output;
+    output.reserve(text.size() * 2);
+
+    for (auto i = 0; i < text.size(); ++i)
     {
-        text.replace("\r", "\\r\r");
-        text.replace("\n", "\\n\n");
+        const QChar ch = text[i];
+        if (ch == '\r')
+        {
+            output += "\\r";
+            if (i + 1 >= text.size() || text[i + 1] != '\n')
+                output += '\n'; // lone CR still breaks the line
+        }
+        else if (ch == '\n')
+            output += "\\n\n";
+        else if (ch == '\t')
+            output += "\\t\t";
+        else if (ch == ' ')
+            output += QChar(183); // middle dot
+        else
+            output += ch;
     }
 
-    text.replace("\t", "\\t\t");
-    text.replace(' ', QChar(183));
-
-    return text;
+    return output;
 }
 
 void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLine)
@@ -960,9 +973,7 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLi
         else
         {
             for (auto i = 0; i < bytes.size(); ++i)
-            {
-                bytesText.append(QString::number(bytes[i], 2) + ' ');
-            }
+                bytesText.append(QString::number(static_cast<quint8>(bytes[i]), 2).rightJustified(8, '0') + ' ');
         }
 
         if (ui->checkBoxShowTime->isChecked())
@@ -1010,45 +1021,44 @@ void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<d
 
 void MainWindow::on_processSerial()
 {
-    QString serialInput = serial.getString();
-    serial.clearAll();
+    processIncomingData(serial.getBytes(), serialDecoder);
+}
 
-    if (ui->comboBoxTextProcessing->currentIndex() == 1) // Append text to textBrowser
-        serialInput = serialInput.trimmed();
+void MainWindow::processIncomingData(const QByteArray &bytes, Utf8Decoder &decoder)
+{
+    if (bytes.isEmpty())
+        return;
+
+    QString input = decoder.decode(bytes);
+
+    if (ui->comboBoxTextProcessing->currentIndex() == 1)
+        input = input.trimmed();
     else if (ui->comboBoxTextProcessing->currentIndex() == 2)
-        serialInput = serialInput.simplified();
+        input = input.simplified();
 
-    if (ui->comboBoxFormat->currentIndex() == 0 && serialInput.isEmpty() == false)
-    {
-        addLog(serialInput, ui->comboBoxAddTextMode->currentIndex());
-    }
-    else if (ui->comboBoxFormat->currentIndex() == 1 && serialInput.length() > 0)
-    {
-        addLogBytes(serialInput.toUtf8(), false, ui->comboBoxAddTextMode->currentIndex());
-    }
-    else if (ui->comboBoxFormat->currentIndex() == 2 && serialInput.length() > 0)
-    {
-        addLogBytes(serialInput.toUtf8(), true, ui->comboBoxAddTextMode->currentIndex());
-    }
+    const bool appendAsLine = ui->comboBoxAddTextMode->currentIndex();
 
-    if (serialInput.isEmpty() == false)
-    {
-        parser.parse(serialInput, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
-        QStringList labelList = parser.getStringListLabels();
-        QList<double> numericDataList = parser.getListNumericValues();
-        QList<long> timeStamps = parser.getListTimeStamp();
+    // HEX / BIN show the raw bytes as received, not a UTF-8 round trip.
+    if (ui->comboBoxFormat->currentIndex() == 0 && !input.isEmpty())
+        addLog(input, appendAsLine);
+    else if (ui->comboBoxFormat->currentIndex() == 1)
+        addLogBytes(bytes, false, appendAsLine);
+    else if (ui->comboBoxFormat->currentIndex() == 2)
+        addLogBytes(bytes, true, appendAsLine);
 
-        this->processChart(labelList, numericDataList, timeStamps);
-        this->processLogWrite(serialInput, labelList, numericDataList, timeStamps);
-        this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), serialInput);
-        this->processTable(labelList, numericDataList);
-        this->processLogTable(timeStamps, labelList, numericDataList);
+    if (input.isEmpty())
+        return;
 
-        //        QFuture<void> future = QtConcurrent::run([=]() // Cool !
-        //        {
+    parser.parse(input, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
+    QStringList labelList = parser.getStringListLabels();
+    QList<double> numericDataList = parser.getListNumericValues();
+    QList<long> timeStamps = parser.getListTimeStamp();
 
-        //        });
-    }
+    this->processChart(labelList, numericDataList, timeStamps);
+    this->processLogWrite(input, labelList, numericDataList, timeStamps);
+    this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), input);
+    this->processTable(labelList, numericDataList);
+    this->processLogTable(timeStamps, labelList, numericDataList);
 }
 
 void MainWindow::clearGraphData(bool replot)
@@ -1065,40 +1075,7 @@ void MainWindow::clearGraphData(bool replot)
 
 void MainWindow::on_processUDP()
 {
-    QString udpInput = networkUDP.readString();
-    networkUDP.clearAll();
-
-    if (ui->comboBoxTextProcessing->currentIndex() == 1)
-        udpInput = udpInput.trimmed();
-    else if (ui->comboBoxTextProcessing->currentIndex() == 2)
-        udpInput = udpInput.simplified();
-
-    if (ui->comboBoxFormat->currentIndex() == 0 && udpInput.isEmpty() == false)
-    {
-        addLog(udpInput);
-    }
-    else if (ui->comboBoxFormat->currentIndex() == 1 && udpInput.length() > 0)
-    {
-        addLogBytes(udpInput.toUtf8(), false, ui->comboBoxAddTextMode->currentIndex());
-    }
-    else if (ui->comboBoxFormat->currentIndex() == 2 && udpInput.length() > 0)
-    {
-        addLogBytes(udpInput.toUtf8(), true, ui->comboBoxAddTextMode->currentIndex());
-    }
-
-    if (udpInput.isEmpty() == false)
-    {
-        parser.parse(udpInput, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
-        QStringList labelList = parser.getStringListLabels();
-        QList<double> numericDataList = parser.getListNumericValues();
-        QList<long> timeStamps = parser.getListTimeStamp();
-
-        this->processLogWrite(udpInput, labelList, numericDataList, timeStamps);
-        this->processChart(labelList, numericDataList, timeStamps);
-        this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), udpInput);
-        this->processTable(labelList, numericDataList); // Fill tableWidget
-        this->processLogTable(timeStamps, labelList, numericDataList);
-    }
+    processIncomingData(networkUDP.readBytes(), udpDecoder);
 }
 
 void MainWindow::sendUDPDatagram(QString message)
@@ -1638,6 +1615,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 
         if (serial.begin(parsedPortName, parsedBaudRate, dataBits, parity, stopBits, flowControl, ui->checkBoxDTR->isChecked()))
         {
+            serialDecoder.reset();
             serialStringProcessingTimer->start(ui->spinBoxProcessingDelay->value());
             parser.restartChartTimer();
 
@@ -1811,6 +1789,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
 
         if (status == true)
         {
+            udpDecoder.reset();
             udpStringProcessingTimer->start(ui->spinBoxProcessingDelay->value());
             parser.restartChartTimer();
 
@@ -1826,6 +1805,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
         else
         {
             addLog("App >>\t UDP error. Unable to bind", true);
+            ui->pushButtonUDPConnect->setChecked(false);
         }
     }
     else

@@ -29,7 +29,7 @@ public:
     int getAvailiblePortsCount();
     QList<QSerialPortInfo> getAvailiblePorts();
     QString getSerialInfo();
-    QString getString(bool clearBuffer = true);
+    QByteArray getBytes(bool clearBuffer = true);
     void clearAll(bool clearHardwareBuffers = false);
     void clearString();
     QList<int> getAvailibleBaudRates();
@@ -44,7 +44,7 @@ private slots:
 
 private:
     QSerialPort *serialDevice = nullptr;
-    QString serialInputString;
+    QByteArray serialInputBuffer;
     SERIAL_READ_MODE stringReadMode = canReadLine_ReadLine;
 };
 

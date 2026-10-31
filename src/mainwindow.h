@@ -10,6 +10,7 @@
 #include "serial.h"
 #include "infodialog.h"
 #include "highlighter.h"
+#include "utf8decoder.h"
 
 #include <QCloseEvent>
 #include <QCompleter>
@@ -170,6 +171,9 @@ private:
     QTimer *serialStringProcessingTimer;
     QTimer *udpStringProcessingTimer;
     Serial serial;
+    Utf8Decoder serialDecoder;
+    Utf8Decoder udpDecoder;
+    void processIncomingData(const QByteArray &bytes, Utf8Decoder &decoder);
     Ui::MainWindow *ui;
     void addLog(QString text, bool appendAsLine = false);
     void addLogBytes(QByteArray bytes, bool hexToBinary = false, bool appendAsLine = false);

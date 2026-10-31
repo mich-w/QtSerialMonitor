@@ -56,7 +56,8 @@ HEADERS += \
         networkudp.h \
         parser.h \
         qcustomplot.h \
-        serial.h
+        serial.h \
+        utf8decoder.h
 
 FORMS += \
         infodialog.ui \

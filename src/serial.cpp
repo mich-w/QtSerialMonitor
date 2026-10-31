@@ -28,25 +28,25 @@ void Serial::readString()
     case canReadLine_ReadLine:
         while (this->serialDevice->canReadLine())
         {
-            serialInputString.append(serialDevice->readLine());
+            serialInputBuffer.append(serialDevice->readLine());
         }
         break;
     case canReadLine_ReadAll:
         while (this->serialDevice->canReadLine())
         {
-            serialInputString.append(serialDevice->readAll());
+            serialInputBuffer.append(serialDevice->readAll());
         }
         break;
     case bytesAvailable_ReadLine:
         while (this->serialDevice->bytesAvailable())
         {
-            serialInputString.append(serialDevice->readLine());
+            serialInputBuffer.append(serialDevice->readLine());
         }
         break;
     case bytesAvailable_ReadAll:
         while (this->serialDevice->bytesAvailable())
         {
-            serialInputString.append(serialDevice->readAll());
+            serialInputBuffer.append(serialDevice->readAll());
         }
         break;
     }
@@ -79,9 +79,9 @@ bool Serial::setReadMode(int mode)
     return true;
 }
 
-QString Serial::getString(bool clearBuffer)
+QByteArray Serial::getBytes(bool clearBuffer)
 {
-    QString output = serialInputString;
+    QByteArray output = serialInputBuffer;
 
     if (clearBuffer)
         clearString();
@@ -91,7 +91,7 @@ QString Serial::getString(bool clearBuffer)
 
 void Serial::clearAll(bool clearHardwareBuffers)
 {
-    serialInputString.clear();
+    serialInputBuffer.clear();
 
     if (clearHardwareBuffers)
         serialDevice->clear();
@@ -99,7 +99,7 @@ void Serial::clearAll(bool clearHardwareBuffers)
 
 void Serial::clearString()
 {
-    serialInputString.clear();
+    serialInputBuffer.clear();
 }
 
 QString Serial::getSerialInfo()
@@ -318,15 +318,7 @@ bool Serial::end()
 
 bool Serial::send(QString message)
 {
-    if (this->serialDevice->isOpen() && this->serialDevice->isWritable())
-    {
-        this->serialDevice->write(message.toStdString().c_str());
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return send(message.toUtf8());
 }
 
 bool Serial::send(const QByteArray &message)

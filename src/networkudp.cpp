@@ -5,46 +5,43 @@ NetworkUDP::NetworkUDP(QObject *parent) : QObject(parent)
     udpSocket = new QUdpSocket(this);
 }
 
-bool NetworkUDP::begin(QHostAddress ip, qint16 port)
+bool NetworkUDP::begin(QHostAddress ip, quint16 port)
 {
-    bind(ip, port);
+    if (!bind(ip, port))
+        return false;
 
-    connect(this->udpSocket, SIGNAL(readyRead()), this, SLOT(readDatagram()));
+    connect(this->udpSocket, &QUdpSocket::readyRead, this, &NetworkUDP::readDatagram, Qt::UniqueConnection);
 
     return true;
 }
 
 bool NetworkUDP::end()
 {
-    disconnect(this->udpSocket, SIGNAL(readyRead()), this, SLOT(readDatagram()));
+    disconnect(this->udpSocket, &QUdpSocket::readyRead, this, &NetworkUDP::readDatagram);
 
     udpSocket->flush();
     udpSocket->close();
     isBinded = false;
 
-    if (!udpSocket->isOpen()) // TODO ZAWSZE FALSE
-        return true;
-    else
-        return false;
+    return !udpSocket->isOpen();
 }
 
-bool NetworkUDP::bind(QHostAddress ip, qint16 port)
+bool NetworkUDP::bind(QHostAddress ip, quint16 port)
 {
     udpSocket->flush();
     udpSocket->close();
 
     if (ip == QHostAddress::Any)
-        udpSocket->bind(ip, port, QUdpSocket::BindFlag::ShareAddress);
+        isBinded = udpSocket->bind(ip, port, QUdpSocket::BindFlag::ShareAddress);
     else
-        udpSocket->bind(ip, port);
+        isBinded = udpSocket->bind(ip, port);
 
-    isBinded = true;
-    return true;
+    return isBinded;
 }
 
-void NetworkUDP::write(QString message, QHostAddress ip, qint16 port)
+void NetworkUDP::write(QString message, QHostAddress ip, quint16 port)
 {
-    auto datagram = message.toLatin1();
+    auto datagram = message.toUtf8();
     udpSocket->writeDatagram(datagram, ip, port);
 }
 
@@ -56,25 +53,25 @@ void NetworkUDP::readDatagram()
     {
         datagram.resize(int(udpSocket->pendingDatagramSize()));
         udpSocket->readDatagram(datagram.data(), datagram.size());
-        udpReceiveStringBuffer.append(datagram.toStdString().c_str());
+        udpReceiveBuffer.append(datagram); // keep raw bytes - NUL bytes are valid data
     }
 }
 
-QString NetworkUDP::readString(bool clearBuffer)
+QByteArray NetworkUDP::readBytes(bool clearBuffer)
 {
-    QString output = udpReceiveStringBuffer;
+    QByteArray output = udpReceiveBuffer;
 
     if (clearBuffer)
-        udpReceiveStringBuffer.clear();
+        udpReceiveBuffer.clear();
 
     return output;
 }
 
 void NetworkUDP::clearStringBuffer()
 {
-    udpReceiveStringBuffer.clear();
+    udpReceiveBuffer.clear();
 }
 
-void NetworkUDP::clearAll() { udpReceiveStringBuffer.clear(); }
+void NetworkUDP::clearAll() { udpReceiveBuffer.clear(); }
 
 bool NetworkUDP::isOpen() { return isBinded; }
