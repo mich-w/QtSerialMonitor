@@ -1513,11 +1513,11 @@ void MainWindow::on_lineEditCustomParsingRules_editingFinished()
 
 void MainWindow::on_spinBoxMaxGraphs_valueChanged(int arg1)
 {
-    QPalette *paletteRed = new QPalette();
-    paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
+    QPalette paletteRed;
+    paletteRed.setColor(QPalette::Text, Qt::GlobalColor::red);
 
     if (arg1 > 10)
-        ui->spinBoxMaxGraphs->setPalette(*paletteRed);
+        ui->spinBoxMaxGraphs->setPalette(paletteRed);
     else
         ui->spinBoxMaxGraphs->setPalette(QPalette());
 
@@ -1553,11 +1553,11 @@ void MainWindow::on_spinBoxProcessingDelay_valueChanged(int arg1)
     serialStringProcessingTimer->setInterval(newInterval);
     udpStringProcessingTimer->setInterval(newInterval);
 
-    QPalette *paletteRed = new QPalette();
-    paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
+    QPalette paletteRed;
+    paletteRed.setColor(QPalette::Text, Qt::GlobalColor::red);
 
     if (newInterval > ui->spinBoxProcessingDelay->minimum())
-        ui->spinBoxProcessingDelay->setPalette(*paletteRed);
+        ui->spinBoxProcessingDelay->setPalette(paletteRed);
     else
         ui->spinBoxProcessingDelay->setPalette(QPalette());
 }
@@ -1744,6 +1744,7 @@ void MainWindow::on_checkBoxShowLegend_toggled(bool checked)
 
 void MainWindow::on_actionSave_graph_as_triggered()
 {
+    on_actionImage_triggered();
 }
 
 void MainWindow::on_actionPrint_Graph_triggered()
@@ -2341,8 +2342,8 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
     clearGraphs(true);
     loadFromRAM(0);
 
-    QPalette *paletteRed = new QPalette();
-    paletteRed->setColor(QPalette::Text, Qt::GlobalColor::red);
+    QPalette paletteRed;
+    paletteRed.setColor(QPalette::Text, Qt::GlobalColor::red);
 
     if (index == 0)
     {
@@ -2354,7 +2355,7 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
     {
         ui->lineEditCustomParsingRules->setEnabled(true);
         ui->labelParsingRules->setEnabled(true);
-        ui->comboBoxGraphDisplayMode->setPalette(*paletteRed);
+        ui->comboBoxGraphDisplayMode->setPalette(paletteRed);
     }
 }
 
@@ -2502,18 +2503,28 @@ void MainWindow::on_actionFull_parser_data_triggered()
 
 void MainWindow::on_actionImage_triggered()
 {
-    QString default_name = "export.png";
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::homePath() + "/" + default_name, tr("Image Files (*.png *.jpg *.bmp)"));
-
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::homePath() + "/export.png",
+                                                    tr("PNG image (*.png);;JPEG image (*.jpg *.jpeg);;BMP image (*.bmp);;PDF vector (*.pdf)"));
     if (filename.isEmpty())
         return;
 
-    QImage bitmap(ui->widgetChart->size(), QImage::Format_ARGB32_Premultiplied);
-    QPainter painter(&bitmap);
-    ui->widgetChart->render(&painter, QPoint(), QRegion(), QWidget::DrawChildren);
-    QImageWriter writer(filename, "png");
-    writer.write(bitmap);
-    qDebug() << "Wrote image to file";
+    const QString suffix = QFileInfo(filename).suffix().toLower();
+    bool saved = false;
+
+    if (suffix == "jpg" || suffix == "jpeg")
+        saved = ui->widgetChart->saveJpg(filename);
+    else if (suffix == "bmp")
+        saved = ui->widgetChart->saveBmp(filename);
+    else if (suffix == "pdf")
+        saved = ui->widgetChart->savePdf(filename);
+    else
+    {
+        if (suffix != "png")
+            filename += ".png";
+        saved = ui->widgetChart->savePng(filename);
+    }
+
+    addLog(saved ? "App >>\t Graph saved to " + filename : "App >>\t Error - unable to save graph to " + filename, true);
 }
 
 //void MainWindow::on_actionto_csv_triggered()
