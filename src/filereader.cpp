@@ -1,5 +1,7 @@
 #include "filereader.h"
 
+#include <QRegularExpression>
+
 FileReader::FileReader(QObject *parent) : QObject(parent)
 {
     fileReadTimer.stop();
@@ -36,61 +38,59 @@ bool FileReader::readAllAtOnce(QFile *fileToRead)
     return false;
 }
 
-QList<QTime> FileReader::getFileTimeRange(QFile *file)
+static QTime findTimeInLine(const QString &line)
 {
-    QList<QTime> timeRange = {QTime(), QTime()};
+    static const QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"};
+    static const QRegularExpression tokenSeparators("[\\s,]+");
 
-    if (file->open(QIODevice::ReadOnly))
+    const QStringList tokens = line.split(tokenSeparators, Qt::SkipEmptyParts);
+    for (const QString &token : tokens)
     {
-        QString allData = file->readAll();
-        file->close();
-
-        QStringList readFileSplitLines = allData.split(QRegExp("[\\n+\\r+]"), Qt::SplitBehaviorFlags::SkipEmptyParts);
-
-        for (auto i = 0; i < readFileSplitLines.count(); ++i)
+        for (const QString &timeFormat : searchTimeFormatList)
         {
-            QStringList inputStringSplitArrayTopLine = readFileSplitLines[i].simplified().split(QRegExp("[\\s+,]"), Qt::SplitBehaviorFlags::SkipEmptyParts);                                     // rozdzielamy traktująac spacje jako separator
-            QStringList inputStringSplitArrayButtomLine = readFileSplitLines[readFileSplitLines.count() - 1 - i].simplified().split(QRegExp("[\\s+,]"), Qt::SplitBehaviorFlags::SkipEmptyParts); // rozdzielamy traktująac spacje jako separator
-            QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"};                                                                                       // TODO !!!
-
-            bool foundTime[2] = {false};
-
-            for (auto j = 0; j < inputStringSplitArrayTopLine.count(); ++j)
-            {
-                foreach (auto timeFormat, searchTimeFormatList)
-                {
-                    if (QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat).isValid() && !foundTime[0])
-                    {
-                        timeRange.first() = QTime::fromString(inputStringSplitArrayTopLine[j], timeFormat);
-                        foundTime[0] = true;
-                        break;
-                    }
-                }
-            }
-
-            for (auto j = 0; j < inputStringSplitArrayButtomLine.count(); ++j)
-            {
-                foreach (auto timeFormat, searchTimeFormatList)
-                {
-                    if (QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat).isValid() && !foundTime[1])
-                    {
-                        timeRange.last() = (QTime::fromString(inputStringSplitArrayButtomLine[j], timeFormat));
-                        foundTime[1] = true;
-
-                        break;
-                    }
-                }
-            }
-
-            if (foundTime[0] && foundTime[1])
-                return timeRange;
+            QTime time = QTime::fromString(token, timeFormat);
+            if (time.isValid())
+                return time;
         }
     }
-    else
+    return QTime();
+}
+
+// Scans only the head and tail of the file, so it stays fast for large logs.
+QList<QTime> FileReader::getFileTimeRange(QFile *file)
+{
+    static const qint64 scanChunkSize = 64 * 1024;
+    static const QRegularExpression lineSeparators("[\\r\\n]+");
+
+    QList<QTime> timeRange = {QTime(), QTime()};
+
+    if (!file->open(QIODevice::ReadOnly))
     {
         qDebug() << "Get file time range - invalid file ?";
-        return {QTime(), QTime()};
+        return timeRange;
     }
+
+    const QStringList headLines = QString::fromUtf8(file->read(scanChunkSize)).split(lineSeparators, Qt::SkipEmptyParts);
+
+    file->seek(qMax<qint64>(0, file->size() - scanChunkSize));
+    const QStringList tailLines = QString::fromUtf8(file->readAll()).split(lineSeparators, Qt::SkipEmptyParts);
+    file->close();
+
+    for (const QString &line : headLines)
+    {
+        timeRange.first() = findTimeInLine(line);
+        if (timeRange.first().isValid())
+            break;
+    }
+
+    for (auto i = tailLines.count() - 1; i >= 0; --i)
+    {
+        timeRange.last() = findTimeInLine(tailLines[i]);
+        if (timeRange.last().isValid())
+            break;
+    }
+
+    return timeRange;
 }
 
 void FileReader::setReadInterval(int newVal) { readInterval = newVal; }
