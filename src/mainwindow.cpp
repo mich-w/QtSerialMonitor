@@ -51,6 +51,11 @@ void MainWindow::createTimers()
     this->udpStringProcessingTimer = new QTimer(this);
 
     connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(on_updateSerialDeviceList()));
+    connect(&serial, &Serial::connectionLost, this, [=](const QString &reason)
+            {
+                addLog("App >>\t Serial port error: " + reason, true);
+                ui->pushButtonSerialConnect->setChecked(false); // closes the port via toggled slot
+            }, Qt::QueuedConnection);
     connect(radioButtonTimer, &QTimer::timeout, this, [=]()
             { ui->radioButtonDeviceUpdate->setChecked(false); });
 }
@@ -851,27 +856,31 @@ void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
 
 void MainWindow::on_updateSerialDeviceList()
 {
-    QList<QSerialPortInfo> devices = serial.getAvailiblePorts();
-    QList<QString> portNames;
-    static QList<QString> portNamesOld;
+    static const QString noDevicesText = "No serial devices detected :(";
+    static QStringList portNamesOld;
 
-    foreach (auto item, devices)
+    const QList<QSerialPortInfo> devices = serial.getAvailiblePorts();
+    QStringList portNames;
+    for (const auto &item : devices)
         portNames.append(item.portName());
+    portNames.sort();
 
-    if ((devices.count() >= 1) && (!(portNames.toSet().intersects(portNamesOld.toSet())) || (portNames.count() != portNamesOld.count())))
+    if (!devices.isEmpty() && portNames != portNamesOld)
     {
-        ui->comboBoxDevices->clear();
+        const QString previousPort = ui->comboBoxDevices->currentData().toString();
 
-        for (auto i = 0; i < devices.count(); ++i)
-        {
-            ui->comboBoxDevices->addItem("(" + devices.at(i).portName() + ")" + " " + devices.at(i).description());
-        }
+        ui->comboBoxDevices->clear();
+        for (const auto &device : devices)
+            ui->comboBoxDevices->addItem("(" + device.portName() + ")" + " " + device.description(), device.portName());
+
+        const int previousIndex = ui->comboBoxDevices->findData(previousPort);
+        if (previousIndex >= 0)
+            ui->comboBoxDevices->setCurrentIndex(previousIndex);
     }
-    else if ((devices.count() < 1) && !ui->comboBoxDevices->itemText(0).startsWith("No COM devices"))
+    else if (devices.isEmpty() && ui->comboBoxDevices->itemText(0) != noDevicesText)
     {
         ui->comboBoxDevices->clear();
-        ui->comboBoxDevices->addItem("No serial devices detected :(");
-        ui->comboBoxDevices->setCurrentIndex(ui->comboBoxDevices->count() - 1);
+        ui->comboBoxDevices->addItem(noDevicesText);
     }
 
     portNamesOld = portNames;
@@ -1594,24 +1603,27 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 
     if (checked)
     {
-        if (serial.getAvailiblePorts().count() < 1)
+        QString parsedPortName = ui->comboBoxDevices->currentData().toString();
+
+        if (parsedPortName.isEmpty())
         {
             addLog("App >>\t No devices available", true);
             addLog("App >>\t Unable to open serial port!", true);
-            ui->pushButtonSerialConnect->setChecked(false);
             inputError = true;
         }
 
-        if (ui->comboBoxBaudRates->currentText().toInt() == 0)
+        if (ui->comboBoxBaudRates->currentText().toInt() <= 0)
         {
             addLog("App >>\t Invalid baud rate!", true);
             inputError = true;
         }
 
         if (inputError)
+        {
+            ui->pushButtonSerialConnect->setChecked(false);
             return;
+        }
 
-        QString parsedPortName = QSerialPortInfo::availablePorts().at(ui->comboBoxDevices->currentIndex()).portName();
         uint parsedBaudRate = ui->comboBoxBaudRates->currentText().toInt();
         QString dataBits = ui->comboBoxDataBits->currentText();
         QString stopBits = ui->comboBoxStopBits->currentText();

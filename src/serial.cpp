@@ -3,6 +3,17 @@
 Serial::Serial(QObject *parent) : QObject(parent)
 {
     serialDevice = new QSerialPort(this);
+    connect(serialDevice, &QSerialPort::errorOccurred, this, &Serial::handleError);
+}
+
+void Serial::handleError(QSerialPort::SerialPortError error)
+{
+    // ResourceError is raised e.g. when a USB device is unplugged while open.
+    if (error == QSerialPort::ResourceError || error == QSerialPort::PermissionError)
+    {
+        if (serialDevice->isOpen())
+            emit connectionLost(serialDevice->errorString());
+    }
 }
 
 Serial::~Serial()

@@ -34,9 +34,13 @@ public:
     void clearString();
     QList<int> getAvailibleBaudRates();
 signals:
+    void connectionLost(const QString &reason);
 
 public slots:
     void readString();
+
+private slots:
+    void handleError(QSerialPort::SerialPortError error);
 
 private:
     QSerialPort *serialDevice = nullptr;
