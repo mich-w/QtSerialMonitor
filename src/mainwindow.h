@@ -27,6 +27,7 @@
 #include <QScrollBar>
 #include <QSettings>
 #include <QShortcut>
+#include <QStandardPaths>
 #include <QtDebug>
 #include <QTextEdit>
 #include <QTextStream>
@@ -177,6 +178,7 @@ private:
     void createChart();
     void createChartTracer();
     void createTimers();
+    static QString defaultLogPath();
     void exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep = ',');
     void exportTableLogToCSV(QTableView *table, QChar sep = ',');
     void loadFromRAM(bool loadText);

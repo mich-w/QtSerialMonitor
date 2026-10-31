@@ -3,6 +3,7 @@
 
 #include <QApplication>
 #include <QDateTime>
+#include <QRegularExpression>
 #include <QDir>
 #include <QFile>
 #include <QObject>
@@ -15,6 +16,7 @@ class Logger : public QObject
     Q_OBJECT
 public:
     explicit Logger(QObject *parent = nullptr);
+    ~Logger();
     bool beginLog(QString path, bool autoLogging, QString fileName, bool truncateFile = false);
     bool isOpen();
     void clearWriteBuffer();
@@ -28,6 +30,10 @@ signals:
 public slots:
 
 private:
+    static QString timeStamp();
+    void rewriteCSVHeader();
+    void writeLine(const QString &line);
+
     QFile *logFile = nullptr;
     QStringList csvLabelsBuffer;
 };

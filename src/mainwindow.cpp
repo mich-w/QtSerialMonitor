@@ -114,7 +114,7 @@ void MainWindow::setupGUI()
     ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
     ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
     ui->lineEditSaveFileName->setText("Log.txt");
-    ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
+    ui->lineEditSaveLogPath->setText(defaultLogPath());
     ui->splitterGraphTable->setSizes({this->height(), 0});
 
     emit on_checkBoxAutoLogging_toggled(ui->checkBoxAutoLogging->isChecked());
@@ -289,8 +289,8 @@ void MainWindow::settingsLoadAll()
         ui->lineEditCustomParsingRules->setText(appSettings.value("data/lineEditCustomParsingRules.text").value<QString>());
         ui->lineEditExternalClockLabel->setText(appSettings.value("data/lineEditExternalClockLabel.text").value<QString>());
         ui->lineEditLoadFilePath->setText(appSettings.value("data/lineEditLoadFilePath.text").value<QString>());
-        ui->lineEditSaveFileName->setText(appSettings.value("data/lineEditSaveFileName.text").value<QString>());
-        ui->lineEditSaveLogPath->setText(appSettings.value("data/lineEditSaveLogPath.text").value<QString>());
+        ui->lineEditSaveFileName->setText(appSettings.value("data/lineEditSaveFileName.text", "Log.txt").value<QString>());
+        ui->lineEditSaveLogPath->setText(appSettings.value("data/lineEditSaveLogPath.text", defaultLogPath()).value<QString>());
         ui->lineEditUDPTargetIP->setText(appSettings.value("data/lineEditUDPTargetIP.text").value<QString>());
         ui->pushButtonEnablePlot->setChecked(appSettings.value("GUI_Elements/pushButtonEnablePlot.isChecked", false).value<bool>());
         ui->pushButtonEnableTableLog->setChecked(appSettings.value("GUI_Elements/pushButtonEnableTableLog.isChecked", true).value<bool>());
@@ -1885,7 +1885,7 @@ void MainWindow::on_pushButtonLogging_toggled(bool checked)
 
         if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
         {
-            if (!fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text()), ui->checkBoxTruncateFileOnSave->isChecked())
+            if (!fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text(), ui->checkBoxTruncateFileOnSave->isChecked()))
             {
                 addLog("App >>\t logger error - unable to open File", true);
                 ui->pushButtonLogging->setChecked(false);
@@ -1932,14 +1932,19 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
     }
 }
 
+QString MainWindow::defaultLogPath()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/QtSerialMonitor/Logs";
+}
+
 void MainWindow::on_pushButtonSetDefaultLogPath_clicked()
 {
-    ui->lineEditSaveLogPath->setText(qApp->applicationDirPath() + "/Logs");
+    ui->lineEditSaveLogPath->setText(defaultLogPath());
 }
 
 void MainWindow::on_pushButtonAddDateTime_clicked()
 {
-    ui->lineEditSaveFileName->setText(QDateTime::currentDateTime().toString("dd.MM.yyyy_hh:mm:ss:zzz_") + ui->lineEditSaveFileName->text());
+    ui->lineEditSaveFileName->setText(QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz_") + ui->lineEditSaveFileName->text()); // no ':' - invalid in Windows file names
 }
 
 void MainWindow::on_pushButtonLogPath_clicked()
