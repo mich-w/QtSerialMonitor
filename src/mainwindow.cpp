@@ -401,7 +401,7 @@ void MainWindow::settingsSaveAll()
         appSettings.setValue("GUI_Elements/pushButtonEnablePlot.isChecked", ui->pushButtonEnablePlot->isChecked());
         appSettings.setValue("GUI_Elements/tabWidgetControlSection.currentIndex", ui->tabWidgetControlSection->currentIndex());
         appSettings.setValue("GUI_Elements/tabWidgetTableView.currentIndex", ui->tabWidgetTableView->currentIndex());
-        appSettings.setValue("layout/pushButtonEnableTableLog.isChecked", ui->pushButtonEnableTableLog->isChecked());
+        appSettings.setValue("GUI_Elements/pushButtonEnableTableLog.isChecked", ui->pushButtonEnableTableLog->isChecked());
         appSettings.setValue("layout/spinBoxMaxGraphs.value", ui->spinBoxMaxGraphs->value());
         appSettings.setValue("layout/spinBoxMaxLines.value", ui->spinBoxMaxLines->value());
         appSettings.setValue("layout/spinBoxMaxRowsLogTable.value", ui->spinBoxMaxRowsLogTable->value());
@@ -431,104 +431,106 @@ void MainWindow::settingsSaveAll()
 
 void MainWindow::processTable(QStringList labels, QList<double> values)
 {
-    static QList<int> tableMissingCount;
+    // Missing-sample counter for each row is kept in the label item's UserRole.
+    auto *table = ui->tableWidgetParsedData;
+    QHash<QString, int> rowOfLabel;
+    for (auto row = 0; row < table->rowCount(); ++row)
+        rowOfLabel.insert(table->item(row, 0)->text(), row);
 
-    foreach (auto label, labels)
+    const auto count = qMin(labels.count(), values.count());
+    for (auto i = 0; i < count; ++i)
     {
-        if (ui->tableWidgetParsedData->findItems(label, Qt::MatchFlag::MatchExactly).count() < 1)
+        int row = rowOfLabel.value(labels[i], -1);
+        if (row < 0)
         {
-            ui->tableWidgetParsedData->insertRow(ui->tableWidgetParsedData->rowCount());
-
-            QTableWidgetItem *newLabel = new QTableWidgetItem(label);
-            ui->tableWidgetParsedData->setItem(ui->tableWidgetParsedData->rowCount() - 1, 0, newLabel);
-            tableMissingCount.append(0);
+            row = table->rowCount();
+            table->insertRow(row);
+            table->setItem(row, 0, new QTableWidgetItem(labels[i]));
+            table->setItem(row, 1, new QTableWidgetItem());
+            rowOfLabel.insert(labels[i], row);
         }
 
-        for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
-        {
-            if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
-            {
-                QTableWidgetItem *newValue = new QTableWidgetItem(QString::number(values[labels.indexOf(label)]));
-                ui->tableWidgetParsedData->setItem(i, 1, newValue);
-                break;
-            }
-        }
+        table->item(row, 1)->setText(QString::number(values[i]));
+        table->item(row, 0)->setData(Qt::UserRole, 0);
+    }
 
-        if (ui->spinBoxRemoveOldLabels->value() > 0)
+    const int removeThreshold = ui->spinBoxRemoveOldLabels->value();
+    if (removeThreshold > 0)
+    {
+        for (auto row = table->rowCount() - 1; row >= 0; --row) // backwards - rows may be removed
         {
-            for (auto i = 0; i < ui->tableWidgetParsedData->rowCount(); ++i)
-            {
-                if (ui->tableWidgetParsedData->item(i, 0)->text() == label)
-                    tableMissingCount[i] = 0;
-                else
-                    tableMissingCount[i]++;
+            QTableWidgetItem *labelItem = table->item(row, 0);
+            if (labels.contains(labelItem->text()))
+                continue;
 
-                if (tableMissingCount[i] > ui->spinBoxRemoveOldLabels->value())
-                {
-                    ui->tableWidgetParsedData->removeRow(i);
-                    tableMissingCount.removeAt(i);
-                }
-            }
+            const int missing = labelItem->data(Qt::UserRole).toInt() + 1;
+            if (missing > removeThreshold)
+                table->removeRow(row);
+            else
+                labelItem->setData(Qt::UserRole, missing);
         }
     }
 
     if (ui->checkBoxTableAutoResize->isChecked())
     {
-        ui->tableWidgetParsedData->resizeColumnsToContents();
-        ui->tableWidgetParsedData->resizeRowsToContents();
+        table->resizeColumnsToContents();
+        table->resizeRowsToContents();
     }
 }
 
 void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable)
 {
-    if (ui->pushButtonEnableTableLog->isChecked())
+    if (ui->pushButtonEnableTableLog->isChecked()) // checked == logging disabled
         return;
 
-    //    static QList<int> tableMissingCount;
-    unsigned long oldRowCount = ui->tableWidgetLogTable->rowCount();
+    const auto count = qMin(labelTable.count(), qMin(timeTable.count(), valueTable.count()));
+    if (count == 0)
+        return;
 
-    QStringList firstRow;
-    for (auto i = 0; i < ui->tableWidgetLogTable->columnCount(); ++i)
-        firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text().trimmed());
+    auto *table = ui->tableWidgetLogTable;
+
+    // Inserting while sorting is enabled reorders rows mid-insert and scatters values.
+    const bool sortingWasEnabled = table->isSortingEnabled();
+    table->setSortingEnabled(false);
+
+    QHash<QString, int> columnOfLabel;
+    for (auto column = 1; column < table->columnCount(); ++column)
+        columnOfLabel.insert(table->horizontalHeaderItem(column)->text(), column);
 
     bool resizeFlag = false;
+    const int row = table->rowCount();
+    table->insertRow(row);
+    table->setItem(row, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[0]).toString(parser.searchTimeFormatList[0])));
 
-    foreach (auto label, labelTable)
+    for (auto i = 0; i < count; ++i)
     {
-        if (firstRow.contains(label) == false) // optimise
+        const QString label = labelTable[i].trimmed();
+        int column = columnOfLabel.value(label, -1);
+        if (column < 0)
         {
-            ui->tableWidgetLogTable->setColumnCount(ui->tableWidgetLogTable->columnCount() + 1);
-            ui->tableWidgetLogTable->setHorizontalHeaderItem(ui->tableWidgetLogTable->columnCount() - 1, new QTableWidgetItem(label.trimmed()));
-
-            firstRow.clear();
-            for (auto i = 0; i < ui->tableWidgetLogTable->columnCount(); ++i)
-                firstRow.append(ui->tableWidgetLogTable->horizontalHeaderItem(i)->text().trimmed());
-
+            column = table->columnCount();
+            table->insertColumn(column);
+            table->setHorizontalHeaderItem(column, new QTableWidgetItem(label));
+            columnOfLabel.insert(label, column);
             resizeFlag = true;
         }
-        else
-        {
-            if (oldRowCount == ui->tableWidgetLogTable->rowCount())
-                ui->tableWidgetLogTable->setRowCount(oldRowCount + 1);
 
-            ui->tableWidgetLogTable->setItem(oldRowCount, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[labelTable.indexOf(label)]).toString(parser.searchTimeFormatList[0])));
-            ui->tableWidgetLogTable->setItem(oldRowCount, firstRow.indexOf(label), new QTableWidgetItem(QString::number(valueTable[labelTable.indexOf(label)])));
-        }
+        table->setItem(row, column, new QTableWidgetItem(QString::number(valueTable[i])));
     }
-
-    if (ui->checkBoxAutoScrollLogTable->isChecked())
-        ui->tableWidgetLogTable->scrollToBottom();
-
-    if (ui->checkBoxAutoSizeColumnsLogTable->isChecked() && resizeFlag)
-        ui->tableWidgetLogTable->resizeColumnsToContents();
 
     if (ui->spinBoxMaxRowsLogTable->value() > 0)
     {
-        while (ui->tableWidgetLogTable->rowCount() > ui->spinBoxMaxRowsLogTable->value())
-        {
-            ui->tableWidgetLogTable->removeRow(0);
-        }
+        while (table->rowCount() > ui->spinBoxMaxRowsLogTable->value())
+            table->removeRow(0);
     }
+
+    table->setSortingEnabled(sortingWasEnabled);
+
+    if (ui->checkBoxAutoScrollLogTable->isChecked())
+        table->scrollToBottom();
+
+    if (ui->checkBoxAutoSizeColumnsLogTable->isChecked() && resizeFlag)
+        table->resizeColumnsToContents();
 }
 
 void MainWindow::on_printIntroChangelog() // TODO
@@ -1172,49 +1174,45 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
             ui->widgetChart->graph()->setName(label);
 
             ui->widgetChart->graph()->selectionDecorator()->setPen(QPen(Qt::black, 1.0, Qt::PenStyle::DashLine));
-            while (ui->widgetChart->graph()->lineStyle() == (QCPGraph::LineStyle::lsImpulse))  //
-                ui->widgetChart->graph()->setLineStyle((QCPGraph::LineStyle)(rand() % 5 + 1)); // random line except for impulse
-            while (ui->widgetChart->graph()->scatterStyle().shape() == QCPScatterStyle::ScatterShape::ssNone)
-                ui->widgetChart->graph()->setScatterStyle(QCPScatterStyle((QCPScatterStyle::ScatterShape)(rand() % 14 + 1))); // random scatter
+            ui->widgetChart->graph()->setScatterStyle(QCPScatterStyle((QCPScatterStyle::ScatterShape)(QRandomGenerator::global()->bounded(1, 15)))); // random scatter
 
-            int hue = 0; // start with red
-            for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
-            {
-                ui->widgetChart->graph(i)->setPen(QPen(QColor::fromHsv(hue, 255, 200))); // random color
-                hue += 360 / ui->widgetChart->graphCount();
-            }
+            // Golden-angle hue spacing: distinct colours that don't change when more graphs are added.
+            const int hue = (graphColorIndex++ * 137) % 360;
+            ui->widgetChart->graph()->setPen(QPen(QColor::fromHsv(hue, 255, 200)));
 
-            missingCount.append(0); // Add missing counter to the list (corresponds to each graph index)
+            missingCount.insert(label, 0);
         }
     }
 
-    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+    for (auto i = ui->widgetChart->graphCount() - 1; i >= 0; --i) // backwards - graphs may be removed
     {
+        QCPGraph *graph = ui->widgetChart->graph(i);
+
         for (auto j = 0; j < labelList.count(); ++j)
         {
-            if (labelList[j] == ui->widgetChart->graph(i)->name()) // If label matches the graphs name - we can start add points to it
+            if (labelList[j] == graph->name()) // If label matches the graphs name - we can start add points to it
             {
                 if (timeStampsList[j] > 0) // if == 0 then we assume that no external clock was parsed propely
-                    ui->widgetChart->graph(i)->addData(timeStampsList[j] / 1000.0, numericDataList[j]);
+                    graph->addData(timeStampsList[j] / 1000.0, numericDataList[j]);
 
-                // break; // no break - slower but if we keep checking for duplicates, we can add multiple points at once
+                // no break - slower but if we keep checking for duplicates, we can add multiple points at once
             }
         }
 
         if (ui->spinBoxMaxTimeRange->value() > 0)
-            ui->widgetChart->graph(i)->data().data()->removeBefore((timeStampsList.last() / 1000.0) - ui->spinBoxMaxTimeRange->value()); // Remove old points
+            graph->data()->removeBefore((timeStampsList.last() / 1000.0) - ui->spinBoxMaxTimeRange->value()); // Remove old points
 
         if (ui->spinBoxRemoveOldLabels->value() > 0)
         {
-            if (labelList.contains(ui->widgetChart->graph(i)->name()))
-                missingCount[i] = 0;
-            else
-                missingCount[i]++;
+            int &missing = missingCount[graph->name()];
+            missing = labelList.contains(graph->name()) ? 0 : missing + 1;
 
-            if (missingCount[i] > ui->spinBoxRemoveOldLabels->value())
+            if (missing > ui->spinBoxRemoveOldLabels->value())
             {
-                ui->widgetChart->removeGraph(i);
-                missingCount.removeAt(i); // Remove entry for this label
+                missingCount.remove(graph->name());
+                if (phaseTracer != nullptr && phaseTracer->graph() == graph)
+                    phaseTracer->setGraph(nullptr);
+                ui->widgetChart->removeGraph(graph);
             }
         }
     }
@@ -1265,7 +1263,12 @@ void MainWindow::on_setSelectedLabels(QList<QString> *labels, bool customRules)
 
 void MainWindow::clearGraphs(bool replot)
 {
+    if (phaseTracer != nullptr)
+        phaseTracer->setGraph(nullptr); // tracer keeps a raw pointer to its graph
+
     ui->widgetChart->clearGraphs();
+    missingCount.clear();
+    graphColorIndex = 0;
 
     if (replot)
         ui->widgetChart->replot();
@@ -1453,7 +1456,7 @@ void MainWindow::on_checkBoxEnableTracer_toggled(bool checked)
     else
     {
         disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
-        delete phaseTracer;
+        ui->widgetChart->removeItem(phaseTracer); // plain delete leaves a dangling pointer in QCustomPlot
         phaseTracer = nullptr;
     }
 
@@ -1462,6 +1465,9 @@ void MainWindow::on_checkBoxEnableTracer_toggled(bool checked)
 
 void MainWindow::createChartTracer()
 {
+    if (phaseTracer != nullptr)
+        ui->widgetChart->removeItem(phaseTracer);
+
     // add the phase tracer (red circle) which sticks to the graph data:
     this->phaseTracer = new QCPItemTracer(ui->widgetChart);
     this->phaseTracer->setInterpolating(false);
@@ -1586,7 +1592,7 @@ void MainWindow::on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1)
         if (phaseTracer != nullptr)
         {
             disconnect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
-            delete phaseTracer;
+            ui->widgetChart->removeItem(phaseTracer); // plain delete leaves a dangling pointer in QCustomPlot
             phaseTracer = nullptr;
         }
 

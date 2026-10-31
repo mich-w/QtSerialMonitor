@@ -160,8 +160,9 @@ private:
     Logger fileLogger;
     NetworkUDP networkUDP;
     Parser parser;
-    QCPItemTracer *phaseTracer;
-    QList<int> missingCount;
+    QCPItemTracer *phaseTracer = nullptr;
+    QHash<QString, int> missingCount; // per graph name: consecutive updates without new data
+    int graphColorIndex = 0;
     QString controlCharactersVisibleConvert(QString text);
     QStringList lineEditCustomParsingRulesAutoCompleteWordList;
     QTimer *radioButtonTimer;
