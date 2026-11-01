@@ -1,0 +1,95 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux (Qt ${{ matrix.qt }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - qt: 6
+            packages: qt6-base-dev qt6-serialport-dev libgl-dev
+          - qt: 5
+            packages: qtbase5-dev libqt5serialport5-dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build ${{ matrix.packages }}
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DQTSM_QT_MAJOR=${{ matrix.qt }}
+
+      - name: Build
+        run: cmake --build build
+
+  windows:
+    name: Windows (Qt 6)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.*'
+          arch: win64_msvc2022_64
+          modules: qtserialport
+          cache: true
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item build/Release/QtSerialMonitor.exe dist/
+          windeployqt --release --no-translations --no-opengl-sw dist/QtSerialMonitor.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QtSerialMonitor-windows-x64
+          path: dist/
+
+  macos:
+    name: macOS (Qt 6)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.*'
+          modules: qtserialport
+          cache: true
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Package
+        run: macdeployqt build/QtSerialMonitor.app -dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QtSerialMonitor-macos
+          path: build/QtSerialMonitor.dmg
