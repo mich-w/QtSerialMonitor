@@ -31,7 +31,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 QMAKE_LFLAGS_RELEASE += -no-pie
 QMAKE_LFLAGS_DEBUG += -no-pie -O0
 
-CONFIG += c++11
+CONFIG += c++17
 
 SOURCES += \
         codeeditor.cpp \

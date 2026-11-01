@@ -121,7 +121,7 @@ QString Serial::getSerialInfo()
     case (QSerialPort::DataBits::Data8):
         outputString.append("Data8, ");
         break;
-    case (QSerialPort::DataBits::UnknownDataBits):
+    default: // Unknown* values were removed in Qt 6
         outputString.append("UnknownDataBits, ");
         break;
     }
@@ -143,7 +143,7 @@ QString Serial::getSerialInfo()
     case (QSerialPort::Parity::SpaceParity):
         outputString.append("SpaceParity, ");
         break;
-    case (QSerialPort::Parity::UnknownParity):
+    default: // Unknown* values were removed in Qt 6
         outputString.append("UnknownParity, ");
         break;
     }
@@ -159,7 +159,7 @@ QString Serial::getSerialInfo()
     case (QSerialPort::StopBits::OneAndHalfStop):
         outputString.append("OneAndHalfStop, ");
         break;
-    case (QSerialPort::StopBits::UnknownStopBits):
+    default: // Unknown* values were removed in Qt 6
         outputString.append("UnknownStopBits, ");
         break;
     }
@@ -175,7 +175,7 @@ QString Serial::getSerialInfo()
     case (QSerialPort::FlowControl::SoftwareControl):
         outputString.append("SoftwareControl, ");
         break;
-    case (QSerialPort::FlowControl::UnknownFlowControl):
+    default: // Unknown* values were removed in Qt 6
         outputString.append("UnknownFlowControl, ");
         break;
     }

@@ -51,12 +51,12 @@ void MainWindow::createTimers()
     this->udpStringProcessingTimer = new QTimer(this);
 
     connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(on_updateSerialDeviceList()));
-    connect(&serial, &Serial::connectionLost, this, [=](const QString &reason)
+    connect(&serial, &Serial::connectionLost, this, [this](const QString &reason)
             {
                 addLog("App >>\t Serial port error: " + reason, true);
                 ui->pushButtonSerialConnect->setChecked(false); // closes the port via toggled slot
             }, Qt::QueuedConnection);
-    connect(radioButtonTimer, &QTimer::timeout, this, [=]()
+    connect(radioButtonTimer, &QTimer::timeout, this, [this]()
             { ui->radioButtonDeviceUpdate->setChecked(false); });
 }
 
@@ -213,7 +213,7 @@ void MainWindow::settingsLoadAll()
 
     // ----- Window size ----- //
     {
-        QStringList windowSize = appSettings.value("layout/windowSize.size").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+        QStringList windowSize = appSettings.value("layout/windowSize.size").value<QString>().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
 
         if (!windowSize.isEmpty())
             this->resize(windowSize.first().trimmed().toInt(), windowSize.last().trimmed().toInt());
@@ -224,11 +224,11 @@ void MainWindow::settingsLoadAll()
     {
         QStringList splitterSizes;
 
-        splitterSizes = appSettings.value("layout/splitterReceivedData.sizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+        splitterSizes = appSettings.value("layout/splitterReceivedData.sizes").value<QString>().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
         if (!splitterSizes.isEmpty())
             ui->splitterReceivedData->setSizes(QList<int>({splitterSizes.first().trimmed().toInt(), splitterSizes.last().trimmed().toInt()}));
 
-        splitterSizes = appSettings.value("layout/splitterGraphTable.sizes").value<QString>().split(QRegExp("\\s+"), QString::SplitBehavior::SkipEmptyParts);
+        splitterSizes = appSettings.value("layout/splitterGraphTable.sizes").value<QString>().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
         if (!splitterSizes.isEmpty())
             ui->splitterGraphTable->setSizes(QList<int>({splitterSizes.first().trimmed().toInt(), splitterSizes.last().trimmed().toInt()}));
 
@@ -241,7 +241,7 @@ void MainWindow::settingsLoadAll()
 
     // ----- comboBoxSendItems ----- //
     {
-        ui->comboBoxSend->addItems(QStringList(appSettings.value("data/comboBoxSendHistory").value<QString>().split(QRegExp("\\n+"), Qt::SplitBehaviorFlags::SkipEmptyParts)));
+        ui->comboBoxSend->addItems(QStringList(appSettings.value("data/comboBoxSendHistory").value<QString>().split(QRegularExpression("\\n+"), Qt::SkipEmptyParts)));
         ui->comboBoxSend->lineEdit()->clear();
     }
     // ------------------------- //
@@ -808,7 +808,7 @@ void MainWindow::on_tracerShowPointValue(QMouseEvent *event)
     QPointF temp = this->phaseTracer->position->coords();
 
     // Show a tooltip which tells the values
-    QToolTip::showText(event->globalPos(),
+    QToolTip::showText(QCursor::pos(),
                        tr("<h4>%L1</h4>"
                           "<table>"
                           "<tr>"
@@ -1562,7 +1562,7 @@ void MainWindow::on_spinBoxProcessingDelay_valueChanged(int arg1)
         ui->spinBoxProcessingDelay->setPalette(QPalette());
 }
 
-void MainWindow::on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1)
+void MainWindow::on_comboBoxTracerStyle_currentTextChanged(const QString &)
 {
     if (ui->checkBoxEnableTracer->isChecked())
     {
@@ -1718,7 +1718,7 @@ void MainWindow::on_action3D_orientation_triggered()
 
 void MainWindow::on_printPlot(QPrinter *printer)
 {
-    printer->setPageSize(QPrinter::PageSize::A4);
+    printer->setPageSize(QPageSize(QPageSize::A4));
     QCPPainter painter(printer);
     QRectF pageRect = printer->pageRect(QPrinter::DevicePixel);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform, true);
@@ -1827,7 +1827,7 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
     }
 }
 
-void MainWindow::on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1)
+void MainWindow::on_comboBoxUDPSendMode_currentTextChanged(const QString &arg1)
 {
     if (arg1.contains("SpecialAddress") || ui->comboBoxUDPReceiveMode->currentText().contains("SpecialAddress"))
         ui->lineEditUDPTargetIP->setEnabled(true);
@@ -1835,7 +1835,7 @@ void MainWindow::on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1)
         ui->lineEditUDPTargetIP->setEnabled(false);
 }
 
-void MainWindow::on_comboBoxUDPReceiveMode_currentIndexChanged(const QString &arg1)
+void MainWindow::on_comboBoxUDPReceiveMode_currentTextChanged(const QString &arg1)
 {
     if (ui->pushButtonUDPConnect->isChecked() == true)
     {
@@ -1967,10 +1967,10 @@ void MainWindow::on_tableWidgetParsedData_customContextMenuRequested(const QPoin
     QMenu *menu = new QMenu(this);
     menu->setAttribute(Qt::WidgetAttribute::WA_DeleteOnClose);
 
-    menu->addAction("Apply to custom display", this, [=]()
+    menu->addAction("Apply to custom display", this, [this]()
                     { emit on_pushButtonSetSelectedToGraph_clicked(); }); // C++ lambda expression
 
-    menu->addAction("Copy as text", this, [=]()
+    menu->addAction("Copy as text", this, [this]()
                     {
                         QString copyText;
                         foreach (auto item, ui->tableWidgetParsedData->selectedItems())
@@ -1978,10 +1978,10 @@ void MainWindow::on_tableWidgetParsedData_customContextMenuRequested(const QPoin
                         QApplication::clipboard()->setText(copyText);
                     }); // C++ lambda expression
 
-    menu->addAction("Set as clock label", this, [=]()
+    menu->addAction("Set as clock label", this, [this]()
                     { ui->lineEditExternalClockLabel->setText(ui->tableWidgetParsedData->selectedItems().first()->text()); }); // C++ lambda expression
 
-    menu->addAction("Clear table contents", this, [=]()
+    menu->addAction("Clear table contents", this, [this]()
                     {
                         ui->tableWidgetParsedData->clearContents();
                         ui->tableWidgetParsedData->setRowCount(0);
@@ -2154,7 +2154,7 @@ void MainWindow::on_pushButtonLoadFile_clicked()
             QFile inputFile(ui->lineEditLoadFilePath->text().trimmed());
             connect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
 
-            connect(&fileReader, &FileReader::fileReadFinished, this, [=]()
+            connect(&fileReader, &FileReader::fileReadFinished, this, [this]()
                     {
                         ui->pushButtonLoadFile->setText("Load File");
                         ui->progressBarLoadFile->setValue(100);
@@ -2192,10 +2192,10 @@ void MainWindow::on_lineEditLoadFilePath_customContextMenuRequested(const QPoint
     QMenu *menu = new QMenu(this);
     menu->setAttribute(Qt::WidgetAttribute::WA_DeleteOnClose);
 
-    menu->addAction("Open file", this, [=]()
+    menu->addAction("Open file", this, [this]()
                     { QDesktopServices::openUrl(QUrl(ui->lineEditLoadFilePath->text())); }); // C++ lambda expression
 
-    menu->addAction("Open folder", this, [=]()
+    menu->addAction("Open folder", this, [this]()
                     { QDesktopServices::openUrl(QUrl(QDir(QFileInfo(ui->lineEditLoadFilePath->text()).absoluteDir()).absolutePath())); }); // C++ lambda expression
 
     menu->popup(ui->lineEditLoadFilePath->mapToGlobal(pos));

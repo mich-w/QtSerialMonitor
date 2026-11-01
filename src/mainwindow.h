@@ -97,9 +97,9 @@ private slots:
     void on_comboBoxLoggingMode_currentIndexChanged(int index);
     void on_comboBoxSendReturnPressedSlot();
     void on_comboBoxSerialReadMode_currentIndexChanged(int index);
-    void on_comboBoxTracerStyle_currentIndexChanged(const QString &arg1);
-    void on_comboBoxUDPReceiveMode_currentIndexChanged(const QString &arg1);
-    void on_comboBoxUDPSendMode_currentIndexChanged(const QString &arg1);
+    void on_comboBoxTracerStyle_currentTextChanged(const QString &arg1);
+    void on_comboBoxUDPReceiveMode_currentTextChanged(const QString &arg1);
+    void on_comboBoxUDPSendMode_currentTextChanged(const QString &arg1);
     void on_hideAllGraphs();
     void on_hideSelectedGraph();
     void on_highlighLog(QString searchString);
