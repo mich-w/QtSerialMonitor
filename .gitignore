@@ -1,6 +1,13 @@
-src/mainwindow.cpp.autosave
-src/QtSerialMonitor.pro.user
-src/QtSerialMonitor.pro.user.*
-/build/*
-/build*
-*.pro.user
+# Build output
+/build*/
+/out/
+CMakeLists.txt.user*
+CMakeUserPresets.json
+compile_commands.json
+.cache/
+
+# IDE / editor
+*.autosave
+*.pro.user*
+.vscode/
+.idea/

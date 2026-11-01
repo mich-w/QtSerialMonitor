@@ -1,7 +1,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#ifdef APP_VERSION
+#define VERSION APP_VERSION // set by CMake from project(VERSION)
+#else
 #define VERSION "1.53"
+#endif
 
 #define CHANGELOG_TEXT "" //"Changelog - version " VERSION ": \n"
 

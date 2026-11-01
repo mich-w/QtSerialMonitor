@@ -1001,7 +1001,7 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLi
     }
 }
 
-void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
+void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> /*timeList*/)
 {
     if (ui->pushButtonLogging->isChecked()) // Write log into file
     {
@@ -2025,7 +2025,7 @@ void MainWindow::on_toolButtonAdvancedGraphMenu_clicked()
     }
 }
 
-void MainWindow::on_splitterGraphTable_splitterMoved(int pos, int index)
+void MainWindow::on_splitterGraphTable_splitterMoved(int pos, int /*index*/)
 {
     if (pos < ui->splitterGraphTable->height() - 30)
         ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::DownArrow);
@@ -2301,7 +2301,7 @@ void MainWindow::on_toolButtonHideTable_clicked()
     ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::UpArrow);
 }
 
-void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int index)
+void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int /*index*/)
 {
     //    if (index == 1)
     //    {
@@ -2482,7 +2482,7 @@ void MainWindow::on_pushButtonEnableTableLog_toggled(bool checked)
     }
 }
 
-void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &arg1)
+void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &/*arg1*/)
 {
     QFile file(ui->lineEditLoadFilePath->text());
 

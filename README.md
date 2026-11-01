@@ -34,6 +34,20 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 
 ----
 
+**Building from source:**
+
+Requirements: CMake ≥ 3.16, a C++17 compiler and Qt 6 (or Qt 5.15) with the *SerialPort* module.
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+./build/QtSerialMonitor
+```
+
+Qt 6 is used when available; pass `-DQTSM_QT_MAJOR=5` to build against Qt 5.15. If CMake can't find Qt, point it at your installation with `-DCMAKE_PREFIX_PATH=/path/to/Qt/6.x/gcc_64`.
+
+----
+
 ***Notes:***
 
 * The app uses a custom-written parser, which searches the incoming message for plottable data in form of label-value set. At the moment, all labels and values **must be separated with a whitespace** in order to be recognized. Its possible to use separators like "=" and "," - parser will be replace them with whitespace before processing. If no label is found, a generic name will be used i.e. "Graph 0".*
@@ -43,5 +57,6 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
         - "Roll = 1.23 Pitch = 45.6"
         - "Voltage: 1.23 (tabulator) Output: 4.56"
         - "1.23 4.56" (Graph 0 and Graph 1)
+        - "temp=2.5e-3, rpm=+1200" (scientific notation and signs are supported)
  
-* Application uses QtSettings functionality and stores a simple .ini file on the hard drive in which it keeps its settings. Under Windows, the file should be located in *C:\ProgramData\QtSerialMonitor*. The settings are saved each time the app closes.
+* Application uses QtSettings functionality and stores a simple .ini file on the hard drive in which it keeps its settings. It is stored in the user's configuration directory, e.g. *%APPDATA%\QtSerialMonitor* on Windows or *~/.config/QtSerialMonitor* on Linux. The settings are saved each time the app closes.
