@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(QtSerialMonitor
-    VERSION 1.53
+    VERSION 1.6.0
     DESCRIPTION "Serial monitor with data plotting"
     HOMEPAGE_URL "https://github.com/mich-w/QtSerialMonitor"
     LANGUAGES CXX)
@@ -67,7 +67,7 @@ add_executable(QtSerialMonitor ${APP_SOURCES})
 target_include_directories(QtSerialMonitor PRIVATE src)
 
 target_compile_definitions(QtSerialMonitor PRIVATE
-    APP_VERSION="${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+    APP_VERSION="${PROJECT_VERSION}"
     QT_DEPRECATED_WARNINGS)
 
 target_link_libraries(QtSerialMonitor PRIVATE
