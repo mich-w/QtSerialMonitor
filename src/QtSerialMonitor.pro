@@ -14,6 +14,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = QtSerialMonitor
 TEMPLATE = app
 
+INCLUDEPATH += ../third_party/qcustomplot
+
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -41,11 +43,10 @@ SOURCES += \
         mainwindow.cpp \
         networkudp.cpp \
         parser.cpp \
-        qcustomplot.cpp \
+        ../third_party/qcustomplot/qcustomplot.cpp \
         serial.cpp
 
 HEADERS += \
-        qcustomplot.h \
         codeeditor.h \
         config.h \
         filereader.h \
@@ -55,7 +56,7 @@ HEADERS += \
         mainwindow.h \
         networkudp.h \
         parser.h \
-        qcustomplot.h \
+        ../third_party/qcustomplot/qcustomplot.h \
         serial.h \
         utf8decoder.h
 
