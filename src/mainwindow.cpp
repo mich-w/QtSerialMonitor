@@ -1979,7 +1979,11 @@ void MainWindow::on_tableWidgetParsedData_customContextMenuRequested(const QPoin
                     }); // C++ lambda expression
 
     menu->addAction("Set as clock label", this, [this]()
-                    { ui->lineEditExternalClockLabel->setText(ui->tableWidgetParsedData->selectedItems().first()->text()); }); // C++ lambda expression
+                    {
+                        const auto selected = ui->tableWidgetParsedData->selectedItems();
+                        if (!selected.isEmpty())
+                            ui->lineEditExternalClockLabel->setText(selected.first()->text());
+                    });
 
     menu->addAction("Clear table contents", this, [this]()
                     {
@@ -2193,10 +2197,10 @@ void MainWindow::on_lineEditLoadFilePath_customContextMenuRequested(const QPoint
     menu->setAttribute(Qt::WidgetAttribute::WA_DeleteOnClose);
 
     menu->addAction("Open file", this, [this]()
-                    { QDesktopServices::openUrl(QUrl(ui->lineEditLoadFilePath->text())); }); // C++ lambda expression
+                    { QDesktopServices::openUrl(QUrl::fromLocalFile(ui->lineEditLoadFilePath->text())); }); // C++ lambda expression
 
     menu->addAction("Open folder", this, [this]()
-                    { QDesktopServices::openUrl(QUrl(QDir(QFileInfo(ui->lineEditLoadFilePath->text()).absoluteDir()).absolutePath())); }); // C++ lambda expression
+                    { QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(ui->lineEditLoadFilePath->text()).absolutePath())); }); // C++ lambda expression
 
     menu->popup(ui->lineEditLoadFilePath->mapToGlobal(pos));
 }
