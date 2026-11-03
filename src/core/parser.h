@@ -4,8 +4,7 @@
 #include <QObject>
 #include <QTime>
 #include <QDebug>
-#include <QTimer>
-#include <QApplication>
+#include <QCoreApplication>
 #include <QElapsedTimer>
 
 class Parser : public QObject

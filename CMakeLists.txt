@@ -41,21 +41,28 @@ target_link_libraries(qcustomplot PUBLIC Qt::Widgets Qt::PrintSupport)
 set_target_properties(qcustomplot PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # ---------------------------------------------------------------------------
+# Core library: parsing, logging, transports - no widget dependencies
+# ---------------------------------------------------------------------------
+add_library(qtsm_core STATIC
+    src/core/filereader.cpp   src/core/filereader.h
+    src/core/logger.cpp       src/core/logger.h
+    src/core/networkudp.cpp   src/core/networkudp.h
+    src/core/parser.cpp       src/core/parser.h
+    src/core/serial.cpp       src/core/serial.h
+    src/core/utf8decoder.h)
+target_include_directories(qtsm_core PUBLIC src/core)
+target_link_libraries(qtsm_core PUBLIC Qt::Core Qt::Network Qt::SerialPort)
+
+# ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
 set(APP_SOURCES
     src/main.cpp
     src/codeeditor.cpp       src/codeeditor.h
     src/config.h
-    src/filereader.cpp       src/filereader.h
     src/highlighter.cpp      src/highlighter.h
     src/infodialog.cpp       src/infodialog.h       src/infodialog.ui
-    src/logger.cpp           src/logger.h
-    src/mainwindow.cpp       src/mainwindow.h       src/mainwindow.ui
-    src/networkudp.cpp       src/networkudp.h
-    src/parser.cpp           src/parser.h
-    src/serial.cpp           src/serial.h
-    src/utf8decoder.h)
+    src/mainwindow.cpp       src/mainwindow.h       src/mainwindow.ui)
 
 if(WIN32)
     list(APPEND APP_SOURCES src/QtSerialMonitor.rc)
@@ -71,17 +78,20 @@ target_compile_definitions(QtSerialMonitor PRIVATE
     QT_DEPRECATED_WARNINGS)
 
 target_link_libraries(QtSerialMonitor PRIVATE
+    qtsm_core
     qcustomplot
     Qt::Widgets
     Qt::SerialPort
     Qt::PrintSupport
     Qt::Network)
 
-if(MSVC)
-    target_compile_options(QtSerialMonitor PRIVATE /W4 /permissive-)
-else()
-    target_compile_options(QtSerialMonitor PRIVATE -Wall -Wextra)
-endif()
+foreach(target qtsm_core QtSerialMonitor)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /W4 /permissive-)
+    else()
+        target_compile_options(${target} PRIVATE -Wall -Wextra)
+    endif()
+endforeach()
 
 set_target_properties(QtSerialMonitor PROPERTIES
     WIN32_EXECUTABLE ON

@@ -309,7 +309,7 @@ void MainWindow::settingsLoadAll()
         if (ui->lineEditLoadFilePath->text().isEmpty() == false)
         {
             QFile file(ui->lineEditLoadFilePath->text());
-            QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+            QList<QTime> timeRange = FileReader::getFileTimeRange(&file);
             ui->timeEditMinParsingTime->setTime(timeRange.first());
             ui->timeEditMaxParsingTime->setTime(timeRange.last());
         }
@@ -2065,27 +2065,12 @@ void MainWindow::on_pushButtonLoadPath_clicked()
         return;
     }
 
-    QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+    QList<QTime> timeRange = FileReader::getFileTimeRange(&file);
     ui->timeEditMinParsingTime->setTime(timeRange.first());
     ui->timeEditMaxParsingTime->setTime(timeRange.last());
 
     QString info = "Size: " + QString::number(file.size());
     ui->lineEditFileInfo->setText(info);
-}
-
-void MainWindow::on_processLoadedFileLine(QString *line, int *progressPercent)
-{
-    parser.parse(*line, true, true, ""); // Parse string - split into labels + numeric data
-    QStringList labelList = parser.getStringListLabels();
-    QList<double> numericDataList = parser.getListNumericValues();
-    QList<long> timeStampList = parser.getListTimeStamp();
-
-    this->processChart(labelList, numericDataList, timeStampList);
-    this->processTable(labelList, numericDataList); // Fill tableWidget
-    // this->saveToRAM(labelList, numericDataList, timeStampList);
-    //  addLog(line);
-
-    ui->progressBarLoadFile->setValue(*progressPercent);
 }
 
 void MainWindow::on_updateProgressBar(float *percent)
@@ -2492,7 +2477,7 @@ void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &/*arg1*/)
         return;
     }
 
-    QList<QTime> timeRange = fileReader.getFileTimeRange(&file);
+    QList<QTime> timeRange = FileReader::getFileTimeRange(&file);
     ui->timeEditMinParsingTime->setTime(timeRange.first());
     ui->timeEditMaxParsingTime->setTime(timeRange.last());
 

@@ -49,7 +49,6 @@ public:
     ~MainWindow();
 public slots:
     void on_processLoadedFile(QString *text);
-    void on_processLoadedFileLine(QString *line, int *progressPercent);
     void on_setSelectedLabels(QList<QString> *labels, bool customRules = true);
     void on_updateProgressBar(float *percent);
     void closeEvent(QCloseEvent *event);

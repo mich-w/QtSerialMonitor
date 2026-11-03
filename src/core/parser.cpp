@@ -66,7 +66,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
         if (l % 50 == 0 && canReportProgress)
         {
             emit updateProgress(&parsingProgressPercent);
-            QApplication::processEvents(); // Prevents app for freeezeng during processing large files and allows to udpate progress percent. A very cheap trick...
+            QCoreApplication::processEvents(); // Prevents app for freeezeng during processing large files and allows to udpate progress percent. A very cheap trick...
         }
 
         if (abortFlag)
@@ -143,7 +143,7 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
         if (l % 50 == 0 && canReportProgress)
         {
             emit updateProgress(&parsingProgressPercent);
-            QApplication::processEvents(); // Prevents app for freeezeng during processing large files and allows to udpate progress percent. A very cheap trick...
+            QCoreApplication::processEvents(); // Prevents app for freeezeng during processing large files and allows to udpate progress percent. A very cheap trick...
         }
 
         if (abortFlag)
