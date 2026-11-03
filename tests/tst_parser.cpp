@@ -112,7 +112,47 @@ private slots:
         QCOMPARE(result[0].value, 1.5);
         QCOMPARE(result[0].time, long(QTime(10, 30, 0, 500).msecsSinceStartOfDay()));
         QCOMPARE(result[1].label, QString("b"));
-        // Note: empty CSV cells collapse, so values after an empty cell shift left.
+
+        // Empty cell must not shift later values into the wrong column.
+        QCOMPARE(result[2].label, QString("b"));
+        QCOMPARE(result[2].value, 3.0);
+        QCOMPARE(result[2].time, long(QTime(10, 30, 1).msecsSinceStartOfDay()));
+    }
+
+    void csvLoggerOutputRoundTrip()
+    {
+        Parser parser;
+        parser.parseCSV("\"time\",\"a\",\"b\"\n"
+                        "2024-01-01T10:00:00.000Z,1\n"
+                        "2024-01-01T10:00:01.000Z,,4\n");
+
+        QCOMPARE(parser.getStringListLabels(), (QStringList{"a", "b"}));
+        QCOMPARE(parser.getListNumericValues(), (QList<double>{1, 4}));
+    }
+
+    void csvDelimitersAndQuoting_data()
+    {
+        QTest::addColumn<QString>("input");
+        QTest::addColumn<QStringList>("expectedLabels");
+        QTest::addColumn<QList<double>>("expectedValues");
+
+        QTest::newRow("semicolon") << "x;y\n1;2\n" << QStringList{"x", "y"} << QList<double>{1, 2};
+        QTest::newRow("tab") << "x\ty\n1\t2\n" << QStringList{"x", "y"} << QList<double>{1, 2};
+        QTest::newRow("quoted comma in header") << "\"temp, C\",rpm\n20,100\n" << QStringList{"temp, C", "rpm"} << QList<double>{20, 100};
+        QTest::newRow("no header") << "1,2\n3,4\n" << QStringList{"Graph 0", "Graph 1", "Graph 0", "Graph 1"} << QList<double>{1, 2, 3, 4};
+        QTest::newRow("label with spaces") << "Motor speed,Load\n5,6\n" << QStringList{"Motor speed", "Load"} << QList<double>{5, 6};
+    }
+
+    void csvDelimitersAndQuoting()
+    {
+        QFETCH(QString, input);
+        QFETCH(QStringList, expectedLabels);
+        QFETCH(QList<double>, expectedValues);
+
+        Parser parser;
+        parser.parseCSV(input);
+        QCOMPARE(parser.getStringListLabels(), expectedLabels);
+        QCOMPARE(parser.getListNumericValues(), expectedValues);
     }
 
     void csvExternalClockColumn()

@@ -126,18 +126,99 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
     }
 }
 
+namespace
+{
+    // Splits one CSV record, keeping empty fields and honouring "quoted, fields" with "" escapes.
+    QStringList splitCsvLine(const QString &line, QChar delimiter)
+    {
+        QStringList fields;
+        QString field;
+        bool inQuotes = false;
+
+        for (auto i = 0; i < line.size(); ++i)
+        {
+            const QChar ch = line[i];
+            if (inQuotes)
+            {
+                if (ch == '"' && i + 1 < line.size() && line[i + 1] == '"')
+                {
+                    field += '"';
+                    ++i;
+                }
+                else if (ch == '"')
+                    inQuotes = false;
+                else
+                    field += ch;
+            }
+            else if (ch == '"')
+                inQuotes = true;
+            else if (ch == delimiter)
+            {
+                fields.append(field.trimmed());
+                field.clear();
+            }
+            else
+                field += ch;
+        }
+        fields.append(field.trimmed());
+
+        // A trailing delimiter (as written by older versions) does not start a new column.
+        if (fields.count() > 1 && fields.last().isEmpty() && line.trimmed().endsWith(delimiter))
+            fields.removeLast();
+
+        return fields;
+    }
+
+    QChar detectCsvDelimiter(const QString &firstLine)
+    {
+        const QList<QChar> candidates = {',', ';', '\t'};
+        QChar best = ',';
+        int bestCount = 0;
+        for (const QChar candidate : candidates)
+        {
+            const int count = firstLine.count(candidate);
+            if (count > bestCount)
+            {
+                best = candidate;
+                bestCount = count;
+            }
+        }
+        return best;
+    }
+}
+
 void Parser::parseCSV(QString inputString, bool useExternalLabel, QString externalClockLabel)
 {
     listNumericData.clear();
     stringListLabels.clear();
     listTimeStamp.clear();
 
-    QStringList inputStringSplitArrayLines = inputString.split(lineSeparators, Qt::SkipEmptyParts);
-    lineCount = inputStringSplitArrayLines.count();
+    const QStringList lines = inputString.split(lineSeparators, Qt::SkipEmptyParts);
+    lineCount = lines.count();
+    if (lineCount == 0)
+        return;
 
+    const QChar delimiter = detectCsvDelimiter(lines.first());
     QStringList csvLabels;
+    int firstDataLine = 0;
 
-    for (auto l = 0; l < lineCount; ++l)
+    // Header: used unless every field of the first line is numeric.
+    const QStringList firstFields = splitCsvLine(lines.first(), delimiter);
+    bool hasHeader = false;
+    for (const auto &field : firstFields)
+        hasHeader |= !field.isEmpty() && !isNumber(field);
+
+    for (auto i = 0; i < firstFields.count(); ++i)
+    {
+        const QString &name = firstFields[i];
+        csvLabels.append(hasHeader && !name.isEmpty() ? name : "Graph " + QString::number(i));
+    }
+    if (hasHeader)
+        firstDataLine = 1;
+
+    const int clockColumn = useExternalLabel && !externalClockLabel.isEmpty() ? csvLabels.indexOf(externalClockLabel) : -1;
+
+    for (auto l = firstDataLine; l < lineCount; ++l)
     {
         parsingProgressPercent = (float)l / lineCount * 100.0F;
         if (l % 50 == 0 && canReportProgress)
@@ -152,32 +233,21 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
             break;
         }
 
-        inputStringSplitArrayLines[l].replace(valueSeparators, " ");
-        inputStringSplitArrayLines[l].remove("\"");
+        const QStringList fields = splitCsvLine(lines[l], delimiter);
 
-        const QStringList tokens = inputStringSplitArrayLines[l].simplified().split(whitespace, Qt::SkipEmptyParts);
-
-        // Header line
-        if (l == 0)
-        {
-            for (const auto &token : tokens)
-            {
-                if (!isNumber(token) && !csvLabels.contains(token))
-                    csvLabels.append(token);
-            }
-            continue;
-        }
+        // Columns that appear beyond the header get generic names.
+        while (csvLabels.count() < fields.count())
+            csvLabels.append("Graph " + QString::number(csvLabels.count()));
 
         // Look for time reference
-        if (useExternalLabel && !externalClockLabel.isEmpty())
+        if (clockColumn >= 0)
         {
-            const int clockColumn = csvLabels.indexOf(externalClockLabel);
-            if (clockColumn >= 0 && clockColumn < tokens.count() && isNumber(tokens[clockColumn]))
-                latestTimeStamp = QTime::fromMSecsSinceStartOfDay(qRound(tokens[clockColumn].toDouble()));
+            if (clockColumn < fields.count() && isNumber(fields[clockColumn]))
+                latestTimeStamp = QTime::fromMSecsSinceStartOfDay(qRound(fields[clockColumn].toDouble()));
         }
         else if (!useExternalLabel)
         {
-            QTime time = findTimeStamp(tokens);
+            QTime time = findTimeStamp(fields);
             if (time.isValid())
             {
                 latestTimeStamp = time;
@@ -187,12 +257,12 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
         }
 
         // Look for data
-        for (auto i = 0; i < tokens.count() && i < csvLabels.count(); ++i)
+        for (auto i = 0; i < fields.count(); ++i)
         {
-            if (isNumber(tokens[i]))
+            if (isNumber(fields[i]))
             {
                 stringListLabels.append(csvLabels[i]);
-                listNumericData.append(tokens[i].toDouble());
+                listNumericData.append(fields[i].toDouble());
                 listTimeStamp.append(latestTimeStamp.msecsSinceStartOfDay());
             }
         }
