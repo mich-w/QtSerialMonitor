@@ -110,6 +110,14 @@ if(UNIX AND NOT APPLE)
     endif()
 endif()
 
+# ---------------------------------------------------------------------------
+# Tests (ctest)
+# ---------------------------------------------------------------------------
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
+
 include(GNUInstallDirs)
 install(TARGETS QtSerialMonitor
     BUNDLE DESTINATION .

@@ -37,6 +37,9 @@ jobs:
       - name: Build
         run: cmake --build build
 
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
   windows:
     name: Windows (Qt 6)
     runs-on: windows-2022
@@ -55,6 +58,9 @@ jobs:
 
       - name: Build
         run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
 
       - name: Package
         shell: pwsh
@@ -85,6 +91,9 @@ jobs:
 
       - name: Build
         run: cmake --build build -j
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
 
       - name: Package
         run: macdeployqt build/QtSerialMonitor.app -dmg
