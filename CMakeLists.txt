@@ -48,7 +48,9 @@ add_library(qtsm_core STATIC
     src/core/logger.cpp       src/core/logger.h
     src/core/networkudp.cpp   src/core/networkudp.h
     src/core/parser.cpp       src/core/parser.h
+    src/core/receivepipeline.cpp src/core/receivepipeline.h
     src/core/serial.cpp       src/core/serial.h
+    src/core/transport.h
     src/core/utf8decoder.h)
 target_include_directories(qtsm_core PUBLIC src/core)
 target_link_libraries(qtsm_core PUBLIC Qt::Core Qt::Network Qt::SerialPort)
@@ -56,28 +58,22 @@ target_link_libraries(qtsm_core PUBLIC Qt::Core Qt::Network Qt::SerialPort)
 # ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
-set(APP_SOURCES
-    src/main.cpp
+# GUI code as a library so integration tests can drive MainWindow.
+add_library(qtsm_gui STATIC
     src/codeeditor.cpp       src/codeeditor.h
     src/config.h
     src/highlighter.cpp      src/highlighter.h
     src/infodialog.cpp       src/infodialog.h       src/infodialog.ui
     src/mainwindow.cpp       src/mainwindow.h       src/mainwindow.ui)
 
-if(WIN32)
-    list(APPEND APP_SOURCES src/QtSerialMonitor.rc)
-endif()
-
-add_executable(QtSerialMonitor ${APP_SOURCES})
-
 # Generated ui_*.h files include promoted widget headers (e.g. codeeditor.h).
-target_include_directories(QtSerialMonitor PRIVATE src)
+target_include_directories(qtsm_gui PUBLIC src)
 
-target_compile_definitions(QtSerialMonitor PRIVATE
+target_compile_definitions(qtsm_gui PUBLIC
     APP_VERSION="${PROJECT_VERSION}"
     QT_DEPRECATED_WARNINGS)
 
-target_link_libraries(QtSerialMonitor PRIVATE
+target_link_libraries(qtsm_gui PUBLIC
     qtsm_core
     qcustomplot
     Qt::Widgets
@@ -85,7 +81,17 @@ target_link_libraries(QtSerialMonitor PRIVATE
     Qt::PrintSupport
     Qt::Network)
 
-foreach(target qtsm_core QtSerialMonitor)
+set(APP_SOURCES src/main.cpp)
+
+if(WIN32)
+    list(APPEND APP_SOURCES src/QtSerialMonitor.rc)
+endif()
+
+add_executable(QtSerialMonitor ${APP_SOURCES})
+
+target_link_libraries(QtSerialMonitor PRIVATE qtsm_gui)
+
+foreach(target qtsm_core qtsm_gui QtSerialMonitor)
     if(MSVC)
         target_compile_options(${target} PRIVATE /W4 /permissive-)
     else()

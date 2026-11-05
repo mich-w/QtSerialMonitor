@@ -1,6 +1,6 @@
 #include "serial.h"
 
-Serial::Serial(QObject *parent) : QObject(parent)
+Serial::Serial(QObject *parent) : Transport(parent)
 {
     serialDevice = new QSerialPort(this);
     connect(serialDevice, &QSerialPort::errorOccurred, this, &Serial::handleError);
@@ -23,33 +23,29 @@ Serial::~Serial()
 
 void Serial::readString()
 {
+    QByteArray chunk;
+
     switch (stringReadMode)
     {
     case canReadLine_ReadLine:
-        while (this->serialDevice->canReadLine())
-        {
-            serialInputBuffer.append(serialDevice->readLine());
-        }
+        while (serialDevice->canReadLine())
+            chunk.append(serialDevice->readLine());
         break;
     case canReadLine_ReadAll:
-        while (this->serialDevice->canReadLine())
-        {
-            serialInputBuffer.append(serialDevice->readAll());
-        }
+        if (serialDevice->canReadLine())
+            chunk.append(serialDevice->readAll());
         break;
     case bytesAvailable_ReadLine:
-        while (this->serialDevice->bytesAvailable())
-        {
-            serialInputBuffer.append(serialDevice->readLine());
-        }
+        while (serialDevice->bytesAvailable())
+            chunk.append(serialDevice->readLine());
         break;
     case bytesAvailable_ReadAll:
-        while (this->serialDevice->bytesAvailable())
-        {
-            serialInputBuffer.append(serialDevice->readAll());
-        }
+        chunk.append(serialDevice->readAll());
         break;
     }
+
+    if (!chunk.isEmpty())
+        emit dataReceived(chunk, false);
 }
 
 bool Serial::setReadMode(int mode)
@@ -77,29 +73,6 @@ bool Serial::setReadMode(int mode)
         return false;
     }
     return true;
-}
-
-QByteArray Serial::getBytes(bool clearBuffer)
-{
-    QByteArray output = serialInputBuffer;
-
-    if (clearBuffer)
-        clearString();
-
-    return output;
-}
-
-void Serial::clearAll(bool clearHardwareBuffers)
-{
-    serialInputBuffer.clear();
-
-    if (clearHardwareBuffers)
-        serialDevice->clear();
-}
-
-void Serial::clearString()
-{
-    serialInputBuffer.clear();
 }
 
 QString Serial::getSerialInfo()

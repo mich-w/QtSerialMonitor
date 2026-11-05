@@ -1,6 +1,6 @@
 #include "networkudp.h"
 
-NetworkUDP::NetworkUDP(QObject *parent) : QObject(parent)
+NetworkUDP::NetworkUDP(QObject *parent) : Transport(parent)
 {
     udpSocket = new QUdpSocket(this);
 }
@@ -53,25 +53,8 @@ void NetworkUDP::readDatagram()
     {
         datagram.resize(int(udpSocket->pendingDatagramSize()));
         udpSocket->readDatagram(datagram.data(), datagram.size());
-        udpReceiveBuffer.append(datagram); // keep raw bytes - NUL bytes are valid data
+        emit dataReceived(datagram, true); // one datagram = one message; NUL bytes are valid data
     }
 }
-
-QByteArray NetworkUDP::readBytes(bool clearBuffer)
-{
-    QByteArray output = udpReceiveBuffer;
-
-    if (clearBuffer)
-        udpReceiveBuffer.clear();
-
-    return output;
-}
-
-void NetworkUDP::clearStringBuffer()
-{
-    udpReceiveBuffer.clear();
-}
-
-void NetworkUDP::clearAll() { udpReceiveBuffer.clear(); }
 
 bool NetworkUDP::isOpen() { return isBinded; }

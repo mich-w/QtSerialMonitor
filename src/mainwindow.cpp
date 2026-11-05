@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     setupGUI();
 
     settingsLoadAll();
+    on_spinBoxProcessingDelay_valueChanged(ui->spinBoxProcessingDelay->value()); // apply even if unchanged from the .ui default
 
     infoDialog.setFixedSize(800, 600);
 
@@ -47,11 +48,12 @@ void MainWindow::createTimers()
 {
     this->serialDeviceCheckTimer = new QTimer(this);
     this->radioButtonTimer = new QTimer(this);
-    this->serialStringProcessingTimer = new QTimer(this);
-    this->udpStringProcessingTimer = new QTimer(this);
 
     connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(on_updateSerialDeviceList()));
-    connect(&serial, &Serial::connectionLost, this, [this](const QString &reason)
+    connectTransport(&serial, &serialPipeline);
+    connectTransport(&networkUDP, &udpPipeline);
+
+    connect(&serial, &Transport::connectionLost, this, [this](const QString &reason)
             {
                 addLog("App >>\t Serial port error: " + reason, true);
                 ui->pushButtonSerialConnect->setChecked(false); // closes the port via toggled slot
@@ -1019,17 +1021,17 @@ void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<d
     }
 }
 
-void MainWindow::on_processSerial()
+void MainWindow::connectTransport(Transport *transport, ReceivePipeline *pipeline)
 {
-    processIncomingData(serial.getBytes(), serialDecoder);
+    connect(transport, &Transport::dataReceived, pipeline, &ReceivePipeline::append);
+    connect(pipeline, &ReceivePipeline::received, this, &MainWindow::displayIncoming);
+    connect(pipeline, &ReceivePipeline::linesReceived, this, &MainWindow::processIncomingLines);
 }
 
-void MainWindow::processIncomingData(const QByteArray &bytes, Utf8Decoder &decoder)
+// Everything received since the last batch - shown as it arrives.
+void MainWindow::displayIncoming(const QByteArray &bytes, const QString &text)
 {
-    if (bytes.isEmpty())
-        return;
-
-    QString input = decoder.decode(bytes);
+    QString input = text;
 
     if (ui->comboBoxTextProcessing->currentIndex() == 1)
         input = input.trimmed();
@@ -1045,18 +1047,22 @@ void MainWindow::processIncomingData(const QByteArray &bytes, Utf8Decoder &decod
         addLogBytes(bytes, false, appendAsLine);
     else if (ui->comboBoxFormat->currentIndex() == 2)
         addLogBytes(bytes, true, appendAsLine);
+}
 
-    if (input.isEmpty())
+// Complete lines only - a value split across two reads is never parsed in halves.
+void MainWindow::processIncomingLines(const QString &lines)
+{
+    if (lines.trimmed().isEmpty())
         return;
 
-    parser.parse(input, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
+    parser.parse(lines, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
     QStringList labelList = parser.getStringListLabels();
     QList<double> numericDataList = parser.getListNumericValues();
     QList<long> timeStamps = parser.getListTimeStamp();
 
     this->processChart(labelList, numericDataList, timeStamps);
-    this->processLogWrite(input, labelList, numericDataList, timeStamps);
-    this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), input);
+    this->processLogWrite(lines, labelList, numericDataList, timeStamps);
+    this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), lines);
     this->processTable(labelList, numericDataList);
     this->processLogTable(timeStamps, labelList, numericDataList);
 }
@@ -1071,11 +1077,6 @@ void MainWindow::clearGraphData(bool replot)
 
     if (replot)
         ui->widgetChart->replot();
-}
-
-void MainWindow::on_processUDP()
-{
-    processIncomingData(networkUDP.readBytes(), udpDecoder);
 }
 
 void MainWindow::sendUDPDatagram(QString message)
@@ -1550,8 +1551,8 @@ void MainWindow::on_spinBoxProcessingDelay_valueChanged(int arg1)
 {
     int newInterval = qMax(1, arg1); // Never 0 ! Couses CPU run like crazy !
 
-    serialStringProcessingTimer->setInterval(newInterval);
-    udpStringProcessingTimer->setInterval(newInterval);
+    serialPipeline.setBatchInterval(newInterval);
+    udpPipeline.setBatchInterval(newInterval);
 
     QPalette paletteRed;
     paletteRed.setColor(QPalette::Text, Qt::GlobalColor::red);
@@ -1615,14 +1616,12 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 
         if (serial.begin(parsedPortName, parsedBaudRate, dataBits, parity, stopBits, flowControl, ui->checkBoxDTR->isChecked()))
         {
-            serialDecoder.reset();
-            serialStringProcessingTimer->start(ui->spinBoxProcessingDelay->value());
+            serialPipeline.reset();
             parser.restartChartTimer();
 
             if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false) // logger on standby ?
                 fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text(), ui->checkBoxTruncateFileOnSave->isChecked());
 
-            connect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processSerial()));
 
             addLog("App >>\t Serial port opened. " + serial.getSerialInfo() + " DTR: " + QString::number(ui->checkBoxDTR->isChecked()), true);
             ui->pushButtonSerialConnect->setText("Disconnect");
@@ -1635,9 +1634,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
     }
     else
     {
-        serialStringProcessingTimer->stop();
-
-        disconnect(serialStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processSerial()));
+        serialPipeline.flush(); // show what was already received
 
         if (serial.end())
         {
@@ -1790,14 +1787,12 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
 
         if (status == true)
         {
-            udpDecoder.reset();
-            udpStringProcessingTimer->start(ui->spinBoxProcessingDelay->value());
+            udpPipeline.reset();
             parser.restartChartTimer();
 
             if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false)
                 fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text(), ui->checkBoxTruncateFileOnSave->isChecked());
 
-            connect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
             addLog("App >>\t UDP port opened.", true);
 
@@ -1813,11 +1808,10 @@ void MainWindow::on_pushButtonUDPConnect_toggled(bool checked)
     {
         if (networkUDP.end())
         {
-            udpStringProcessingTimer->stop();
+            udpPipeline.flush();
 
             addLog("App >>\t UDP port closed.", true);
 
-            disconnect(udpStringProcessingTimer, SIGNAL(timeout()), this, SLOT(on_processUDP()));
 
             if (!ui->pushButtonSerialConnect->isChecked() && !ui->pushButtonUDPConnect->isChecked())
                 fileLogger.closeFile();

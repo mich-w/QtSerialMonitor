@@ -10,7 +10,7 @@
 #include "serial.h"
 #include "infodialog.h"
 #include "highlighter.h"
-#include "utf8decoder.h"
+#include "receivepipeline.h"
 
 #include <QCloseEvent>
 #include <QCompleter>
@@ -111,8 +111,6 @@ private slots:
     void on_printIntroChangelog();
     void on_printLog(QPrinter *printer);
     void on_printPlot(QPrinter *printer);
-    void on_processSerial();
-    void on_processUDP();
     void on_pushButtonAddDateTime_clicked();
     void on_pushButtonClear_clicked();
     void on_pushButtonClearAll_clicked();
@@ -167,12 +165,12 @@ private:
     QStringList lineEditCustomParsingRulesAutoCompleteWordList;
     QTimer *radioButtonTimer;
     QTimer *serialDeviceCheckTimer;
-    QTimer *serialStringProcessingTimer;
-    QTimer *udpStringProcessingTimer;
     Serial serial;
-    Utf8Decoder serialDecoder;
-    Utf8Decoder udpDecoder;
-    void processIncomingData(const QByteArray &bytes, Utf8Decoder &decoder);
+    ReceivePipeline serialPipeline;
+    ReceivePipeline udpPipeline;
+    void connectTransport(Transport *transport, ReceivePipeline *pipeline);
+    void displayIncoming(const QByteArray &bytes, const QString &text);
+    void processIncomingLines(const QString &lines);
     Ui::MainWindow *ui;
     void addLog(QString text, bool appendAsLine = false);
     void addLogBytes(QByteArray bytes, bool hexToBinary = false, bool appendAsLine = false);

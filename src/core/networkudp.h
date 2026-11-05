@@ -1,10 +1,12 @@
 #ifndef NETWORKUDP_H
 #define NETWORKUDP_H
 
+#include "transport.h"
+
 #include <QObject>
 #include <QUdpSocket>
 
-class NetworkUDP : public QObject
+class NetworkUDP : public Transport
 {
     Q_OBJECT
 public:
@@ -12,10 +14,7 @@ public:
     bool begin(QHostAddress ip, quint16 port);
     bool bind(QHostAddress ip, quint16 port);
     bool end();
-    bool isOpen();
-    QByteArray readBytes(bool clearBuffer = true);
-    void clearAll();
-    void clearStringBuffer();
+    bool isOpen() override;
     void write(QString message, QHostAddress ip, quint16 port);
 signals:
 
@@ -25,7 +24,6 @@ private slots:
 
 private:
     bool isBinded = false;
-    QByteArray udpReceiveBuffer;
     QUdpSocket *udpSocket;
 };
 

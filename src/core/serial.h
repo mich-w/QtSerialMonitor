@@ -1,6 +1,8 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
+#include "transport.h"
+
 #include <QObject>
 #include <QSerialPort>
 #include <QSerialPortInfo>
@@ -13,7 +15,7 @@ enum SERIAL_READ_MODE
     bytesAvailable_ReadAll
 };
 
-class Serial : public QObject
+class Serial : public Transport
 {
     Q_OBJECT
 public:
@@ -22,20 +24,14 @@ public:
     bool begin(QString parsedPortName, int parsedBaudRate, int dataBits, int parity, int stopBits, int flowControl, bool dtrOn);
     bool begin(QString parsedPortName, qint32 parsedBaudRate, QString dataBits, QString parity, QString stopBits, QString flowControl, bool dtrOn);
     bool end();
-    bool isOpen();
+    bool isOpen() override;
     bool send(const QByteArray &message);
     bool send(QString message);
     bool setReadMode(int mode);
     int getAvailiblePortsCount();
     QList<QSerialPortInfo> getAvailiblePorts();
     QString getSerialInfo();
-    QByteArray getBytes(bool clearBuffer = true);
-    void clearAll(bool clearHardwareBuffers = false);
-    void clearString();
     QList<int> getAvailibleBaudRates();
-signals:
-    void connectionLost(const QString &reason);
-
 public slots:
     void readString();
 
@@ -44,7 +40,6 @@ private slots:
 
 private:
     QSerialPort *serialDevice = nullptr;
-    QByteArray serialInputBuffer;
     SERIAL_READ_MODE stringReadMode = canReadLine_ReadLine;
 };
 
