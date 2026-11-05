@@ -2328,7 +2328,7 @@ p, li { white-space: pre-wrap; }
                 <enum>QAbstractSpinBox::NoButtons</enum>
                </property>
                <property name="maximum">
-                <number>99999</number>
+                <number>65535</number>
                </property>
                <property name="value">
                 <number>0</number>
@@ -2378,7 +2378,7 @@ p, li { white-space: pre-wrap; }
                 <number>0</number>
                </property>
                <property name="maximum">
-                <number>99999</number>
+                <number>65535</number>
                </property>
                <property name="singleStep">
                 <number>1</number>
@@ -2580,9 +2580,6 @@ p, li { white-space: pre-wrap; }
                    </property>
                    <property name="calendarPopup">
                     <bool>false</bool>
-                   </property>
-                   <property name="timeSpec">
-                    <enum>Qt::LocalTime</enum>
                    </property>
                   </widget>
                  </item>
