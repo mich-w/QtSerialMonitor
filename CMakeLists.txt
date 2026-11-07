@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(QtSerialMonitor
-    VERSION 1.7.0
+    VERSION 1.8.0
     DESCRIPTION "Serial monitor with data plotting"
     HOMEPAGE_URL "https://github.com/mich-w/QtSerialMonitor"
     LANGUAGES CXX)

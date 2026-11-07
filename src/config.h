@@ -4,15 +4,14 @@
 #ifdef APP_VERSION
 #define VERSION APP_VERSION // set by CMake from project(VERSION)
 #else
-#define VERSION "1.7.0"
+#define VERSION "1.8.0"
 #endif
 
 #define CHANGELOG_TEXT "What's new in " VERSION ":\n"                                                    \
-                       " - Values split across reads are no longer plotted in halves\n"                \
-                       " - UDP datagrams without newline are kept separate\n"                          \
-                       " - Files load in the background with a working Cancel button\n"                \
-                       " - CSV loading: empty cells, quoted fields, ';' and tab delimiters\n"          \
-                       " - Window and panel layout restored exactly between sessions\n"
+                       " - Demo mode: pick '(Demo) Simulated sine waves' or start with --demo\n"        \
+                       " - Auto-reconnect when a USB device is unplugged and plugged back in\n"        \
+                       " - Arduino Serial Plotter (Sensor1:12,Sensor2:34) and Teleplot (>temp:21.5) formats\n" \
+                       " - Command line options: --demo, --demo-rate, --help, --version\n"
 
 #define INTRO_TEXT ""                                                                           \
                    "Welcome to QtSerialMonitor, \n"                                             \

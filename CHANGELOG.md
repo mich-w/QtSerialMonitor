@@ -5,6 +5,17 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] – towards 2.0.0
 
+## [1.8.0]
+
+### Added
+- Demo mode: a simulated device streaming sine waves, selectable as *(Demo) Simulated sine waves* or with `--demo` / `--demo-rate <hz>`.
+- Command line options `--help` and `--version`.
+- Auto-reconnect: an unplugged USB device is found again (by serial number, VID:PID or port name) and reopened.
+- Arduino IDE 2 Serial Plotter format (`Sensor1:12,Sensor2:34`) and Teleplot format (`>temp:21.5`, `>temp:<ms>:21.5`).
+
+### Fixed
+- A second main window could show an empty device list.
+
 ## [1.7.0]
 
 ### Changed
