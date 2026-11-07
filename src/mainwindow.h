@@ -48,9 +48,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 public slots:
-    void on_processLoadedFile(QString *text);
     void on_setSelectedLabels(QList<QString> *labels, bool customRules = true);
-    void on_updateProgressBar(float *percent);
+    void handleFileLoaded(const FileReader::Result &result);
     void closeEvent(QCloseEvent *event);
 private slots:
     void on_aboutToQuitSlot();

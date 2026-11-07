@@ -53,6 +53,7 @@ QTime Parser::findTimeStamp(const QStringList &tokens) const
 
 void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternalClock, QString externalClockLabel)
 {
+    lastParseAborted = false;
     listNumericData.clear();
     stringListLabels.clear();
     listTimeStamp.clear();
@@ -62,18 +63,8 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
 
     for (auto l = 0; l < lineCount; ++l)
     {
-        parsingProgressPercent = (float)l / lineCount * 100.0F;
-        if (l % 50 == 0 && canReportProgress)
-        {
-            emit updateProgress(&parsingProgressPercent);
-            QCoreApplication::processEvents(); // Prevents app for freeezeng during processing large files and allows to udpate progress percent. A very cheap trick...
-        }
-
-        if (abortFlag)
-        {
-            abortFlag = false;
+        if (shouldStop(l))
             break;
-        }
 
         inputStringSplitArrayLines[l].replace(valueSeparators, " ");
         const QStringList tokens = inputStringSplitArrayLines[l].simplified().split(whitespace, Qt::SkipEmptyParts);
@@ -189,6 +180,7 @@ namespace
 
 void Parser::parseCSV(QString inputString, bool useExternalLabel, QString externalClockLabel)
 {
+    lastParseAborted = false;
     listNumericData.clear();
     stringListLabels.clear();
     listTimeStamp.clear();
@@ -220,18 +212,8 @@ void Parser::parseCSV(QString inputString, bool useExternalLabel, QString extern
 
     for (auto l = firstDataLine; l < lineCount; ++l)
     {
-        parsingProgressPercent = (float)l / lineCount * 100.0F;
-        if (l % 50 == 0 && canReportProgress)
-        {
-            emit updateProgress(&parsingProgressPercent);
-            QCoreApplication::processEvents(); // Prevents app for freeezeng during processing large files and allows to udpate progress percent. A very cheap trick...
-        }
-
-        if (abortFlag)
-        {
-            abortFlag = false;
+        if (shouldStop(l))
             break;
-        }
 
         const QStringList fields = splitCsvLine(lines[l], delimiter);
 
@@ -341,4 +323,14 @@ void Parser::resetTimeRange()
 }
 
 void Parser::abort() { abortFlag = true; }
-void Parser::setReportProgress(bool isEnabled) { canReportProgress = isEnabled; }
+void Parser::setProgressCallback(std::function<void(int)> callback) { progressCallback = std::move(callback); }
+
+bool Parser::shouldStop(int line)
+{
+    if (progressCallback && line % 1000 == 0)
+        progressCallback(lineCount > 0 ? line * 100 / lineCount : 0);
+
+    if (abortFlag.exchange(false))
+        lastParseAborted = true;
+    return lastParseAborted;
+}

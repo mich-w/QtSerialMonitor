@@ -1,5 +1,7 @@
 #include "filereader.h"
 
+#include "parser.h"
+
 #include <QDateTime>
 #include <QDebug>
 #include <QTextStream>
@@ -9,20 +11,73 @@ FileReader::FileReader(QObject *parent) : QObject(parent)
 {
 }
 
-bool FileReader::readAllAtOnce(QFile *fileToRead)
+FileReader::~FileReader()
 {
-    if (fileToRead->open(QIODevice::ReadOnly))
+    cancel();
+    if (worker)
     {
-        QTextStream stream(fileToRead);
-        QString allData = stream.readAll();
-        fileToRead->close();
-
-        emit textReady(&allData);
-        emit fileReadFinished();
-
-        return true;
+        worker->wait();
+        delete worker; // its finished handler is bound to this object and will not run
     }
-    return false;
+}
+
+bool FileReader::isBusy() const
+{
+    return !worker.isNull();
+}
+
+void FileReader::cancel()
+{
+    if (activeParser)
+        activeParser->abort();
+}
+
+bool FileReader::load(const QString &path, const Options &options)
+{
+    if (isBusy())
+        return false;
+
+    auto parser = std::make_shared<Parser>();
+    auto result = std::make_shared<Result>();
+    activeParser = parser;
+
+    parser->setParsingTimeRange(options.minTime, options.maxTime);
+    parser->setProgressCallback([this](int percent)
+                                { emit progress(percent); }); // emitted from the worker thread, queued to receivers
+
+    worker = QThread::create([path, options, parser, result]()
+                             {
+                                 QFile file(path);
+                                 if (!file.open(QIODevice::ReadOnly))
+                                 {
+                                     result->error = file.errorString();
+                                     return;
+                                 }
+
+                                 result->text = QString::fromUtf8(file.readAll());
+                                 file.close();
+
+                                 if (options.csv)
+                                     parser->parseCSV(result->text, options.useExternalClockLabel, options.clockLabel);
+                                 else
+                                     parser->parse(result->text, false, true, "");
+
+                                 result->labels = parser->getStringListLabels();
+                                 result->values = parser->getListNumericValues();
+                                 result->timeStamps = parser->getListTimeStamp();
+                             });
+
+    connect(worker, &QThread::finished, this, [this, parser, result]()
+            {
+                result->cancelled = parser->wasAborted();
+                worker->deleteLater();
+                worker = nullptr;
+                activeParser.reset();
+                emit loaded(*result);
+            });
+
+    worker->start();
+    return true;
 }
 
 static QTime findTimeInLine(const QString &line)

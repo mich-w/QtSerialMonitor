@@ -50,6 +50,9 @@ void MainWindow::createTimers()
     this->radioButtonTimer = new QTimer(this);
 
     connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(on_updateSerialDeviceList()));
+    connect(&fileReader, &FileReader::progress, ui->progressBarLoadFile, &QProgressBar::setValue);
+    connect(&fileReader, &FileReader::loaded, this, &MainWindow::handleFileLoaded);
+
     connectTransport(&serial, &serialPipeline);
     connectTransport(&networkUDP, &udpPipeline);
 
@@ -2067,47 +2070,34 @@ void MainWindow::on_pushButtonLoadPath_clicked()
     ui->lineEditFileInfo->setText(info);
 }
 
-void MainWindow::on_updateProgressBar(float *percent)
+void MainWindow::handleFileLoaded(const FileReader::Result &result)
 {
-    ui->progressBarLoadFile->setValue(*percent);
-}
+    ui->pushButtonLoadFile->setText("Load File");
 
-void MainWindow::on_processLoadedFile(QString *text)
-{
-    disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
-    connect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
+    if (!result.error.isEmpty())
+    {
+        addLog("App >>\t Error - unable to read file: " + result.error, true);
+        ui->progressBarLoadFile->setValue(0);
+        return;
+    }
 
-    parser.setReportProgress(true);
+    if (result.cancelled)
+    {
+        addLog("App >>\t File loading cancelled.", true);
+        ui->progressBarLoadFile->setValue(0);
+        return;
+    }
+
     parser.clearStorage();
-    parser.setParsingTimeRange(ui->timeEditMinParsingTime->time(), ui->timeEditMaxParsingTime->time());
+    this->processChart(result.labels, result.values, result.timeStamps);
+    this->processTable(result.labels, result.values);
+    this->saveToRAM(result.labels, result.values, result.timeStamps);
 
-    // Select file type
-    if (ui->comboBoxLogFormat->currentIndex() == 0)
-        parser.parseCSV(*text, (bool)ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text());
-    else
-        parser.parse(*text, false, true, "");
+    if (ui->checkBoxAppendLoadedTextToLog->isChecked())
+        ui->textBrowserLogs->appendPlainText(result.text);
 
-    // disconnect events, reset parser
-    parser.resetTimeRange();
-    parser.setReportProgress(false);
-    disconnect(&parser, SIGNAL(updateProgress(float *)), this, SLOT(on_updateProgressBar(float *)));
-
-    // Parsing
-    {
-        QStringList labelList = parser.getStringListLabels();
-        QList<double> numericDataList = parser.getListNumericValues();
-        QList<long> timeStampList = parser.getListTimeStamp();
-
-        this->processChart(labelList, numericDataList, timeStampList);
-        this->processTable(labelList, numericDataList);
-        this->saveToRAM(labelList, numericDataList, timeStampList);
-    }
-
-    // Add text to log
-    {
-        if (ui->checkBoxAppendLoadedTextToLog->isChecked() == true)
-            this->ui->textBrowserLogs->appendPlainText(*text);
-    }
+    ui->progressBarLoadFile->setValue(100);
+    addLog("App >>\t Loaded " + QString::number(result.values.count()) + " values from file.", true);
 }
 
 void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
@@ -2125,49 +2115,33 @@ void MainWindow::on_pushButtonRAMClear_clicked()
 
 void MainWindow::on_pushButtonLoadFile_clicked()
 {
+    if (fileReader.isBusy())
+    {
+        fileReader.cancel(); // handleFileLoaded() resets the UI
+        return;
+    }
+
     ui->progressBarLoadFile->setValue(0);
 
-    if (ui->pushButtonLoadFile->text().contains("Load"))
+    const QString path = ui->lineEditLoadFilePath->text().trimmed();
+    const QFileInfo fileInfo(path);
+    if (!fileInfo.isFile() || !fileInfo.isReadable())
     {
-        this->clearGraphs(true);
+        addLog("App >>\t Error - invalid file path !", true);
+        return;
+    }
+
+    FileReader::Options options;
+    options.csv = ui->comboBoxLogFormat->currentIndex() == 0;
+    options.useExternalClockLabel = ui->comboBoxClockSource->currentIndex() == 1;
+    options.clockLabel = ui->lineEditExternalClockLabel->text();
+    options.minTime = ui->timeEditMinParsingTime->time();
+    options.maxTime = ui->timeEditMaxParsingTime->time();
+
+    this->clearGraphs(true);
+
+    if (fileReader.load(path, options))
         ui->pushButtonLoadFile->setText("Cancel");
-
-        if (QDir(ui->lineEditLoadFilePath->text().trimmed()).isReadable())
-        {
-            QFile inputFile(ui->lineEditLoadFilePath->text().trimmed());
-            connect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
-
-            connect(&fileReader, &FileReader::fileReadFinished, this, [this]()
-                    {
-                        ui->pushButtonLoadFile->setText("Load File");
-                        ui->progressBarLoadFile->setValue(100);
-                    });
-
-            if (fileReader.readAllAtOnce(&inputFile))
-            {
-                addLog("App >>\t Read file succesfully... ", true);
-            }
-            else
-            {
-                addLog("App >>\t Error - invalid file !", true);
-                ui->pushButtonLoadFile->setText("Load File");
-                ui->progressBarLoadFile->setValue(0);
-            }
-        }
-        else
-        {
-            addLog("App >>\t Error - invalid file path !", true);
-            ui->pushButtonLoadFile->setText("Load File");
-            ui->progressBarLoadFile->setValue(0);
-        }
-    }
-    else
-    {
-        parser.abort();
-        disconnect(&fileReader, SIGNAL(textReady(QString *)), this, SLOT(on_processLoadedFile(QString *)));
-        ui->pushButtonLoadFile->setText("Load File");
-        ui->progressBarLoadFile->setValue(0);
-    }
 }
 
 void MainWindow::on_lineEditLoadFilePath_customContextMenuRequested(const QPoint &pos)

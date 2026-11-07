@@ -7,6 +7,9 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 
+#include <atomic>
+#include <functional>
+
 class Parser : public QObject
 {
     Q_OBJECT
@@ -22,6 +25,7 @@ public:
     QStringList getTextList();
     QStringList searchTimeFormatList = {"hh:mm:ss:zzz", "hh:mm:ss.zzz", "hh:mm:ss.z", "hh:mm:ss"};
     void abort();
+    bool wasAborted() const { return lastParseAborted; } // true if the last parse stopped early
     void appendSetToMemory(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, QString text = "");
     void clear();
     void clearExternalClock();
@@ -31,15 +35,13 @@ public:
     void resetTimeRange();
     void restartChartTimer();
     void setParsingTimeRange(QTime minTime, QTime maxTime);
-    void setReportProgress(bool isEnabled);
+    void setProgressCallback(std::function<void(int percent)> callback); // called from the parsing thread
     void getCSVReadyData(QStringList *columnNames, QList<QList<double> > *dataColumns);
-signals:
-    void updateProgress(float *percent);
-public slots:
 private:
-    bool abortFlag = false;
-    bool canReportProgress = false;
-    float parsingProgressPercent = 0.0f;
+    std::atomic<bool> abortFlag{false};
+    bool lastParseAborted = false;
+    std::function<void(int)> progressCallback;
+    bool shouldStop(int line); // reports progress, returns true when aborted
     int lineCount = 0;
     QList<double> dataStorage;
     QList<double> listNumericData;
