@@ -49,6 +49,7 @@ add_library(qtsm_core STATIC
     src/core/logger.cpp       src/core/logger.h
     src/core/networkudp.cpp   src/core/networkudp.h
     src/core/parser.cpp       src/core/parser.h
+    src/core/portidentity.cpp src/core/portidentity.h
     src/core/receivepipeline.cpp src/core/receivepipeline.h
     src/core/serial.cpp       src/core/serial.h
     src/core/transport.h

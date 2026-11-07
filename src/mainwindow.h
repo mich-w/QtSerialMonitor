@@ -11,6 +11,7 @@
 #include "infodialog.h"
 #include "highlighter.h"
 #include "demotransport.h"
+#include "portidentity.h"
 #include "receivepipeline.h"
 #include "widgetsettings.h"
 
@@ -170,6 +171,13 @@ private:
     Serial serial;
     DemoTransport demo;
     QStringList portNamesOld; // serial ports seen at the last device list refresh
+    PortIdentity connectedPort; // remembered for auto-reconnect
+    QTimer reconnectTimer;
+    bool waitingForReconnect = false;
+    void handleSerialConnectionLost(const QString &reason);
+    void tryReconnect();
+    bool openSerialPort(const QString &portName);
+    void stopReconnecting();
     int demoRate = DemoTransport::DefaultRateHz;
     static constexpr const char *demoPortId = "demo:";
     ReceivePipeline serialPipeline;

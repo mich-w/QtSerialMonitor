@@ -23,6 +23,52 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::handleSerialConnectionLost(const QString &reason)
+{
+    if (waitingForReconnect || !serial.isOpen())
+        return; // errors keep coming while the device is gone
+
+    addLog("App >>\t Serial port error: " + reason, true);
+
+    if (!ui->checkBoxAutoReconnect->isChecked())
+    {
+        ui->pushButtonSerialConnect->setChecked(false); // closes the port via toggled slot
+        return;
+    }
+
+    serialPipeline.flush();
+    serial.end();
+
+    waitingForReconnect = true;
+    reconnectTimer.start();
+    ui->pushButtonSerialConnect->setText("Reconnecting... (click to cancel)");
+    addLog("App >>\t Waiting for " + connectedPort.portName + " to come back...", true);
+}
+
+void MainWindow::tryReconnect()
+{
+    const QString portName = PortIdentity::findMatch(connectedPort, PortIdentity::available());
+    if (portName.isEmpty())
+        return;
+
+    // The device can take a moment before it accepts connections - just retry on the next tick.
+    if (!openSerialPort(portName))
+        return;
+
+    stopReconnecting();
+    on_updateSerialDeviceList();
+    const int index = ui->comboBoxDevices->findData(portName);
+    if (index >= 0)
+        ui->comboBoxDevices->setCurrentIndex(index);
+    addLog("App >>\t Reconnected to " + portName + ".", true);
+}
+
+void MainWindow::stopReconnecting()
+{
+    waitingForReconnect = false;
+    reconnectTimer.stop();
+}
+
 void MainWindow::startDemo(int rateHz)
 {
     demoRate = rateHz;
@@ -75,11 +121,10 @@ void MainWindow::createTimers()
     connectTransport(&demo, &serialPipeline); // demo stands in for a serial device
     connectTransport(&networkUDP, &udpPipeline);
 
-    connect(&serial, &Transport::connectionLost, this, [this](const QString &reason)
-            {
-                addLog("App >>\t Serial port error: " + reason, true);
-                ui->pushButtonSerialConnect->setChecked(false); // closes the port via toggled slot
-            }, Qt::QueuedConnection);
+    connect(&serial, &Transport::connectionLost, this, &MainWindow::handleSerialConnectionLost, Qt::QueuedConnection);
+
+    reconnectTimer.setInterval(500);
+    connect(&reconnectTimer, &QTimer::timeout, this, &MainWindow::tryReconnect);
     connect(radioButtonTimer, &QTimer::timeout, this, [this]()
             { ui->radioButtonDeviceUpdate->setChecked(false); });
 }
@@ -217,7 +262,7 @@ namespace
     // Widgets whose state is saved between sessions. Order matters on load:
     // some toggles reset other widgets (e.g. auto logging clears the file name).
     const QStringList persistentWidgets = {
-    "checkBoxAppendDate", "checkBoxAutoLogging", "checkBoxAutoRefresh",
+    "checkBoxAppendDate", "checkBoxAutoLogging", "checkBoxAutoReconnect", "checkBoxAutoRefresh",
     "checkBoxAutoRescaleY", "checkBoxAutoSaveBuffer", "checkBoxAutoScrollLogTable",
     "checkBoxAutoSizeColumnsLogTable", "checkBoxAutoTrack", "checkBoxDTR",
     "checkBoxEnableTracer", "checkBoxRAMClearChart", "checkBoxScrollLogEnableSorting",
@@ -1474,6 +1519,27 @@ void MainWindow::on_comboBoxTracerStyle_currentTextChanged(const QString &)
     }
 }
 
+bool MainWindow::openSerialPort(const QString &portName)
+{
+    const bool opened = serial.begin(portName, ui->comboBoxBaudRates->currentText().toInt(),
+                                     ui->comboBoxDataBits->currentText(), ui->comboBoxParity->currentText(),
+                                     ui->comboBoxStopBits->currentText(), ui->comboBoxFlowControl->currentText(),
+                                     ui->checkBoxDTR->isChecked());
+    if (!opened)
+        return false;
+
+    serialPipeline.reset();
+    parser.restartChartTimer();
+
+    if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false) // logger on standby ?
+        fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text(), ui->checkBoxTruncateFileOnSave->isChecked());
+
+    connectedPort = PortIdentity::fromInfo(QSerialPortInfo(portName));
+    addLog("App >>\t Serial port opened. " + serial.getSerialInfo() + " DTR: " + QString::number(ui->checkBoxDTR->isChecked()), true);
+    ui->pushButtonSerialConnect->setText("Disconnect");
+    return true;
+}
+
 void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 {
     bool inputError = false;
@@ -1515,25 +1581,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
             return;
         }
 
-        uint parsedBaudRate = ui->comboBoxBaudRates->currentText().toInt();
-        QString dataBits = ui->comboBoxDataBits->currentText();
-        QString stopBits = ui->comboBoxStopBits->currentText();
-        QString parity = ui->comboBoxParity->currentText();
-        QString flowControl = ui->comboBoxFlowControl->currentText();
-
-        if (serial.begin(parsedPortName, parsedBaudRate, dataBits, parity, stopBits, flowControl, ui->checkBoxDTR->isChecked()))
-        {
-            serialPipeline.reset();
-            parser.restartChartTimer();
-
-            if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false) // logger on standby ?
-                fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text(), ui->checkBoxTruncateFileOnSave->isChecked());
-
-
-            addLog("App >>\t Serial port opened. " + serial.getSerialInfo() + " DTR: " + QString::number(ui->checkBoxDTR->isChecked()), true);
-            ui->pushButtonSerialConnect->setText("Disconnect");
-        }
-        else
+        if (!openSerialPort(parsedPortName))
         {
             ui->pushButtonSerialConnect->setChecked(false);
             addLog("App >>\t Unable to open serial port!", true);
@@ -1541,6 +1589,14 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
     }
     else
     {
+        if (waitingForReconnect)
+        {
+            stopReconnecting();
+            addLog("App >>\t Reconnecting cancelled.", true);
+            ui->pushButtonSerialConnect->setText("Connect");
+            return;
+        }
+
         serialPipeline.flush(); // show what was already received
 
         if (demo.isOpen())

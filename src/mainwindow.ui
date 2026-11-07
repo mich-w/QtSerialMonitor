@@ -2094,6 +2094,16 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
+             <item row="1" column="14">
+              <widget class="QCheckBox" name="checkBoxAutoReconnect">
+               <property name="toolTip">
+                <string>Reconnect automatically when the device is unplugged and plugged back in. The device is recognised by its USB serial number, so it may come back under a different port name.</string>
+               </property>
+               <property name="text">
+                <string>Auto-reconnect</string>
+               </property>
+              </widget>
+             </item>
              <item row="0" column="12">
               <widget class="QRadioButton" name="radioButtonDeviceUpdate">
                <property name="enabled">

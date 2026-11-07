@@ -13,6 +13,7 @@ qtsm_add_test(tst_filereader)
 qtsm_add_test(tst_utf8decoder)
 qtsm_add_test(tst_receivepipeline)
 qtsm_add_test(tst_demotransport)
+qtsm_add_test(tst_portidentity)
 
 # Integration test driving the real main window.
 add_executable(tst_mainwindow tst_mainwindow.cpp)
