@@ -5,6 +5,22 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] – towards 2.0.0
 
+## [1.7.0]
+
+### Changed
+- Received data is pushed from the serial port / UDP socket as it arrives instead of being polled by timers; the "processing delay" now only batches updates.
+- Only complete lines are parsed and logged; the terminal still shows data immediately.
+- Files are loaded and parsed on a background thread; Cancel works and the UI stays responsive.
+- Window geometry and splitter layout are saved with Qt's native state; older settings are migrated automatically.
+- Code restructured: `src/core` library (no widget dependencies), unit tests and a headless integration test run with `ctest` and in CI.
+
+### Fixed
+- Values split across two reads were plotted as two wrong values (`Temp 23` + `.5`).
+- Consecutive UDP datagrams without a trailing newline were glued together.
+- CSV loading shifted values to the wrong column after an empty cell.
+- Re-entrancy while loading large files (the parser pumped the event loop).
+- UDP port fields accepted values above 65535.
+
 ## [1.6.0]
 
 ### Added
