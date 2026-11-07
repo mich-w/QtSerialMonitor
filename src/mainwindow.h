@@ -11,6 +11,7 @@
 #include "infodialog.h"
 #include "highlighter.h"
 #include "receivepipeline.h"
+#include "widgetsettings.h"
 
 #include <QCloseEvent>
 #include <QCompleter>

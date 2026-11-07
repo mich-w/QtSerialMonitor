@@ -2,6 +2,7 @@
 #include "mainwindow.h"
 #include <QCheckBox>
 #include <QComboBox>
+#include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
@@ -136,6 +137,48 @@ private slots:
         find<QCheckBox>("checkBoxShowControlChars")->setChecked(true);
         send("a b\tc\r\nd\re\n");
         QTRY_COMPARE(logText(), QString::fromUtf8("a·b\\t\tc\\r\\n\nd\\r\ne\\n\n"));
+    }
+
+    void settingsFromOlderVersionLoad()
+    {
+        {
+            QSettings legacy(QSettings::IniFormat, QSettings::UserScope, "QtSerialMonitor", "QtSerialMonitor");
+            legacy.clear();
+            legacy.setValue("Info/version", "1.53");
+            legacy.setValue("layout/windowSize.size", "1111 777");
+            legacy.setValue("GUI_Elements/checkBoxDTR.isChecked", true);
+            legacy.setValue("GUI_Elements/comboBoxParity.currentIndex", 2);
+            legacy.setValue("GUI_Elements/comboBoxBaudRates.currentIndex", 9999); // out of range - must be ignored
+            legacy.setValue("layout/spinBoxMaxLines.value", 1234);
+            legacy.setValue("data/lineEditUDPTargetIP.text", "10.0.0.7");
+            legacy.setValue("data/comboBoxSendHistory", "AT\nAT+RST\n");
+        }
+
+        MainWindow restored;
+        auto findIn = [&](const char *name) { return restored.findChild<QWidget *>(name); };
+
+        QCOMPARE(restored.size(), QSize(1111, 777));
+        QVERIFY(qobject_cast<QCheckBox *>(findIn("checkBoxDTR"))->isChecked());
+        QCOMPARE(qobject_cast<QComboBox *>(findIn("comboBoxParity"))->currentIndex(), 2);
+        QVERIFY(qobject_cast<QComboBox *>(findIn("comboBoxBaudRates"))->currentIndex() < 9999);
+        QCOMPARE(qobject_cast<QSpinBox *>(findIn("spinBoxMaxLines"))->value(), 1234);
+        QCOMPARE(qobject_cast<QLineEdit *>(findIn("lineEditUDPTargetIP"))->text(), QString("10.0.0.7"));
+        QCOMPARE(qobject_cast<QComboBox *>(findIn("comboBoxSend"))->count(), 2);
+
+        // Save in the new format, then load it again.
+        qobject_cast<QSpinBox *>(findIn("spinBoxMaxLines"))->setValue(4321);
+        QVERIFY(QMetaObject::invokeMethod(&restored, "on_aboutToQuitSlot"));
+
+        QSettings saved(QSettings::IniFormat, QSettings::UserScope, "QtSerialMonitor", "QtSerialMonitor");
+        QVERIFY(saved.contains("layout/windowGeometry"));
+        QVERIFY(!saved.contains("layout/windowSize.size"));
+        QCOMPARE(saved.value("layout/spinBoxMaxLines.value").toInt(), 4321);
+        QCOMPARE(saved.value("Info/version").toString(), QString(VERSION));
+
+        MainWindow reloaded;
+        QCOMPARE(reloaded.findChild<QSpinBox *>("spinBoxMaxLines")->value(), 4321);
+        QCOMPARE(reloaded.findChild<QComboBox *>("comboBoxSend")->count(), 2);
+        saved.clear();
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
