@@ -181,6 +181,25 @@ private slots:
         saved.clear();
     }
 
+    void demoDeviceStreamsSines()
+    {
+        find<QPushButton>("pushButtonUDPConnect")->setChecked(false);
+        window->startDemo(100);
+        QVERIFY2(find<QPushButton>("pushButtonSerialConnect")->isChecked(), qPrintable(logText()));
+
+        QTRY_COMPARE(graphNames(), (QStringList{"sin1", "sin2", "noisy"}));
+        QTRY_VERIFY(find<QCustomPlot>("widgetChart")->graph(0)->dataCount() > 10);
+
+        // Sent text is echoed back by the demo device.
+        auto *send = find<QComboBox>("comboBoxSend");
+        send->setCurrentText("hello demo");
+        find<QPushButton>("pushButtonSend")->click();
+        QTRY_VERIFY(logText().contains("demo> received: hello demo"));
+
+        find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
+        QVERIFY(!find<QPushButton>("pushButtonSerialConnect")->isChecked());
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");

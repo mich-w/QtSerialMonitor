@@ -18,6 +18,7 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 - Data plotter with multiple graphs support and basic data filtering - uses [QCustomPlot](https://www.qcustomplot.com/),
 - Printer support, ability to save graph as image,
 - Read/write ".csv", ".txt" data logs,
+- Demo mode - a simulated device streaming sine waves, no hardware needed (`QtSerialMonitor --demo`),
 - many more...
 
 <a href="https://github.com/mich-w/QtSerialMonitor/releases/download/v1.53/QtSerialMonitor_v1.53_win_x64.zip" download>Download QtSerialMonitor_v1.53_win_x64</a> 
@@ -43,6 +44,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ./build/QtSerialMonitor
 ```
+
+Try it without any hardware: `./build/QtSerialMonitor --demo` (optionally `--demo-rate 100` for samples per second), or pick *(Demo) Simulated sine waves* from the device list. Run with `--help` for all options.
 
 Qt 6 is used when available; pass `-DQTSM_QT_MAJOR=5` to build against Qt 5.15. If CMake can't find Qt, point it at your installation with `-DCMAKE_PREFIX_PATH=/path/to/Qt/6.x/gcc_64`.
 

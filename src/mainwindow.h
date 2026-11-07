@@ -10,6 +10,7 @@
 #include "serial.h"
 #include "infodialog.h"
 #include "highlighter.h"
+#include "demotransport.h"
 #include "receivepipeline.h"
 #include "widgetsettings.h"
 
@@ -47,6 +48,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    void startDemo(int rateHz = DemoTransport::DefaultRateHz); // select the simulated device and connect
     ~MainWindow();
 public slots:
     void on_setSelectedLabels(QList<QString> *labels, bool customRules = true);
@@ -166,6 +168,10 @@ private:
     QTimer *radioButtonTimer;
     QTimer *serialDeviceCheckTimer;
     Serial serial;
+    DemoTransport demo;
+    QStringList portNamesOld; // serial ports seen at the last device list refresh
+    int demoRate = DemoTransport::DefaultRateHz;
+    static constexpr const char *demoPortId = "demo:";
     ReceivePipeline serialPipeline;
     ReceivePipeline udpPipeline;
     void connectTransport(Transport *transport, ReceivePipeline *pipeline);

@@ -23,11 +23,29 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::startDemo(int rateHz)
+{
+    demoRate = rateHz;
+
+    const int index = ui->comboBoxDevices->findData(demoPortId);
+    if (index < 0)
+        return;
+
+    ui->comboBoxDevices->setCurrentIndex(index);
+    ui->tabWidgetControlSection->setCurrentIndex(TAB_INDEX::SERIAL_USB);
+    ui->pushButtonEnablePlot->setChecked(false); // checked == plotting disabled
+    ui->checkBoxAutoTrack->setChecked(true);
+
+    if (ui->pushButtonSerialConnect->isChecked())
+        ui->pushButtonSerialConnect->setChecked(false);
+    ui->pushButtonSerialConnect->setChecked(true);
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     // if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
 
-    if (serial.isOpen() || networkUDP.isOpen())
+    if (serial.isOpen() || networkUDP.isOpen() || demo.isOpen())
     {
         QMessageBox::StandardButton resBtn = QMessageBox::question(this, "About to exit...", tr("Connection open. Are you sure ? \n"),
                                                                    QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
@@ -54,6 +72,7 @@ void MainWindow::createTimers()
     connect(&fileReader, &FileReader::loaded, this, &MainWindow::handleFileLoaded);
 
     connectTransport(&serial, &serialPipeline);
+    connectTransport(&demo, &serialPipeline); // demo stands in for a serial device
     connectTransport(&networkUDP, &udpPipeline);
 
     connect(&serial, &Transport::connectionLost, this, [this](const QString &reason)
@@ -728,7 +747,8 @@ void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
 void MainWindow::on_updateSerialDeviceList()
 {
     static const QString noDevicesText = "No serial devices detected :(";
-    static QStringList portNamesOld;
+
+    static const QString demoText = "(Demo) Simulated sine waves";
 
     const QList<QSerialPortInfo> devices = serial.getAvailiblePorts();
     QStringList portNames;
@@ -736,13 +756,14 @@ void MainWindow::on_updateSerialDeviceList()
         portNames.append(item.portName());
     portNames.sort();
 
-    if (!devices.isEmpty() && portNames != portNamesOld)
+    if (!devices.isEmpty() && (portNames != portNamesOld || ui->comboBoxDevices->count() == 0))
     {
         const QString previousPort = ui->comboBoxDevices->currentData().toString();
 
         ui->comboBoxDevices->clear();
         for (const auto &device : devices)
             ui->comboBoxDevices->addItem("(" + device.portName() + ")" + " " + device.description(), device.portName());
+        ui->comboBoxDevices->addItem(demoText, demoPortId);
 
         const int previousIndex = ui->comboBoxDevices->findData(previousPort);
         if (previousIndex >= 0)
@@ -750,8 +771,12 @@ void MainWindow::on_updateSerialDeviceList()
     }
     else if (devices.isEmpty() && ui->comboBoxDevices->itemText(0) != noDevicesText)
     {
+        const bool demoSelected = ui->comboBoxDevices->currentData().toString() == demoPortId;
         ui->comboBoxDevices->clear();
         ui->comboBoxDevices->addItem(noDevicesText);
+        ui->comboBoxDevices->addItem(demoText, demoPortId);
+        if (demoSelected)
+            ui->comboBoxDevices->setCurrentIndex(1);
     }
 
     portNamesOld = portNames;
@@ -1191,7 +1216,8 @@ void MainWindow::sendSerial(QString message) // TODO - move to serial - error vi
         message = message + "\r\n";
     }
 
-    if (!serial.send(message))
+    const bool sent = demo.isOpen() ? demo.send(message.toUtf8()) : serial.send(message);
+    if (!sent)
         this->addLog("App >>\t Unable to send! Serial port closed !", true);
 }
 
@@ -1475,6 +1501,20 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
             return;
         }
 
+        if (parsedPortName == demoPortId)
+        {
+            serialPipeline.reset();
+            parser.restartChartTimer();
+            demo.start(demoRate);
+
+            if (ui->pushButtonLogging->isChecked() && fileLogger.isOpen() == false)
+                fileLogger.beginLog(ui->lineEditSaveLogPath->text(), ui->checkBoxAutoLogging->isChecked(), ui->lineEditSaveFileName->text(), ui->checkBoxTruncateFileOnSave->isChecked());
+
+            addLog("App >>\t Demo device started (" + QString::number(demo.rate()) + " samples/s). Anything you send is echoed back.", true);
+            ui->pushButtonSerialConnect->setText("Disconnect");
+            return;
+        }
+
         uint parsedBaudRate = ui->comboBoxBaudRates->currentText().toInt();
         QString dataBits = ui->comboBoxDataBits->currentText();
         QString stopBits = ui->comboBoxStopBits->currentText();
@@ -1503,7 +1543,13 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
     {
         serialPipeline.flush(); // show what was already received
 
-        if (serial.end())
+        if (demo.isOpen())
+        {
+            demo.stop();
+            addLog("App >>\t Demo device stopped.", true);
+            ui->pushButtonSerialConnect->setText("Connect");
+        }
+        else if (serial.end())
         {
             addLog("App >>\t Connection closed.", true);
             ui->pushButtonSerialConnect->setText("Connect");
