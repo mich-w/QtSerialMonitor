@@ -61,5 +61,7 @@ Qt 6 is used when available; pass `-DQTSM_QT_MAJOR=5` to build against Qt 5.15. 
         - "Voltage: 1.23 (tabulator) Output: 4.56"
         - "1.23 4.56" (Graph 0 and Graph 1)
         - "temp=2.5e-3, rpm=+1200" (scientific notation and signs are supported)
+        - "Sensor1:12,Sensor2:34" (Arduino IDE 2 Serial Plotter format)
+        - ">temp:21.5" or ">temp:1627551892437:21.5" (Teleplot format, one value per line)
  
 * Application uses QtSettings functionality and stores a simple .ini file on the hard drive in which it keeps its settings. It is stored in the user's configuration directory, e.g. *%APPDATA%\QtSerialMonitor* on Windows or *~/.config/QtSerialMonitor* on Linux. The settings are saved each time the app closes.

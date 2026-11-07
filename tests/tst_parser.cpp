@@ -42,6 +42,12 @@ private slots:
         QTest::newRow("scientific") << "sci 1e-3 big 2.5E+3" << QStringList{"sci", "big"} << QList<double>{0.001, 2500};
         QTest::newRow("negative and dot") << "x -.5 y 3." << QStringList{"x", "y"} << QList<double>{-0.5, 3};
         QTest::newRow("no numbers") << "hello world" << QStringList{} << QList<double>{};
+        QTest::newRow("arduino plotter colon") << "Sensor1:12,Sensor2:34" << QStringList{"Sensor1", "Sensor2"} << QList<double>{12, 34};
+        QTest::newRow("arduino plotter tabs") << "a:1\tb:-2.5\tc:3e2" << QStringList{"a", "b", "c"} << QList<double>{1, -2.5, 300};
+        QTest::newRow("teleplot") << ">temp:21.5\n>hum:40\n" << QStringList{"temp", "hum"} << QList<double>{21.5, 40};
+        QTest::newRow("teleplot unit and flags") << QString::fromUtf8(">volt:3.3§V|g\n") << QStringList{"volt"} << QList<double>{3.3};
+        QTest::newRow("teleplot text ignored") << ">state:running|t\n>xy:1:2|xy\n" << QStringList{} << QList<double>{};
+        QTest::newRow("mixed teleplot and plain") << ">a:1\nb 2\n" << QStringList{"a", "b"} << QList<double>{1, 2};
         QTest::newRow("multi line") << "a 1\r\nb 2\n\nc 3\r" << QStringList{"a", "b", "c"} << QList<double>{1, 2, 3};
     }
 
@@ -84,6 +90,24 @@ private slots:
         const auto result = samples(parser);
         QCOMPARE(result.count(), 1);
         QCOMPARE(result[0].time, long(QTime(10, 30, 0, 250).msecsSinceStartOfDay()));
+    }
+
+    void teleplotTimestamp()
+    {
+        const QDateTime when(QDate(2024, 1, 1), QTime(12, 34, 56, 789));
+        Parser parser;
+        parser.parse(QString(">temp:%1:21.5\n").arg(when.toMSecsSinceEpoch()), false, true, "");
+
+        const auto result = samples(parser);
+        QCOMPARE(result.count(), 1);
+        QCOMPARE(result[0].time, long(QTime(12, 34, 56, 789).msecsSinceStartOfDay()));
+    }
+
+    void timeTokensAreNotLabelColonValue()
+    {
+        Parser parser;
+        parser.parse("10:30:00.000 x 1", false, true, "");
+        QCOMPARE(labels(parser), QStringList{"x"});
     }
 
     void timeRangeSkipsWholeLines()

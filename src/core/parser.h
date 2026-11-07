@@ -42,6 +42,8 @@ private:
     bool lastParseAborted = false;
     std::function<void(int)> progressCallback;
     bool shouldStop(int line); // reports progress, returns true when aborted
+    void appendSample(const QString &label, double value, bool syncToSystemClock, bool useExternalClock);
+    bool parseTeleplotLine(const QString &line, bool syncToSystemClock, bool useExternalClock);
     int lineCount = 0;
     QList<double> dataStorage;
     QList<double> listNumericData;

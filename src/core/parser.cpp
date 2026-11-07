@@ -12,7 +12,75 @@ namespace
     const QRegularExpression whitespace("\\s+");
     const QRegularExpression valueSeparators("[=,]");
 
+    // Arduino IDE 2 Serial Plotter style "label:value". The label must start with a
+    // letter so time stamps such as 10:30:00.000 are left alone.
+    const QRegularExpression labelColonValue("^([A-Za-z_][^:]*):([+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?)$");
+
     bool isNumber(const QString &token) { return numberRegex.match(token).hasMatch(); }
+
+    QStringList expandLabelColonValue(const QStringList &tokens)
+    {
+        QStringList expanded;
+        for (const auto &token : tokens)
+        {
+            const auto match = labelColonValue.match(token);
+            if (match.hasMatch())
+                expanded << match.captured(1) << match.captured(2);
+            else
+                expanded << token;
+        }
+        return expanded;
+    }
+}
+
+void Parser::appendSample(const QString &label, double value, bool syncToSystemClock, bool useExternalClock)
+{
+    stringListLabels.append(label);
+    listNumericData.append(value);
+
+    if (useExternalClock)
+        listTimeStamp.append(latestTimeStamp.msecsSinceStartOfDay());
+    else if (syncToSystemClock)
+        listTimeStamp.append(QTime::currentTime().msecsSinceStartOfDay());
+    else
+        listTimeStamp.append(parserClock.elapsed());
+}
+
+// Teleplot line: ">name:value", ">name:timestamp_ms:value", optionally followed by "§unit" and/or "|flags".
+// Returns false if the line is not a numeric Teleplot sample.
+bool Parser::parseTeleplotLine(const QString &line, bool syncToSystemClock, bool useExternalClock)
+{
+    QString body = line.trimmed().mid(1);
+
+    const int flagsAt = body.indexOf('|');
+    const QString flags = flagsAt >= 0 ? body.mid(flagsAt + 1) : QString();
+    if (flagsAt >= 0)
+        body.truncate(flagsAt);
+    if (flags.contains('t') || flags.contains("xy"))
+        return false; // text or XY variables are not plotted over time
+
+    const int unitAt = body.indexOf(QChar(0x00A7)); // '§'
+    if (unitAt >= 0)
+        body.truncate(unitAt);
+
+    const QStringList parts = body.split(':');
+    if (parts.count() < 2 || parts.count() > 3 || parts[0].trimmed().isEmpty())
+        return false;
+
+    const QString value = parts.last().trimmed();
+    if (!isNumber(value))
+        return false;
+
+    if (parts.count() == 3 && useExternalClock)
+    {
+        bool ok = false;
+        const qint64 epochMs = qint64(parts[1].trimmed().toDouble(&ok));
+        if (ok)
+            latestTimeStamp = QDateTime::fromMSecsSinceEpoch(epochMs).time();
+    }
+
+    appendSample(parts[0].trimmed(), value.toDouble(), syncToSystemClock, useExternalClock);
+    return true;
 }
 
 Parser::Parser(QObject *parent) : QObject(parent)
@@ -66,8 +134,14 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
         if (shouldStop(l))
             break;
 
+        if (inputStringSplitArrayLines[l].startsWith('>'))
+        {
+            parseTeleplotLine(inputStringSplitArrayLines[l], syncToSystemClock, useExternalClock);
+            continue;
+        }
+
         inputStringSplitArrayLines[l].replace(valueSeparators, " ");
-        const QStringList tokens = inputStringSplitArrayLines[l].simplified().split(whitespace, Qt::SkipEmptyParts);
+        const QStringList tokens = expandLabelColonValue(inputStringSplitArrayLines[l].simplified().split(whitespace, Qt::SkipEmptyParts));
 
         // Find external time for this line
         if (useExternalClock)
@@ -95,24 +169,17 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
             if (!isNumber(tokens[i]))
                 continue;
 
+            QString label;
             if (i == 0 || isNumber(tokens[i - 1]))
-                stringListLabels.append("Graph " + QString::number(i));
+                label = "Graph " + QString::number(i);
             else
             {
-                QString label = tokens[i - 1];
+                label = tokens[i - 1];
                 if (label.length() > 1 && label.endsWith(':')) // "Voltage: 1.23"
                     label.chop(1);
-                stringListLabels.append(label);
             }
 
-            listNumericData.append(tokens[i].toDouble());
-
-            if (useExternalClock)
-                listTimeStamp.append(latestTimeStamp.msecsSinceStartOfDay());
-            else if (syncToSystemClock)
-                listTimeStamp.append(QTime::currentTime().msecsSinceStartOfDay());
-            else
-                listTimeStamp.append(parserClock.elapsed());
+            appendSample(label, tokens[i].toDouble(), syncToSystemClock, useExternalClock);
         }
     }
 }
