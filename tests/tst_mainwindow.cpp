@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QScrollBar>
 #include <QSpinBox>
+#include <QToolButton>
 #include <QTableWidget>
 
 #include <QSettings>
@@ -90,6 +91,7 @@ private slots:
     {
         find<QSpinBox>("spinBoxRemoveOldLabels")->setValue(3);
 
+        // "Max missing" counts processing batches, so give each line its own batch.
         for (const char *line : {"a 1 b 2 c 3", "a 4 b 5", "b 6", "b 7", "b 8", "b 9 d +1e2"})
         {
             send(line);
@@ -115,6 +117,20 @@ private slots:
         QCOMPARE(logTable->rowCount(), 6);
         QCOMPARE(logTable->horizontalHeaderItem(1)->text(), QString("a"));
         QCOMPARE(logTable->item(0, 1)->text(), QString("1")); // first value of a new label is kept
+    }
+
+    void logTableKeepsLinesFromOneBatch()
+    {
+        find<QSpinBox>("spinBoxProcessingDelay")->setValue(200); // force both lines into one batch
+        send("x 1 y 2");
+        send("x 3 y 4");
+
+        auto *logTable = find<QTableWidget>("tableWidgetLogTable");
+        QTRY_COMPARE(logTable->rowCount(), 2);
+        QCOMPARE(logTable->item(0, 1)->text(), QString("1"));
+        QCOMPARE(logTable->item(1, 1)->text(), QString("3"));
+        QCOMPARE(logTable->item(1, 2)->text(), QString("4"));
+        find<QSpinBox>("spinBoxProcessingDelay")->setValue(1);
     }
 
     void hexViewShowsRawBytes()
@@ -240,6 +256,53 @@ private slots:
         QVERIFY(pause->isChecked());
 
         find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
+    }
+
+    void commandHistoryMacrosAndRepeat()
+    {
+        find<QPushButton>("pushButtonUDPConnect")->setChecked(false);
+        window->startDemo(1);
+        auto *send = find<QComboBox>("comboBoxSend");
+        QLineEdit *edit = send->lineEdit();
+
+        for (const char *command : {"first", "second", "first"})
+        {
+            send->setCurrentText(command);
+            find<QPushButton>("pushButtonSend")->click();
+        }
+        QCOMPARE(send->count(), 2);
+        QCOMPARE(send->itemText(0), QString("first")); // most recent first, no duplicates
+
+        edit->setText("draft");
+        QTest::keyClick(edit, Qt::Key_Up);
+        QCOMPARE(edit->text(), QString("first"));
+        QTest::keyClick(edit, Qt::Key_Up);
+        QCOMPARE(edit->text(), QString("second"));
+        QTest::keyClick(edit, Qt::Key_Down);
+        QTest::keyClick(edit, Qt::Key_Down);
+        QCOMPARE(edit->text(), QString("draft"));
+
+        // Macro button sends its text.
+        auto *macros = find<MacroBar>("macroBar");
+        macros->setMacros({{"Reset", "AT+RST"}});
+        find<QToolButton>("toolButtonMacro0")->click();
+        QTRY_VERIFY(logText().contains("demo> received: AT+RST"));
+
+        // Periodic send repeats until unchecked.
+        send->setCurrentText("tick");
+        find<QSpinBox>("spinBoxRepeatInterval")->setValue(20);
+        find<QCheckBox>("checkBoxRepeatSend")->setChecked(true);
+        QTRY_VERIFY(logText().count("demo> received: tick") >= 3);
+        find<QCheckBox>("checkBoxRepeatSend")->setChecked(false);
+        QTest::qWait(100); // let echoes already in the receive pipeline reach the log
+        const int sent = logText().count("demo> received: tick");
+        QTest::qWait(150);
+        QCOMPARE(logText().count("demo> received: tick"), sent);
+
+        // Repeat stops by itself when the connection closes.
+        find<QCheckBox>("checkBoxRepeatSend")->setChecked(true);
+        find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
+        QTRY_VERIFY(!find<QCheckBox>("checkBoxRepeatSend")->isChecked());
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot

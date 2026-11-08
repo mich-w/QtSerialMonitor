@@ -134,6 +134,35 @@ void MainWindow::setupGUI()
     // ----------------------- MainWindow ----------------------- //
     {
         connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
+        ui->comboBoxSend->setInsertPolicy(QComboBox::NoInsert); // history is managed by CommandHistory
+        ui->comboBoxSend->lineEdit()->installEventFilter(this);
+        ui->comboBoxSend->lineEdit()->setPlaceholderText("Type a command, Enter to send, Up/Down for history");
+
+        // Periodic send
+        checkBoxRepeatSend = new QCheckBox("Repeat every", this);
+        checkBoxRepeatSend->setObjectName("checkBoxRepeatSend");
+        checkBoxRepeatSend->setToolTip("Send the text periodically until unchecked or the connection closes.");
+        spinBoxRepeatInterval = new QSpinBox(this);
+        spinBoxRepeatInterval->setObjectName("spinBoxRepeatInterval");
+        spinBoxRepeatInterval->setRange(10, 3600000);
+        spinBoxRepeatInterval->setValue(1000);
+        spinBoxRepeatInterval->setSuffix(" ms");
+        ui->gridLayout_3->addWidget(checkBoxRepeatSend, 1, 6);
+        ui->gridLayout_3->addWidget(spinBoxRepeatInterval, 1, 7);
+        connect(checkBoxRepeatSend, &QCheckBox::toggled, this, &MainWindow::setRepeatSend);
+        connect(spinBoxRepeatInterval, QOverload<int>::of(&QSpinBox::valueChanged), &repeatSendTimer, QOverload<int>::of(&QTimer::setInterval));
+        connect(&repeatSendTimer, &QTimer::timeout, this, [this]()
+                {
+                    if (!sendText(repeatSendText))
+                        checkBoxRepeatSend->setChecked(false);
+                });
+
+        // Macros
+        macroBar = new MacroBar(this);
+        macroBar->setObjectName("macroBar");
+        ui->gridLayout_3->addWidget(macroBar, 2, 1, 1, 7);
+        connect(macroBar, &MacroBar::sendRequested, this, [this](const QString &text)
+                { sendText(text); });
         this->setWindowTitle(this->windowTitle() + " " + VERSION);
     }
     // ---------------------------------------------------------- //
@@ -350,7 +379,7 @@ namespace
     "lineEditExternalClockLabel", "lineEditLoadFilePath", "lineEditSaveFileName",
     "lineEditSaveLogPath", "lineEditUDPTargetIP", "pushButtonEnablePlot",
     "pushButtonEnableTableLog", "spinBoxMaxGraphs", "spinBoxMaxLines",
-    "spinBoxMaxRowsLogTable", "spinBoxMaxTimeRange", "spinBoxProcessingDelay",
+    "spinBoxMaxRowsLogTable", "spinBoxMaxTimeRange", "spinBoxProcessingDelay", "spinBoxRepeatInterval",
     "spinBoxRemoveOldLabels", "spinBoxScrollingTimeRange", "spinBoxUDPReceivePort",
     "spinBoxUDPTargetPort", "tabWidgetControlSection", "tabWidgetTableView"};
 
@@ -394,8 +423,10 @@ void MainWindow::settingsLoadAll()
     ui->toolButtonAdvancedGraphMenu->setArrowType(ui->splitterGraphTable->sizes().last() > 0 ? Qt::DownArrow : Qt::UpArrow);
 
     // ----- Send history ----- //
-    ui->comboBoxSend->addItems(settings.value("data/comboBoxSendHistory").toString().split('\n', Qt::SkipEmptyParts));
+    commandHistory.setItems(settings.value("data/comboBoxSendHistory").toString().split('\n', Qt::SkipEmptyParts));
+    ui->comboBoxSend->addItems(commandHistory.items());
     ui->comboBoxSend->lineEdit()->clear();
+    macroBar->load(settings);
 
     // ----- Widgets ----- //
     WidgetSettings::load(settings, this, persistentWidgets);
@@ -424,10 +455,8 @@ void MainWindow::settingsSaveAll()
         settings.remove(key + ".sizes");
     }
 
-    QStringList sendHistory;
-    for (auto i = 0; i < ui->comboBoxSend->count(); ++i)
-        sendHistory.append(ui->comboBoxSend->itemText(i));
-    settings.setValue("data/comboBoxSendHistory", sendHistory.join('\n'));
+    settings.setValue("data/comboBoxSendHistory", commandHistory.items().join('\n'));
+    macroBar->save(settings);
 
     WidgetSettings::save(settings, this, persistentWidgets);
 
@@ -536,13 +565,24 @@ void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, 
         columnOfLabel.insert(table->horizontalHeaderItem(column)->text(), column);
 
     bool resizeFlag = false;
-    const int row = table->rowCount();
-    table->insertRow(row);
-    table->setItem(row, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[0]).toString(parser.searchTimeFormatList[0])));
+    int row = -1;
+    QSet<QString> labelsInRow;
 
     for (auto i = 0; i < count; ++i)
     {
         const QString label = labelTable[i].trimmed();
+
+        // One row per record: a label that is already filled in starts the next row,
+        // so several lines arriving in one batch do not overwrite each other.
+        if (row < 0 || labelsInRow.contains(label))
+        {
+            row = table->rowCount();
+            table->insertRow(row);
+            table->setItem(row, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[i]).toString(parser.searchTimeFormatList[0])));
+            labelsInRow.clear();
+        }
+        labelsInRow.insert(label);
+
         int column = columnOfLabel.value(label, -1);
         if (column < 0)
         {
@@ -582,27 +622,90 @@ void MainWindow::on_printIntroChangelog() // TODO
 
 void MainWindow::on_comboBoxSendReturnPressedSlot()
 {
-    sendMessageLineEdit(ui->tabWidgetControlSection->currentIndex());
+    sendMessageLineEdit();
 }
 
-void MainWindow::sendMessageLineEdit(int mode)
+// Sends to every open connection (serial/demo and UDP). Returns false if nothing is connected.
+bool MainWindow::sendText(const QString &text)
 {
-    if (mode == 0)
-        sendSerial(ui->comboBoxSend->currentText());
-    else if (mode == 1)
-        sendUDPDatagram(ui->comboBoxSend->currentText());
-    else
+    bool sent = false;
+
+    if (serial.isOpen() || demo.isOpen())
     {
-        sendSerial(ui->comboBoxSend->currentText()); // TODO
-        sendUDPDatagram(ui->comboBoxSend->currentText());
+        sendSerial(text);
+        sent = true;
+    }
+    if (networkUDP.isOpen())
+    {
+        sendUDPDatagram(text);
+        sent = true;
     }
 
-    if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
-        addLog("\n >> " + ui->comboBoxSend->currentText(), ui->comboBoxAddTextMode->currentIndex());
+    if (!sent)
+        addLog("App >>\t Not connected - nothing was sent.", true);
+    else if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
+        addLog("\n >> " + text, ui->comboBoxAddTextMode->currentIndex());
 
-    ui->comboBoxSend->setCurrentText("");
-    ui->comboBoxSend->model()->sort(0, Qt::SortOrder::AscendingOrder); // sort alphabetically
+    return sent;
 }
+
+void MainWindow::sendMessageLineEdit()
+{
+    const QString text = ui->comboBoxSend->currentText();
+    sendText(text);
+    addToCommandHistory(text);
+    ui->comboBoxSend->setCurrentText("");
+}
+
+void MainWindow::addToCommandHistory(const QString &text)
+{
+    commandHistory.add(text);
+    const QSignalBlocker blocker(ui->comboBoxSend);
+    ui->comboBoxSend->clear();
+    ui->comboBoxSend->addItems(commandHistory.items()); // most recent first
+    ui->comboBoxSend->setCurrentIndex(-1);
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    // Shell-like Up/Down history in the send box.
+    if (watched == ui->comboBoxSend->lineEdit() && event->type() == QEvent::KeyPress)
+    {
+        auto *keyEvent = static_cast<QKeyEvent *>(event);
+        QLineEdit *edit = ui->comboBoxSend->lineEdit();
+        if (keyEvent->key() == Qt::Key_Up)
+        {
+            edit->setText(commandHistory.older(edit->text()));
+            return true;
+        }
+        if (keyEvent->key() == Qt::Key_Down)
+        {
+            edit->setText(commandHistory.newer(edit->text()));
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::setRepeatSend(bool enabled)
+{
+    if (!enabled)
+    {
+        repeatSendTimer.stop();
+        return;
+    }
+
+    repeatSendText = ui->comboBoxSend->currentText();
+    if (!sendText(repeatSendText)) // not connected - don't start
+    {
+        checkBoxRepeatSend->setChecked(false);
+        return;
+    }
+    addToCommandHistory(repeatSendText);
+    ui->comboBoxSend->setCurrentText(repeatSendText);
+    repeatSendTimer.start(spinBoxRepeatInterval->value());
+}
+
 
 // Auto-scroll X and rescale Y
 void MainWindow::on_chartBeforeReplotSlot()
@@ -1308,10 +1411,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         else if (ui->checkBoxSendKey->isChecked())
         {
-            sendMessageKeyEvent(event);
-
-            if (ui->comboBoxMessagesDisplayMode->currentIndex() == 0)
-                addLog(">>\n\t" + event->text(), ui->comboBoxAddTextMode->currentIndex());
+            if (!event->text().isEmpty())
+                sendText(event->text());
         }
     }
     else if (ui->widgetChart->hasFocus())
@@ -1344,18 +1445,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     }
 }
 
-void MainWindow::sendMessageKeyEvent(QKeyEvent *event)
-{
-    if (ui->tabWidgetControlSection->currentIndex() == 0)
-        sendSerial(event->text());
-    else if (ui->tabWidgetControlSection->currentIndex() == 1)
-        sendUDPDatagram(event->text());
-    else
-    {
-        sendSerial(event->text());
-        sendUDPDatagram(event->text());
-    }
-}
 
 void MainWindow::sendSerial(QString message) // TODO - move to serial - error via signal/slot
 {
@@ -1536,14 +1625,12 @@ void MainWindow::on_pushButtonEnablePlot_toggled(bool checked)
 
 void MainWindow::on_pushButtonSend_clicked()
 {
-    if (ui->comboBoxSend->findText(ui->comboBoxSend->currentText()) < 0)
-        ui->comboBoxSend->addItem(ui->comboBoxSend->currentText()); // add to history (here we have to do it manually)
-
-    on_comboBoxSendReturnPressedSlot();
+    sendMessageLineEdit();
 }
 
 void MainWindow::on_pushButtonClearHistory_clicked()
 {
+    commandHistory.clear();
     ui->comboBoxSend->clear();
 }
 

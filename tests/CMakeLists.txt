@@ -15,6 +15,7 @@ qtsm_add_test(tst_receivepipeline)
 qtsm_add_test(tst_demotransport)
 qtsm_add_test(tst_portidentity)
 qtsm_add_test(tst_channelstats)
+qtsm_add_test(tst_commandhistory)
 
 # Integration test driving the real main window.
 add_executable(tst_mainwindow tst_mainwindow.cpp)

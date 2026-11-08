@@ -11,6 +11,8 @@
 #include "infodialog.h"
 #include "highlighter.h"
 #include "channelstats.h"
+#include "commandhistory.h"
+#include "macrobar.h"
 #include "demotransport.h"
 #include "portidentity.h"
 #include "receivepipeline.h"
@@ -214,8 +216,16 @@ private:
     void clearParsedDataTable();
     QHash<QString, ChannelStats> channelStats;
     void saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText = false, QString text = "");
-    void sendMessageKeyEvent(QKeyEvent *event);
-    void sendMessageLineEdit(int mode);
+    void sendMessageLineEdit();
+    bool sendText(const QString &text);
+    void addToCommandHistory(const QString &text);
+    void setRepeatSend(bool enabled);
+    CommandHistory commandHistory;
+    MacroBar *macroBar = nullptr;
+    QCheckBox *checkBoxRepeatSend = nullptr;
+    QSpinBox *spinBoxRepeatInterval = nullptr;
+    QTimer repeatSendTimer;
+    QString repeatSendText;
     void sendSerial(QString message);
     void sendUDPDatagram(QString message);
     void settingsLoadAll();
@@ -224,6 +234,7 @@ private:
     void setupTable();
 
 protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
     void keyPressEvent(QKeyEvent *event);
 };
 
