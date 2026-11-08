@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     settingsLoadAll();
     on_spinBoxProcessingDelay_valueChanged(ui->spinBoxProcessingDelay->value()); // apply even if unchanged from the .ui default
     setupThemeControls();
+    setupToolBar();
     applyTheme();
 
     infoDialog.setFixedSize(800, 600);
@@ -330,6 +331,87 @@ void MainWindow::setupThemeControls()
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &MainWindow::updateThemeButton);
     updateThemeButton();
+}
+
+void MainWindow::setupToolBar()
+{
+    QToolBar *toolBar = addToolBar("Main");
+    toolBar->setObjectName("mainToolBar");
+    toolBar->setMovable(false);
+    toolBar->setIconSize(QSize(20, 20));
+    toolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+    actionConnect = toolBar->addAction("Connect");
+    actionConnect->setObjectName("actionToolbarConnect");
+    actionConnect->setCheckable(true);
+    actionConnect->setToolTip("Connect to the device selected in the Serial COM tab");
+    connect(actionConnect, &QAction::triggered, this, [this](bool checked)
+            {
+                ui->tabWidgetControlSection->setCurrentIndex(TAB_INDEX::SERIAL_USB);
+                ui->pushButtonSerialConnect->setChecked(checked);
+                updateToolBar(); // connecting may have failed
+            });
+    connect(ui->pushButtonSerialConnect, &QPushButton::toggled, this, &MainWindow::updateToolBar);
+
+    actionDemo = toolBar->addAction("Demo");
+    actionDemo->setObjectName("actionToolbarDemo");
+    actionDemo->setToolTip("Stream simulated sine waves - no hardware needed");
+    connect(actionDemo, &QAction::triggered, this, [this]()
+            { startDemo(demoRate); });
+
+    toolBar->addSeparator();
+
+    actionPause = toolBar->addAction("Pause");
+    actionPause->setObjectName("actionToolbarPause");
+    actionPause->setCheckable(true);
+    actionPause->setToolTip("Freeze the chart while recording continues (Space)");
+    connect(actionPause, &QAction::triggered, pushButtonPauseChart, &QPushButton::setChecked);
+    connect(pushButtonPauseChart, &QPushButton::toggled, this, &MainWindow::updateToolBar);
+
+    actionClear = toolBar->addAction("Clear");
+    actionClear->setObjectName("actionToolbarClear");
+    actionClear->setToolTip("Clear the chart and tables");
+    connect(actionClear, &QAction::triggered, ui->pushButtonClearAll, &QPushButton::click);
+
+    toolBar->addSeparator();
+
+    actionSaveLog = toolBar->addAction("Save log");
+    actionSaveLog->setToolTip("Save the received text to a file");
+    connect(actionSaveLog, &QAction::triggered, ui->actionSave_As, &QAction::trigger);
+
+    actionExportImage = toolBar->addAction("Export chart");
+    actionExportImage->setToolTip("Save the chart as PNG, JPG, BMP or PDF");
+    connect(actionExportImage, &QAction::triggered, this, &MainWindow::on_actionImage_triggered);
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &MainWindow::updateToolBar);
+    updateToolBar();
+}
+
+void MainWindow::updateToolBar()
+{
+    const QColor color = ThemeManager::instance().colors().text;
+    const bool connected = ui->pushButtonSerialConnect->isChecked();
+
+    {
+        const QSignalBlocker blockConnect(actionConnect);
+        actionConnect->setChecked(connected);
+    }
+    actionConnect->setText(connected ? "Disconnect" : "Connect");
+    actionConnect->setIcon(Icons::make(connected ? Icons::Shape::Disconnect : Icons::Shape::Connect, connected ? ThemeManager::instance().colors().accentText : color));
+
+    const bool paused = pushButtonPauseChart->isChecked();
+    {
+        const QSignalBlocker blockPause(actionPause);
+        actionPause->setChecked(paused);
+    }
+    actionPause->setText(paused ? "Resume" : "Pause");
+    actionPause->setIcon(Icons::make(paused ? Icons::Shape::Play : Icons::Shape::Pause, paused ? ThemeManager::instance().colors().accentText : color));
+    pushButtonPauseChart->setIcon(Icons::make(paused ? Icons::Shape::Play : Icons::Shape::Pause, paused ? ThemeManager::instance().colors().accentText : color));
+
+    actionDemo->setIcon(Icons::make(Icons::Shape::Demo, color));
+    actionClear->setIcon(Icons::make(Icons::Shape::Clear, color));
+    actionSaveLog->setIcon(Icons::make(Icons::Shape::Save, color));
+    actionExportImage->setIcon(Icons::make(Icons::Shape::Image, color));
 }
 
 void MainWindow::updateThemeButton()

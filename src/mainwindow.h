@@ -30,6 +30,7 @@
 #include <QList>
 #include <QActionGroup>
 #include <QMainWindow>
+#include <QToolBar>
 #include <QToolButton>
 #include <QMessageBox>
 #include <QMetaType>
@@ -185,6 +186,14 @@ private:
     void applyTheme();
     void setupThemeControls();
     void updateThemeButton();
+    void setupToolBar();
+    void updateToolBar();
+    QAction *actionConnect = nullptr;
+    QAction *actionDemo = nullptr;
+    QAction *actionPause = nullptr;
+    QAction *actionClear = nullptr;
+    QAction *actionSaveLog = nullptr;
+    QAction *actionExportImage = nullptr;
     QActionGroup *themeActions = nullptr;
     QToolButton *themeButton = nullptr;
     void styleGraph(QCPGraph *graph);
