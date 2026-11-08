@@ -11,17 +11,24 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 
 <img src="https://raw.githubusercontent.com/mich-w/QtSerialMonitor/master/docs/_screenshots/Sines3.gif">
 
-**Features:**
-- In/out serial data terminal with command history,
-- UDP network protocol support,
-- Resizable UI widgets,
-- Data plotter with multiple graphs support and basic data filtering - uses [QCustomPlot](https://www.qcustomplot.com/),
-- Printer support, ability to save graph as image,
-- Read/write ".csv", ".txt" data logs,
-- Demo mode - a simulated device streaming sine waves, no hardware needed (`QtSerialMonitor --demo`),
-- many more...
+<p>
+<img src="docs/_screenshots/v2-light.png" width="49%" alt="QtSerialMonitor 2.0, light theme">
+<img src="docs/_screenshots/v2-dark.png" width="49%" alt="QtSerialMonitor 2.0, dark theme">
+</p>
 
-<a href="https://github.com/mich-w/QtSerialMonitor/releases/download/v1.53/QtSerialMonitor_v1.53_win_x64.zip" download>Download QtSerialMonitor_v1.53_win_x64</a> 
+**Features:**
+- Serial and UDP terminal: text, HEX or binary view, command history (Up/Down), macro buttons, periodic send,
+- Live plotter with multiple graphs, pause and history scroll bar, tracer, filtering - uses [QCustomPlot](https://www.qcustomplot.com/),
+- Understands plain `label value` text, CSV, Arduino Serial Plotter (`a:1,b:2`) and [Teleplot](https://github.com/nesnes/teleplot) (`>a:1`) formats,
+- Per-channel statistics: min, max, mean, count and sample rate,
+- Auto-reconnect when a USB device is unplugged and plugged back in,
+- Read/write ".csv", ".txt" data logs; large files load in the background,
+- Light and dark themes (or follow the system),
+- Demo mode - a simulated device streaming sine waves, no hardware needed (`QtSerialMonitor --demo`),
+- Printer support, export chart as PNG, JPG, BMP or PDF,
+- Runs on Windows, Linux and macOS with Qt 6 (or Qt 5.15).
+
+Downloads for Windows and macOS are attached to each [release](https://github.com/mich-w/QtSerialMonitor/releases). See [CHANGELOG.md](CHANGELOG.md) for what changed.
 -
 ---
 
