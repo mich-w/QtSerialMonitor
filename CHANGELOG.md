@@ -5,6 +5,21 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] – towards 2.0.0
 
+## [1.9.0]
+
+### Added
+- Chart pause (button, Space or P) – data keeps being recorded – and a history scroll bar under the chart.
+- Per-channel statistics in the parsed data table: Min, Max, Mean, Count, Rate [Hz]; "Reset statistics" in its context menu.
+- Shell-like command history with Up/Down, most recent first, no duplicates.
+- Macro buttons for frequently sent commands.
+- Periodic send ("Repeat every N ms").
+
+### Changed
+- Sent text goes to every open connection instead of depending on the selected control tab.
+
+### Fixed
+- Log table merged lines from the same processing batch into one row, overwriting values.
+
 ## [1.8.0]
 
 ### Added
