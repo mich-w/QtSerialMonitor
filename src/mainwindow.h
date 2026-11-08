@@ -170,6 +170,13 @@ private:
     QTimer *serialDeviceCheckTimer;
     Serial serial;
     DemoTransport demo;
+    QPushButton *pushButtonPauseChart = nullptr;
+    QScrollBar *scrollBarChartHistory = nullptr;
+    bool chartPaused = false;
+    bool updatingHistoryScrollBar = false;
+    void setChartPaused(bool paused);
+    void scrollChartHistory(int valueMs);
+    void updateHistoryScrollBar();
     QStringList portNamesOld; // serial ports seen at the last device list refresh
     PortIdentity connectedPort; // remembered for auto-reconnect
     QTimer reconnectTimer;

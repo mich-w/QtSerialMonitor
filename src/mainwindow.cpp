@@ -236,8 +236,81 @@ void MainWindow::createChart()
         connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_tracerShowPointValue(QMouseEvent *)));
     }
 
+    // ----- Pause button + history scroll bar under the chart ----- //
+    pushButtonPauseChart = new QPushButton("Pause", this);
+    pushButtonPauseChart->setObjectName("pushButtonPauseChart");
+    pushButtonPauseChart->setCheckable(true);
+    pushButtonPauseChart->setToolTip("Freeze the chart while data keeps being recorded (Space or P on the chart).");
+
+    scrollBarChartHistory = new QScrollBar(Qt::Horizontal, this);
+    scrollBarChartHistory->setObjectName("scrollBarChartHistory");
+    scrollBarChartHistory->setToolTip("Scroll through the recorded history. Moving it pauses the chart.");
+
+    auto *historyRow = new QHBoxLayout;
+    historyRow->addWidget(pushButtonPauseChart);
+    historyRow->addWidget(scrollBarChartHistory, 1);
+    ui->gridLayout_12->addLayout(historyRow, 1, 0);
+
+    connect(pushButtonPauseChart, &QPushButton::toggled, this, &MainWindow::setChartPaused);
+    connect(scrollBarChartHistory, &QScrollBar::valueChanged, this, &MainWindow::scrollChartHistory);
+    connect(ui->widgetChart->xAxis, QOverload<const QCPRange &>::of(&QCPAxis::rangeChanged), this, [this](const QCPRange &)
+            { updateHistoryScrollBar(); });
+
     ui->textBrowserLogs->setHighlightEnabled(false);
     emit on_comboBoxLogFormat_currentIndexChanged(ui->comboBoxLogFormat->currentIndex());
+}
+
+void MainWindow::setChartPaused(bool paused)
+{
+    chartPaused = paused;
+    pushButtonPauseChart->setText(paused ? "Resume" : "Pause");
+
+    if (!paused)
+        ui->widgetChart->replot(); // auto-track jumps back to live data
+}
+
+void MainWindow::scrollChartHistory(int valueMs)
+{
+    if (updatingHistoryScrollBar)
+        return;
+
+    if (!chartPaused)
+        pushButtonPauseChart->setChecked(true);
+
+    const double size = ui->widgetChart->xAxis->range().size();
+    ui->widgetChart->xAxis->setRange(valueMs / 1000.0, valueMs / 1000.0 + size);
+    ui->widgetChart->replot();
+}
+
+// Scroll bar covers all recorded data; its page is the visible time window (milliseconds).
+void MainWindow::updateHistoryScrollBar()
+{
+    QCPRange dataRange;
+    bool haveData = false;
+    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+    {
+        bool found = false;
+        const QCPRange keys = ui->widgetChart->graph(i)->getKeyRange(found);
+        if (!found)
+            continue;
+        dataRange = haveData ? QCPRange(qMin(dataRange.lower, keys.lower), qMax(dataRange.upper, keys.upper)) : keys;
+        haveData = true;
+    }
+
+    const QCPRange view = ui->widgetChart->xAxis->range();
+    updatingHistoryScrollBar = true;
+    if (haveData)
+    {
+        const int minimum = qRound(qMin(dataRange.lower, view.lower) * 1000.0);
+        const int maximum = qRound(qMax(dataRange.upper - view.size(), view.lower) * 1000.0);
+        scrollBarChartHistory->setRange(minimum, qMax(minimum, maximum));
+        scrollBarChartHistory->setPageStep(qMax(1, qRound(view.size() * 1000.0)));
+        scrollBarChartHistory->setSingleStep(qMax(1, qRound(view.size() * 100.0)));
+        scrollBarChartHistory->setValue(qRound(view.lower * 1000.0));
+    }
+    else
+        scrollBarChartHistory->setRange(0, 0);
+    updatingHistoryScrollBar = false;
 }
 
 void MainWindow::setupTable()
@@ -513,7 +586,7 @@ void MainWindow::on_chartBeforeReplotSlot()
         isChartEmpty = true;
     }
 
-    if (ui->checkBoxAutoTrack->isChecked() && ui->widgetChart->graphCount() > 0)
+    if (ui->checkBoxAutoTrack->isChecked() && !chartPaused && ui->widgetChart->graphCount() > 0)
     {
         if (parser.getListTimeStamp().count() > 0)
         {
@@ -1132,7 +1205,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
     }
 
-    ui->widgetChart->replot();
+    if (!chartPaused) // keep recording while paused, just don't move the view
+        ui->widgetChart->replot();
+    updateHistoryScrollBar();
 }
 
 void MainWindow::on_setSelectedLabels(QList<QString> *labels, bool customRules)
@@ -1220,6 +1295,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         else if (event->key() == Qt::Key_Y)
         {
             ui->checkBoxAutoRescaleY->toggle();
+        }
+        else if (event->key() == Qt::Key_Space || event->key() == Qt::Key_P)
+        {
+            pushButtonPauseChart->toggle();
         }
         else if (event->key() == Qt::Key_L)
         {

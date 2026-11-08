@@ -5,6 +5,7 @@
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QSpinBox>
 #include <QTableWidget>
 
@@ -198,6 +199,40 @@ private slots:
 
         find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
         QVERIFY(!find<QPushButton>("pushButtonSerialConnect")->isChecked());
+    }
+
+    void pauseKeepsRecordingAndScrollsHistory()
+    {
+        auto *chart = find<QCustomPlot>("widgetChart");
+        auto *pause = find<QPushButton>("pushButtonPauseChart");
+        auto *history = find<QScrollBar>("scrollBarChartHistory");
+
+        find<QPushButton>("pushButtonUDPConnect")->setChecked(false);
+        find<QSpinBox>("spinBoxScrollingTimeRange")->setValue(1); // view the last 1 s
+        window->startDemo(200);
+        // Record more history than fits in the view.
+        QTRY_VERIFY_WITH_TIMEOUT(chart->graphCount() == 3 && chart->graph(0)->dataCount() > 1
+                                     && chart->graph(0)->dataMainKey(chart->graph(0)->dataCount() - 1) - chart->graph(0)->dataMainKey(0) > 2.0,
+                                 10000);
+
+        pause->setChecked(true);
+        const QCPRange frozen = chart->xAxis->range();
+        const int countAtPause = chart->graph(0)->dataCount();
+        QTest::qWait(300);
+        QVERIFY(chart->graph(0)->dataCount() > countAtPause); // still recording
+        QCOMPARE(chart->xAxis->range().lower, frozen.lower);   // view does not move
+
+        // Scrolling to the oldest data moves the view back.
+        history->setValue(history->minimum());
+        QVERIFY(chart->xAxis->range().lower < frozen.lower);
+
+        // Resume returns to live data and dragging the scroll bar pauses again.
+        pause->setChecked(false);
+        QTRY_VERIFY(chart->xAxis->range().upper >= chart->graph(0)->dataMainKey(chart->graph(0)->dataCount() - 1));
+        history->setValue(history->minimum());
+        QVERIFY(pause->isChecked());
+
+        find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
