@@ -108,7 +108,7 @@ void CodeEditor::highlightCurrentLine()
     {
         QList<QTextEdit::ExtraSelection> extraSelections;
         QTextEdit::ExtraSelection selection;
-        QColor lineColor = QColor(Qt::yellow).lighter(160);
+        const QColor lineColor = currentLineColor;
 
         selection.format.setBackground(lineColor);
         selection.format.setProperty(QTextFormat::FullWidthSelection, true);
@@ -122,6 +122,15 @@ void CodeEditor::highlightCurrentLine()
     }
 }
 
+void CodeEditor::setColors(const QColor &currentLine, const QColor &gutter, const QColor &gutterText)
+{
+    currentLineColor = currentLine;
+    gutterColor = gutter;
+    gutterTextColor = gutterText;
+    lineNumberArea->update();
+    highlightCurrentLine();
+}
+
 void CodeEditor::setHighlightEnabled(bool status)
 {
     isHighlightCurrentLineEnabled = status;
@@ -130,7 +139,7 @@ void CodeEditor::setHighlightEnabled(bool status)
 void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 {
     QPainter painter(lineNumberArea);
-    painter.fillRect(event->rect(), Qt::lightGray);
+    painter.fillRect(event->rect(), gutterColor);
 
     QTextBlock block = firstVisibleBlock();
     int blockNumber = block.blockNumber();
@@ -142,7 +151,7 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
         if (block.isVisible() && bottom >= event->rect().top())
         {
             QString number = QString::number(blockNumber + 1);
-            painter.setPen(Qt::black);
+            painter.setPen(gutterTextColor);
             painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignLeft, number);
         }
 

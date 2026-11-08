@@ -1,5 +1,6 @@
 #include "config.h"
 #include "mainwindow.h"
+#include "theme.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -33,6 +34,8 @@ int main(int argc, char *argv[])
         std::fputs("--demo-rate must be a number between 1 and 1000.\n", stderr);
         return 1;
     }
+
+    ThemeManager::instance().applySaved(); // before any window is shown - no flash of the wrong theme
 
     MainWindow window;
     window.show();

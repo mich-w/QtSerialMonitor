@@ -67,9 +67,11 @@ add_library(qtsm_gui STATIC
     src/codeeditor.cpp       src/codeeditor.h
     src/config.h
     src/highlighter.cpp      src/highlighter.h
+    src/icons.cpp            src/icons.h
     src/infodialog.cpp       src/infodialog.h       src/infodialog.ui
     src/macrobar.cpp         src/macrobar.h
     src/mainwindow.cpp       src/mainwindow.h       src/mainwindow.ui
+    src/theme.cpp            src/theme.h
     src/widgetsettings.cpp   src/widgetsettings.h)
 
 # Generated ui_*.h files include promoted widget headers (e.g. codeeditor.h).

@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     settingsLoadAll();
     on_spinBoxProcessingDelay_valueChanged(ui->spinBoxProcessingDelay->value()); // apply even if unchanged from the .ui default
+    setupThemeControls();
+    applyTheme();
 
     infoDialog.setFixedSize(800, 600);
 
@@ -116,6 +118,8 @@ void MainWindow::createTimers()
     connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(on_updateSerialDeviceList()));
     connect(&fileReader, &FileReader::progress, ui->progressBarLoadFile, &QProgressBar::setValue);
     connect(&fileReader, &FileReader::loaded, this, &MainWindow::handleFileLoaded);
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &MainWindow::applyTheme);
 
     connectTransport(&serial, &serialPipeline);
     connectTransport(&demo, &serialPipeline); // demo stands in for a serial device
@@ -242,7 +246,9 @@ void MainWindow::createChart()
     ui->widgetChart->axisRect()->setupFullAxesBox(true);
     ui->widgetChart->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignBottom | Qt::AlignLeft);
     ui->widgetChart->legend->setVisible(true);
-    ui->widgetChart->legend->setFont(QFont("MS Shell Dlg 2", 8, QFont::Thin, false));
+    QFont legendFont = font();
+    legendFont.setPointSizeF(legendFont.pointSizeF() * 0.9);
+    ui->widgetChart->legend->setFont(legendFont);
     ui->widgetChart->legend->setIconSize(15, 10);
     ui->widgetChart->legend->setSelectableParts(QCPLegend::SelectablePart::spItems); // legend box shall not be selectable, only legend items
     ui->widgetChart->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
@@ -278,7 +284,13 @@ void MainWindow::createChart()
     auto *historyRow = new QHBoxLayout;
     historyRow->addWidget(pushButtonPauseChart);
     historyRow->addWidget(scrollBarChartHistory, 1);
-    ui->gridLayout_12->addLayout(historyRow, 1, 0);
+    // Insert directly under the chart; the chart options panel moves one row down.
+    int row = 0, column = 0, rowSpan = 1, columnSpan = 1;
+    const int panelIndex = ui->gridLayout_12->indexOf(ui->scrollArea);
+    ui->gridLayout_12->getItemPosition(panelIndex, &row, &column, &rowSpan, &columnSpan);
+    ui->gridLayout_12->removeWidget(ui->scrollArea);
+    ui->gridLayout_12->addLayout(historyRow, row, column, 1, columnSpan);
+    ui->gridLayout_12->addWidget(ui->scrollArea, row + 1, column, rowSpan, columnSpan);
 
     connect(pushButtonPauseChart, &QPushButton::toggled, this, &MainWindow::setChartPaused);
     connect(scrollBarChartHistory, &QScrollBar::valueChanged, this, &MainWindow::scrollChartHistory);
@@ -287,6 +299,117 @@ void MainWindow::createChart()
 
     ui->textBrowserLogs->setHighlightEnabled(false);
     emit on_comboBoxLogFormat_currentIndexChanged(ui->comboBoxLogFormat->currentIndex());
+}
+
+void MainWindow::setupThemeControls()
+{
+    // View -> Theme menu, shared with the theme button in the menu bar corner.
+    QMenu *themeMenu = ui->menuView->addMenu("Theme");
+    themeActions = new QActionGroup(this);
+    for (auto mode : {ThemeManager::Mode::System, ThemeManager::Mode::Light, ThemeManager::Mode::Dark})
+    {
+        QAction *action = themeMenu->addAction(ThemeManager::displayName(mode));
+        action->setCheckable(true);
+        action->setData(int(mode));
+        action->setChecked(mode == ThemeManager::instance().mode());
+        themeActions->addAction(action);
+    }
+    connect(themeActions, &QActionGroup::triggered, this, [](QAction *action)
+            {
+                ThemeManager::instance().apply(ThemeManager::Mode(action->data().toInt()));
+                ThemeManager::instance().save();
+            });
+
+    themeButton = new QToolButton(this);
+    themeButton->setObjectName("toolButtonTheme");
+    themeButton->setAutoRaise(true);
+    themeButton->setPopupMode(QToolButton::InstantPopup);
+    themeButton->setMenu(themeMenu);
+    themeButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    ui->menuBar->setCornerWidget(themeButton, Qt::TopRightCorner);
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &MainWindow::updateThemeButton);
+    updateThemeButton();
+}
+
+void MainWindow::updateThemeButton()
+{
+    const auto &theme = ThemeManager::instance();
+    const Icons::Shape shape = theme.mode() == ThemeManager::Mode::System ? Icons::Shape::Auto
+                               : theme.colors().dark                     ? Icons::Shape::Moon
+                                                                         : Icons::Shape::Sun;
+    themeButton->setIcon(Icons::make(shape, theme.colors().text));
+    themeButton->setText(ThemeManager::displayName(theme.mode()));
+    themeButton->setToolTip("Theme: " + ThemeManager::displayName(theme.mode()) + " (click to change)");
+
+    for (QAction *action : themeActions->actions())
+        action->setChecked(ThemeManager::Mode(action->data().toInt()) == theme.mode());
+}
+
+QColor MainWindow::legendTextColor(bool graphVisible) const
+{
+    const auto &colors = ThemeManager::instance().colors();
+    return graphVisible ? colors.text : colors.mutedText;
+}
+
+void MainWindow::styleGraph(QCPGraph *graph)
+{
+    const auto &theme = ThemeManager::instance();
+    QPen pen(theme.seriesColor(graph->property("colorIndex").toInt()), 2.0);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
+    graph->setPen(pen);
+    graph->setScatterStyle(QCPScatterStyle::ssNone);
+    graph->setAntialiased(true);
+
+    QPen selected(theme.colors().text, 2.0, Qt::DashLine);
+    graph->selectionDecorator()->setPen(selected);
+}
+
+void MainWindow::applyTheme()
+{
+    const auto &colors = ThemeManager::instance().colors();
+    QCustomPlot *plot = ui->widgetChart;
+
+    plot->setBackground(colors.chartBackground);
+    plot->axisRect()->setBackground(colors.chartBackground);
+
+    for (QCPAxis *axis : plot->axisRect()->axes())
+    {
+        axis->setBasePen(QPen(colors.chartAxis, 1));
+        axis->setTickPen(QPen(colors.chartAxis, 1));
+        axis->setSubTickPen(QPen(colors.chartAxis, 1));
+        axis->setTickLabelColor(colors.mutedText);
+        axis->setLabelColor(colors.mutedText);
+        axis->grid()->setPen(QPen(colors.chartGrid, 1));
+        axis->grid()->setSubGridVisible(false);
+        axis->grid()->setZeroLinePen(QPen(colors.chartAxis, 1));
+    }
+
+    QColor legendBackground = colors.chartBackground;
+    legendBackground.setAlpha(225);
+    plot->legend->setBrush(legendBackground);
+    plot->legend->setBorderPen(QPen(colors.border));
+    plot->legend->setSelectedBorderPen(QPen(colors.accent));
+    plot->legend->setTextColor(colors.text);
+    plot->legend->setSelectedTextColor(colors.accent);
+
+    for (auto i = 0; i < plot->graphCount(); ++i)
+    {
+        styleGraph(plot->graph(i));
+        if (auto *item = plot->legend->itemWithPlottable(plot->graph(i)))
+            item->setTextColor(legendTextColor(plot->graph(i)->visible()));
+    }
+
+    if (phaseTracer != nullptr)
+    {
+        phaseTracer->setPen(QPen(colors.warning, 1.5));
+        phaseTracer->setBrush(colors.warning);
+    }
+
+    ui->textBrowserLogs->setColors(colors.currentLine, colors.gutter, colors.gutterText);
+    on_highlighLog(ui->lineEditHighlight->text());
+    plot->replot();
 }
 
 void MainWindow::setChartPaused(bool paused)
@@ -818,7 +941,7 @@ void MainWindow::on_showSelectedGraphExclusively()
         if (ui->widgetChart->graph(i)->selected() || ui->widgetChart->legend->item(i)->selected())
         {
             ui->widgetChart->graph(i)->setVisible(true);
-            ui->widgetChart->legend->item(i)->setTextColor(Qt::GlobalColor::black);
+            ui->widgetChart->legend->item(i)->setTextColor(legendTextColor(true));
             ui->widgetChart->replot();
 
             return;
@@ -831,7 +954,7 @@ void MainWindow::on_showAllGraphs()
     for (auto i = 0; i < ui->widgetChart->legend->itemCount(); ++i)
     {
         ui->widgetChart->graph(i)->setVisible(true);
-        ui->widgetChart->legend->item(i)->setTextColor(Qt::GlobalColor::black);
+        ui->widgetChart->legend->item(i)->setTextColor(legendTextColor(true));
     }
 
     ui->widgetChart->replot();
@@ -852,7 +975,7 @@ void MainWindow::on_hideSelectedGraph()
         if (ui->widgetChart->legend->item(i)->selected())
         {
             ui->widgetChart->graph(i)->setVisible(false);
-            ui->widgetChart->legend->item(i)->setTextColor(Qt::GlobalColor::gray);
+            ui->widgetChart->legend->item(i)->setTextColor(legendTextColor(false));
         }
     }
 
@@ -867,7 +990,7 @@ void MainWindow::on_showSelectedGraph()
         if (ui->widgetChart->legend->item(i)->selected())
         {
             ui->widgetChart->graph(i)->setVisible(true);
-            ui->widgetChart->legend->item(i)->setTextColor(Qt::GlobalColor::black);
+            ui->widgetChart->legend->item(i)->setTextColor(legendTextColor(true));
         }
     }
 
@@ -882,7 +1005,7 @@ void MainWindow::on_hideAllGraphs()
         for (auto i = 0; i < ui->widgetChart->legend->itemCount(); ++i)
         {
             ui->widgetChart->graph(i)->setVisible(false);
-            ui->widgetChart->legend->item(i)->setTextColor(Qt::GlobalColor::gray);
+            ui->widgetChart->legend->item(i)->setTextColor(legendTextColor(false));
         }
 
         ui->widgetChart->replot();
@@ -1296,12 +1419,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
 
-            ui->widgetChart->graph()->selectionDecorator()->setPen(QPen(Qt::black, 1.0, Qt::PenStyle::DashLine));
-            ui->widgetChart->graph()->setScatterStyle(QCPScatterStyle((QCPScatterStyle::ScatterShape)(QRandomGenerator::global()->bounded(1, 15)))); // random scatter
-
-            // Golden-angle hue spacing: distinct colours that don't change when more graphs are added.
-            const int hue = (graphColorIndex++ * 137) % 360;
-            ui->widgetChart->graph()->setPen(QPen(QColor::fromHsv(hue, 255, 200)));
+            // Colours come from the theme palette and don't change when more graphs are added.
+            ui->widgetChart->graph()->setProperty("colorIndex", graphColorIndex++);
+            styleGraph(ui->widgetChart->graph());
 
             missingCount.insert(label, 0);
         }
@@ -1537,9 +1657,9 @@ void MainWindow::on_highlighLog(QString searchString)
         QTextCharFormat colorFormat = highlightCursor.charFormat();
 
         colorFormat.setFontLetterSpacing(110);
-        colorFormat.setForeground(Qt::black);
+        colorFormat.setForeground(ThemeManager::instance().colors().text);
         colorFormat.setFontWeight(QFont::Bold);
-        colorFormat.setBackground(Qt::gray);
+        colorFormat.setBackground(ThemeManager::instance().colors().searchHighlight);
 
         while (!highlightCursor.isNull() && !highlightCursor.atEnd())
         {
@@ -1593,8 +1713,8 @@ void MainWindow::createChartTracer()
     else
         this->phaseTracer->setStyle(QCPItemTracer::tsCircle);
 
-    this->phaseTracer->setPen(QPen(Qt::red));
-    this->phaseTracer->setBrush(Qt::red);
+    this->phaseTracer->setPen(QPen(ThemeManager::instance().colors().warning, 1.5));
+    this->phaseTracer->setBrush(ThemeManager::instance().colors().warning);
     this->phaseTracer->setSize(8);
 }
 
@@ -1650,7 +1770,7 @@ void MainWindow::on_lineEditCustomParsingRules_editingFinished()
 void MainWindow::on_spinBoxMaxGraphs_valueChanged(int arg1)
 {
     QPalette paletteRed;
-    paletteRed.setColor(QPalette::Text, Qt::GlobalColor::red);
+    paletteRed.setColor(QPalette::Text, ThemeManager::instance().colors().warning);
 
     if (arg1 > 10)
         ui->spinBoxMaxGraphs->setPalette(paletteRed);
@@ -1690,7 +1810,7 @@ void MainWindow::on_spinBoxProcessingDelay_valueChanged(int arg1)
     udpPipeline.setBatchInterval(newInterval);
 
     QPalette paletteRed;
-    paletteRed.setColor(QPalette::Text, Qt::GlobalColor::red);
+    paletteRed.setColor(QPalette::Text, ThemeManager::instance().colors().warning);
 
     if (newInterval > ui->spinBoxProcessingDelay->minimum())
         ui->spinBoxProcessingDelay->setPalette(paletteRed);
@@ -2462,7 +2582,7 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
     loadFromRAM(0);
 
     QPalette paletteRed;
-    paletteRed.setColor(QPalette::Text, Qt::GlobalColor::red);
+    paletteRed.setColor(QPalette::Text, ThemeManager::instance().colors().warning);
 
     if (index == 0)
     {

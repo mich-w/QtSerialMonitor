@@ -12,6 +12,8 @@
 #include "highlighter.h"
 #include "channelstats.h"
 #include "commandhistory.h"
+#include "icons.h"
+#include "theme.h"
 #include "macrobar.h"
 #include "demotransport.h"
 #include "portidentity.h"
@@ -26,7 +28,9 @@
 #include <QFileDialog>
 #include <QKeyEvent>
 #include <QList>
+#include <QActionGroup>
 #include <QMainWindow>
+#include <QToolButton>
 #include <QMessageBox>
 #include <QMetaType>
 #include <QPaintDevice>
@@ -178,6 +182,13 @@ private:
     bool chartPaused = false;
     bool updatingHistoryScrollBar = false;
     void setChartPaused(bool paused);
+    void applyTheme();
+    void setupThemeControls();
+    void updateThemeButton();
+    QActionGroup *themeActions = nullptr;
+    QToolButton *themeButton = nullptr;
+    void styleGraph(QCPGraph *graph);
+    QColor legendTextColor(bool graphVisible) const;
     void scrollChartHistory(int valueMs);
     void updateHistoryScrollBar();
     QStringList portNamesOld; // serial ports seen at the last device list refresh

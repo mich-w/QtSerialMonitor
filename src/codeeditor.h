@@ -23,6 +23,7 @@ public:
     int lineNumberAreaWidth();
 
     void setHighlightEnabled(bool status);
+    void setColors(const QColor &currentLine, const QColor &gutter, const QColor &gutterText);
 protected:
     void resizeEvent(QResizeEvent *event) override;
 
@@ -34,6 +35,9 @@ private slots:
 private:
     QWidget *lineNumberArea;
     bool isHighlightCurrentLineEnabled = false;
+    QColor currentLineColor = QColor(Qt::yellow).lighter(160);
+    QColor gutterColor = Qt::lightGray;
+    QColor gutterTextColor = Qt::black;
 };
 
 class LineNumberArea : public QWidget

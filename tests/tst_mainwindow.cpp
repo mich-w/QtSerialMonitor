@@ -1,5 +1,6 @@
 // Integration test: drives the real MainWindow headlessly and feeds it data over UDP.
 #include "mainwindow.h"
+#include "theme.h"
 #include <QCheckBox>
 #include <QComboBox>
 #include <QLineEdit>
@@ -303,6 +304,27 @@ private slots:
         find<QCheckBox>("checkBoxRepeatSend")->setChecked(true);
         find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
         QTRY_VERIFY(!find<QCheckBox>("checkBoxRepeatSend")->isChecked());
+    }
+
+    void themeSwitching()
+    {
+        auto &theme = ThemeManager::instance();
+        auto *chart = find<QCustomPlot>("widgetChart");
+
+        theme.apply(ThemeManager::Mode::Dark);
+        QVERIFY(QApplication::palette().color(QPalette::Window).lightness() < 100);
+        QVERIFY(chart->axisRect()->backgroundBrush().color().lightness() < 100);
+        QCOMPARE(find<QToolButton>("toolButtonTheme")->text(), QString("Dark"));
+
+        theme.apply(ThemeManager::Mode::Light);
+        QVERIFY(QApplication::palette().color(QPalette::Window).lightness() > 200);
+        QVERIFY(chart->axisRect()->backgroundBrush().color().lightness() > 200);
+
+        theme.save();
+        QSettings settings(QSettings::IniFormat, QSettings::UserScope, "QtSerialMonitor", "QtSerialMonitor");
+        QCOMPARE(settings.value("GUI_Elements/theme").toString(), QString("light"));
+        settings.remove("GUI_Elements/theme");
+        theme.apply(ThemeManager::Mode::System);
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
