@@ -317,11 +317,10 @@ void MainWindow::setupTable()
 {
     ui->tableWidgetParsedData->clear();
     ui->tableWidgetParsedData->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-    ui->tableWidgetParsedData->setColumnCount(2);
-    ui->tableWidgetParsedData->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
-    ui->tableWidgetParsedData->setHorizontalHeaderItem(1, new QTableWidgetItem("Current Value"));
-    //    ui->tableWidgetParsedData->setHorizontalHeaderItem(2, new QTableWidgetItem("Max"));
-    //    ui->tableWidgetParsedData->setHorizontalHeaderItem(3, new QTableWidgetItem("Min"));
+    const QStringList parsedDataHeaders = {"Name", "Value", "Min", "Max", "Mean", "Count", "Rate [Hz]"};
+    ui->tableWidgetParsedData->setColumnCount(parsedDataHeaders.count());
+    for (auto column = 0; column < parsedDataHeaders.count(); ++column)
+        ui->tableWidgetParsedData->setHorizontalHeaderItem(column, new QTableWidgetItem(parsedDataHeaders[column]));
 
     ui->tableWidgetLogTable->clear();
     ui->tableWidgetLogTable->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
@@ -435,13 +434,15 @@ void MainWindow::settingsSaveAll()
     settings.sync();
 }
 
-void MainWindow::processTable(QStringList labels, QList<double> values)
+void MainWindow::processTable(QStringList labels, QList<double> values, QList<long> timeStamps)
 {
+    enum Column { Name, Value, Min, Max, Mean, Count, Rate, ColumnCount };
+
     // Missing-sample counter for each row is kept in the label item's UserRole.
     auto *table = ui->tableWidgetParsedData;
     QHash<QString, int> rowOfLabel;
     for (auto row = 0; row < table->rowCount(); ++row)
-        rowOfLabel.insert(table->item(row, 0)->text(), row);
+        rowOfLabel.insert(table->item(row, Name)->text(), row);
 
     const auto count = qMin(labels.count(), values.count());
     for (auto i = 0; i < count; ++i)
@@ -451,13 +452,34 @@ void MainWindow::processTable(QStringList labels, QList<double> values)
         {
             row = table->rowCount();
             table->insertRow(row);
-            table->setItem(row, 0, new QTableWidgetItem(labels[i]));
-            table->setItem(row, 1, new QTableWidgetItem());
+            table->setItem(row, Name, new QTableWidgetItem(labels[i]));
+            for (int column = Value; column < ColumnCount; ++column)
+            {
+                auto *item = new QTableWidgetItem();
+                item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                table->setItem(row, column, item);
+            }
             rowOfLabel.insert(labels[i], row);
         }
 
-        table->item(row, 1)->setText(QString::number(values[i]));
-        table->item(row, 0)->setData(Qt::UserRole, 0);
+        ChannelStats &stats = channelStats[labels[i]];
+        stats.add(values[i], i < timeStamps.count() ? timeStamps[i] : 0);
+
+        table->item(row, Value)->setText(QString::number(values[i]));
+        table->item(row, Name)->setData(Qt::UserRole, 0);
+    }
+
+    // Statistics are refreshed once per batch, not per sample.
+    for (auto row = 0; row < table->rowCount(); ++row)
+    {
+        const auto it = channelStats.constFind(table->item(row, Name)->text());
+        if (it == channelStats.constEnd() || it->count == 0)
+            continue;
+        table->item(row, Min)->setText(QString::number(it->min));
+        table->item(row, Max)->setText(QString::number(it->max));
+        table->item(row, Mean)->setText(QString::number(it->mean));
+        table->item(row, Count)->setText(QString::number(it->count));
+        table->item(row, Rate)->setText(it->rateHz() > 0 ? QString::number(it->rateHz(), 'f', 1) : QString());
     }
 
     const int removeThreshold = ui->spinBoxRemoveOldLabels->value();
@@ -465,13 +487,16 @@ void MainWindow::processTable(QStringList labels, QList<double> values)
     {
         for (auto row = table->rowCount() - 1; row >= 0; --row) // backwards - rows may be removed
         {
-            QTableWidgetItem *labelItem = table->item(row, 0);
+            QTableWidgetItem *labelItem = table->item(row, Name);
             if (labels.contains(labelItem->text()))
                 continue;
 
             const int missing = labelItem->data(Qt::UserRole).toInt() + 1;
             if (missing > removeThreshold)
+            {
+                channelStats.remove(labelItem->text());
                 table->removeRow(row);
+            }
             else
                 labelItem->setData(Qt::UserRole, missing);
         }
@@ -482,6 +507,13 @@ void MainWindow::processTable(QStringList labels, QList<double> values)
         table->resizeColumnsToContents();
         table->resizeRowsToContents();
     }
+}
+
+void MainWindow::clearParsedDataTable()
+{
+    ui->tableWidgetParsedData->clearContents();
+    ui->tableWidgetParsedData->setRowCount(0);
+    channelStats.clear();
 }
 
 void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable)
@@ -1073,7 +1105,7 @@ void MainWindow::processIncomingLines(const QString &lines)
     this->processChart(labelList, numericDataList, timeStamps);
     this->processLogWrite(lines, labelList, numericDataList, timeStamps);
     this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), lines);
-    this->processTable(labelList, numericDataList);
+    this->processTable(labelList, numericDataList, timeStamps);
     this->processLogTable(timeStamps, labelList, numericDataList);
 }
 
@@ -1373,7 +1405,7 @@ void MainWindow::loadFromRAM(bool loadText)
         return;
 
     this->processChart(RAMLabels, RAMData, RAMTime);
-    this->processTable(RAMLabels, RAMData);
+    this->processTable(RAMLabels, RAMData, RAMTime);
     this->processLogTable(RAMTime, RAMLabels, RAMData);
 }
 
@@ -1486,8 +1518,7 @@ void MainWindow::on_pushButtonClearAll_clicked()
     parser.clearExternalClock();
     clearGraphs(true);
 
-    ui->tableWidgetParsedData->clearContents();
-    ui->tableWidgetParsedData->setRowCount(0);
+    clearParsedDataTable();
     ui->tableWidgetLogTable->setRowCount(0);
     ui->tableWidgetLogTable->setColumnCount(1);
 
@@ -2000,8 +2031,7 @@ void MainWindow::on_actionAbout_Qt_triggered()
 
 void MainWindow::on_pushButtonClearTable_clicked()
 {
-    ui->tableWidgetParsedData->clearContents();
-    ui->tableWidgetParsedData->setRowCount(0);
+    clearParsedDataTable();
 }
 
 void MainWindow::on_tableWidgetParsedData_customContextMenuRequested(const QPoint &pos)
@@ -2027,11 +2057,11 @@ void MainWindow::on_tableWidgetParsedData_customContextMenuRequested(const QPoin
                             ui->lineEditExternalClockLabel->setText(selected.first()->text());
                     });
 
+    menu->addAction("Reset statistics", this, [this]()
+                    { channelStats.clear(); });
+
     menu->addAction("Clear table contents", this, [this]()
-                    {
-                        ui->tableWidgetParsedData->clearContents();
-                        ui->tableWidgetParsedData->setRowCount(0);
-                    }); // C++ lambda expression
+                    { clearParsedDataTable(); });
 
     menu->popup(ui->tableWidgetParsedData->mapToGlobal(pos));
 }
@@ -2135,7 +2165,7 @@ void MainWindow::handleFileLoaded(const FileReader::Result &result)
 
     parser.clearStorage();
     this->processChart(result.labels, result.values, result.timeStamps);
-    this->processTable(result.labels, result.values);
+    this->processTable(result.labels, result.values, result.timeStamps);
     this->saveToRAM(result.labels, result.values, result.timeStamps);
 
     if (ui->checkBoxAppendLoadedTextToLog->isChecked())

@@ -10,6 +10,7 @@
 #include "serial.h"
 #include "infodialog.h"
 #include "highlighter.h"
+#include "channelstats.h"
 #include "demotransport.h"
 #include "portidentity.h"
 #include "receivepipeline.h"
@@ -209,7 +210,9 @@ private:
     void processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList);
     void processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable);
     void processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);
-    void processTable(QStringList labels, QList<double> values);
+    void processTable(QStringList labels, QList<double> values, QList<long> timeStamps);
+    void clearParsedDataTable();
+    QHash<QString, ChannelStats> channelStats;
     void saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText = false, QString text = "");
     void sendMessageKeyEvent(QKeyEvent *event);
     void sendMessageLineEdit(int mode);

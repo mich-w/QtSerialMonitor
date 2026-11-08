@@ -104,6 +104,13 @@ private slots:
         QCOMPARE(table->item(0, 1)->text(), QString("9"));
         QCOMPARE(table->item(1, 1)->text(), QString("100"));
 
+        // Statistics columns for "b" (values 2, 5, 6, 7, 8, 9)
+        QCOMPARE(table->horizontalHeaderItem(2)->text(), QString("Min"));
+        QCOMPARE(table->item(0, 2)->text(), QString("2"));
+        QCOMPARE(table->item(0, 3)->text(), QString("9"));
+        QCOMPARE(table->item(0, 4)->text(), QString::number(37.0 / 6.0));
+        QCOMPARE(table->item(0, 5)->text(), QString("6"));
+
         auto *logTable = find<QTableWidget>("tableWidgetLogTable");
         QCOMPARE(logTable->rowCount(), 6);
         QCOMPARE(logTable->horizontalHeaderItem(1)->text(), QString("a"));

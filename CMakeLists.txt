@@ -44,6 +44,7 @@ set_target_properties(qcustomplot PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # Core library: parsing, logging, transports - no widget dependencies
 # ---------------------------------------------------------------------------
 add_library(qtsm_core STATIC
+    src/core/channelstats.h
     src/core/demotransport.cpp src/core/demotransport.h
     src/core/filereader.cpp   src/core/filereader.h
     src/core/logger.cpp       src/core/logger.h
