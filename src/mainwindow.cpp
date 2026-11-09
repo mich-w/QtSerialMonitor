@@ -143,6 +143,9 @@ void MainWindow::setupGUI()
     {
         connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
         ui->comboBoxSend->setInsertPolicy(QComboBox::NoInsert); // history is managed by CommandHistory
+        // Key presses arrive at the combo box (its line edit forwards focus to it), so filter both;
+        // otherwise QComboBox's own Up/Down would step through the list in the wrong direction.
+        ui->comboBoxSend->installEventFilter(this);
         ui->comboBoxSend->lineEdit()->installEventFilter(this);
         ui->comboBoxSend->lineEdit()->setPlaceholderText("Type a command, Enter to send, Up/Down for history");
 
@@ -902,7 +905,7 @@ void MainWindow::addToCommandHistory(const QString &text)
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
     // Shell-like Up/Down history in the send box.
-    if (watched == ui->comboBoxSend->lineEdit() && event->type() == QEvent::KeyPress)
+    if ((watched == ui->comboBoxSend || watched == ui->comboBoxSend->lineEdit()) && event->type() == QEvent::KeyPress)
     {
         auto *keyEvent = static_cast<QKeyEvent *>(event);
         QLineEdit *edit = ui->comboBoxSend->lineEdit();

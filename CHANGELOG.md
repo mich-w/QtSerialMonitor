@@ -10,6 +10,9 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Main toolbar: Connect, Pause, Clear, Save log, Export chart.
 - Tools menu with *Demo device*; the demo device is listed among serial devices only while it runs.
 
+### Fixed
+- Up/Down in the send box walked the history in the wrong direction; Up now recalls the most recent command, like a terminal.
+
 ### Changed
 - Refreshed look: new palettes, rounded controls, accent colour, cleaner tabs, tables and scroll bars.
 - Chart follows the theme; series use a curated palette and smooth lines instead of random marker shapes.

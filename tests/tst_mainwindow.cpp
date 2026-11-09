@@ -288,12 +288,20 @@ private slots:
         QCOMPARE(send->count(), 2);
         QCOMPARE(send->itemText(0), QString("first")); // most recent first, no duplicates
 
+        // Keys go to the combo box, as with real keyboard focus (the line edit's focus proxy).
         edit->setText("draft");
+        QTest::keyClick(send, Qt::Key_Up);
+        QCOMPARE(edit->text(), QString("first")); // Up = most recent, like a terminal
+        QTest::keyClick(send, Qt::Key_Up);
+        QCOMPARE(edit->text(), QString("second"));
+        QTest::keyClick(send, Qt::Key_Down);
+        QCOMPARE(edit->text(), QString("first"));
+        QTest::keyClick(send, Qt::Key_Down);
+        QCOMPARE(edit->text(), QString("draft"));
+
+        // Same through the line edit itself.
         QTest::keyClick(edit, Qt::Key_Up);
         QCOMPARE(edit->text(), QString("first"));
-        QTest::keyClick(edit, Qt::Key_Up);
-        QCOMPARE(edit->text(), QString("second"));
-        QTest::keyClick(edit, Qt::Key_Down);
         QTest::keyClick(edit, Qt::Key_Down);
         QCOMPARE(edit->text(), QString("draft"));
 
