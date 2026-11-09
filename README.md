@@ -52,7 +52,7 @@ cmake --build build -j
 ./build/QtSerialMonitor
 ```
 
-Try it without any hardware: `./build/QtSerialMonitor --demo` (optionally `--demo-rate 100` for samples per second), or pick *(Demo) Simulated sine waves* from the device list. Run with `--help` for all options.
+Try it without any hardware: `./build/QtSerialMonitor --demo` (optionally `--demo-rate 100` for samples per second), or use *Tools → Demo device*. Run with `--help` for all options.
 
 Qt 6 is used when available; pass `-DQTSM_QT_MAJOR=5` to build against Qt 5.15. If CMake can't find Qt, point it at your installation with `-DCMAKE_PREFIX_PATH=/path/to/Qt/6.x/gcc_64`.
 

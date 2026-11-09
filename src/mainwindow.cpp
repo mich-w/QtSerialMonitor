@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     settingsLoadAll();
     on_spinBoxProcessingDelay_valueChanged(ui->spinBoxProcessingDelay->value()); // apply even if unchanged from the .ui default
+    setupToolsMenu();
     setupThemeControls();
     setupToolBar();
     applyTheme();
@@ -75,6 +76,8 @@ void MainWindow::stopReconnecting()
 void MainWindow::startDemo(int rateHz)
 {
     demoRate = rateHz;
+    demoListed = true;
+    on_updateSerialDeviceList();
 
     const int index = ui->comboBoxDevices->findData(demoPortId);
     if (index < 0)
@@ -331,6 +334,38 @@ void MainWindow::setupThemeControls()
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &MainWindow::updateThemeButton);
     updateThemeButton();
+
+    // The menu bar lays out its corner widget only once, so make room for the longest label up front.
+    int widest = 0;
+    for (auto mode : {ThemeManager::Mode::System, ThemeManager::Mode::Light, ThemeManager::Mode::Dark})
+    {
+        themeButton->setText(ThemeManager::displayName(mode));
+        widest = qMax(widest, themeButton->sizeHint().width());
+    }
+    themeButton->setMinimumWidth(widest);
+    updateThemeButton();
+}
+
+void MainWindow::setupToolsMenu()
+{
+    QMenu *toolsMenu = new QMenu("Tools", this);
+    toolsMenu->setObjectName("menuTools");
+    ui->menuBar->insertMenu(ui->menuHelp->menuAction(), toolsMenu);
+
+    actionDemoDevice = toolsMenu->addAction("Demo device (simulated sine waves)");
+    actionDemoDevice->setObjectName("actionDemoDevice");
+    actionDemoDevice->setCheckable(true);
+    actionDemoDevice->setToolTip("Stream simulated data without any hardware. Also available as --demo on the command line.");
+    connect(actionDemoDevice, &QAction::triggered, this, [this](bool checked)
+            {
+                if (checked)
+                    startDemo(demoRate);
+                else if (demo.isOpen())
+                    ui->pushButtonSerialConnect->setChecked(false);
+                actionDemoDevice->setChecked(demo.isOpen());
+            });
+    connect(ui->pushButtonSerialConnect, &QPushButton::toggled, this, [this]()
+            { actionDemoDevice->setChecked(demo.isOpen()); });
 }
 
 void MainWindow::setupToolBar()
@@ -352,12 +387,6 @@ void MainWindow::setupToolBar()
                 updateToolBar(); // connecting may have failed
             });
     connect(ui->pushButtonSerialConnect, &QPushButton::toggled, this, &MainWindow::updateToolBar);
-
-    actionDemo = toolBar->addAction("Demo");
-    actionDemo->setObjectName("actionToolbarDemo");
-    actionDemo->setToolTip("Stream simulated sine waves - no hardware needed");
-    connect(actionDemo, &QAction::triggered, this, [this]()
-            { startDemo(demoRate); });
 
     toolBar->addSeparator();
 
@@ -408,7 +437,6 @@ void MainWindow::updateToolBar()
     actionPause->setIcon(Icons::make(paused ? Icons::Shape::Play : Icons::Shape::Pause, paused ? ThemeManager::instance().colors().accentText : color));
     pushButtonPauseChart->setIcon(Icons::make(paused ? Icons::Shape::Play : Icons::Shape::Pause, paused ? ThemeManager::instance().colors().accentText : color));
 
-    actionDemo->setIcon(Icons::make(Icons::Shape::Demo, color));
     actionClear->setIcon(Icons::make(Icons::Shape::Clear, color));
     actionSaveLog->setIcon(Icons::make(Icons::Shape::Save, color));
     actionExportImage->setIcon(Icons::make(Icons::Shape::Image, color));
@@ -1205,39 +1233,33 @@ void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
 void MainWindow::on_updateSerialDeviceList()
 {
     static const QString noDevicesText = "No serial devices detected :(";
-
     static const QString demoText = "(Demo) Simulated sine waves";
 
-    const QList<QSerialPortInfo> devices = serial.getAvailiblePorts();
-    QStringList portNames;
-    for (const auto &item : devices)
-        portNames.append(item.portName());
-    portNames.sort();
+    // Wanted entries as (text, port name); the demo device is listed only while it is in use.
+    QList<QPair<QString, QString>> entries;
+    for (const auto &device : serial.getAvailiblePorts())
+        entries.append({"(" + device.portName() + ") " + device.description(), device.portName()});
+    if (entries.isEmpty())
+        entries.append({noDevicesText, QString()});
+    if (demoListed)
+        entries.append({demoText, demoPortId});
 
-    if (!devices.isEmpty() && (portNames != portNamesOld || ui->comboBoxDevices->count() == 0))
+    bool changed = ui->comboBoxDevices->count() != entries.count();
+    for (auto i = 0; !changed && i < entries.count(); ++i)
+        changed = ui->comboBoxDevices->itemText(i) != entries[i].first || ui->comboBoxDevices->itemData(i).toString() != entries[i].second;
+
+    if (changed)
     {
         const QString previousPort = ui->comboBoxDevices->currentData().toString();
 
         ui->comboBoxDevices->clear();
-        for (const auto &device : devices)
-            ui->comboBoxDevices->addItem("(" + device.portName() + ")" + " " + device.description(), device.portName());
-        ui->comboBoxDevices->addItem(demoText, demoPortId);
+        for (const auto &entry : entries)
+            ui->comboBoxDevices->addItem(entry.first, entry.second);
 
         const int previousIndex = ui->comboBoxDevices->findData(previousPort);
-        if (previousIndex >= 0)
+        if (previousIndex >= 0 && !previousPort.isEmpty())
             ui->comboBoxDevices->setCurrentIndex(previousIndex);
     }
-    else if (devices.isEmpty() && ui->comboBoxDevices->itemText(0) != noDevicesText)
-    {
-        const bool demoSelected = ui->comboBoxDevices->currentData().toString() == demoPortId;
-        ui->comboBoxDevices->clear();
-        ui->comboBoxDevices->addItem(noDevicesText);
-        ui->comboBoxDevices->addItem(demoText, demoPortId);
-        if (demoSelected)
-            ui->comboBoxDevices->setCurrentIndex(1);
-    }
-
-    portNamesOld = portNames;
 
     this->radioButtonTimer->start(RADIO_BUTTON_UPDATE_SERIAL_DEVICES_ON_INTERVAL);
     ui->radioButtonDeviceUpdate->setChecked(true);
@@ -2003,6 +2025,8 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
             demo.stop();
             addLog("App >>\t Demo device stopped.", true);
             ui->pushButtonSerialConnect->setText("Connect");
+            demoListed = false;
+            on_updateSerialDeviceList();
         }
         else if (serial.end())
         {

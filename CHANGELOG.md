@@ -5,6 +5,16 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased] – towards 2.0.0
 
+### Added
+- Light and dark themes, or follow the system setting; theme button in the menu bar and View → Theme.
+- Main toolbar: Connect, Pause, Clear, Save log, Export chart.
+- Tools menu with *Demo device*; the demo device is listed among serial devices only while it runs.
+
+### Changed
+- Refreshed look: new palettes, rounded controls, accent colour, cleaner tabs, tables and scroll bars.
+- Chart follows the theme; series use a curated palette and smooth lines instead of random marker shapes.
+- README: new screenshots and feature list. Releases are built by CI and attached to GitHub releases.
+
 ## [1.9.0]
 
 ### Added

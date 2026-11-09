@@ -189,7 +189,9 @@ private:
     void setupToolBar();
     void updateToolBar();
     QAction *actionConnect = nullptr;
-    QAction *actionDemo = nullptr;
+    QAction *actionDemoDevice = nullptr;
+    bool demoListed = false; // demo device shown in the device list only while used
+    void setupToolsMenu();
     QAction *actionPause = nullptr;
     QAction *actionClear = nullptr;
     QAction *actionSaveLog = nullptr;
@@ -200,7 +202,6 @@ private:
     QColor legendTextColor(bool graphVisible) const;
     void scrollChartHistory(int valueMs);
     void updateHistoryScrollBar();
-    QStringList portNamesOld; // serial ports seen at the last device list refresh
     PortIdentity connectedPort; // remembered for auto-reconnect
     QTimer reconnectTimer;
     bool waitingForReconnect = false;

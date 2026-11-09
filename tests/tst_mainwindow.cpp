@@ -223,6 +223,20 @@ private slots:
 
         find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
         QVERIFY(!find<QPushButton>("pushButtonSerialConnect")->isChecked());
+
+        // Hidden from the device list unless running; Tools -> Demo device starts and stops it.
+        auto *devices = find<QComboBox>("comboBoxDevices");
+        QCOMPARE(devices->findData("demo:"), -1);
+        auto *demoAction = window->findChild<QAction *>("actionDemoDevice");
+        QVERIFY(demoAction);
+        demoAction->trigger();
+        QVERIFY(demoAction->isChecked());
+        QVERIFY(find<QPushButton>("pushButtonSerialConnect")->isChecked());
+        QVERIFY(devices->findData("demo:") >= 0);
+        demoAction->trigger();
+        QVERIFY(!demoAction->isChecked());
+        QVERIFY(!find<QPushButton>("pushButtonSerialConnect")->isChecked());
+        QCOMPARE(devices->findData("demo:"), -1);
     }
 
     void pauseKeepsRecordingAndScrollsHistory()
@@ -319,6 +333,14 @@ private slots:
         theme.apply(ThemeManager::Mode::Light);
         QVERIFY(QApplication::palette().color(QPalette::Window).lightness() > 200);
         QVERIFY(chart->axisRect()->backgroundBrush().color().lightness() > 200);
+
+        // Switching to a longer label must not truncate the corner button ("S...m").
+        theme.apply(ThemeManager::Mode::Dark);
+        theme.apply(ThemeManager::Mode::System);
+        auto *button = find<QToolButton>("toolButtonTheme");
+        QCOMPARE(button->text(), QString("System"));
+        QVERIFY(button->width() >= button->sizeHint().width());
+        theme.apply(ThemeManager::Mode::Light);
 
         theme.save();
         QSettings settings(QSettings::IniFormat, QSettings::UserScope, "QtSerialMonitor", "QtSerialMonitor");
