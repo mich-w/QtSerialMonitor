@@ -204,6 +204,11 @@ private:
     void updateHistoryScrollBar();
     PortIdentity connectedPort; // remembered for auto-reconnect
     QTimer reconnectTimer;
+    QTimer chartRefreshTimer;
+    static constexpr int DefaultChartRefreshRate = 30; // frames per second
+    void requestChartRefresh();
+    void refreshChart();
+    void setChartRefreshRate(int framesPerSecond);
     bool waitingForReconnect = false;
     void handleSerialConnectionLost(const QString &reason);
     void tryReconnect();

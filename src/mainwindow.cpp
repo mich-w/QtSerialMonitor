@@ -131,6 +131,10 @@ void MainWindow::createTimers()
 
     connect(&serial, &Transport::connectionLost, this, &MainWindow::handleSerialConnectionLost, Qt::QueuedConnection);
 
+    chartRefreshTimer.setSingleShot(true);
+    connect(&chartRefreshTimer, &QTimer::timeout, this, &MainWindow::refreshChart);
+    setChartRefreshRate(DefaultChartRefreshRate);
+
     reconnectTimer.setInterval(500);
     connect(&reconnectTimer, &QTimer::timeout, this, &MainWindow::tryReconnect);
     connect(radioButtonTimer, &QTimer::timeout, this, [this]()
@@ -1570,9 +1574,27 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         }
     }
 
+    requestChartRefresh();
+}
+
+// New data only schedules a redraw; the chart is redrawn at most chartRefreshRate times per second
+// instead of after every batch (redrawing was ~75% of the CPU time at 1000 lines/s).
+void MainWindow::requestChartRefresh()
+{
+    if (!chartRefreshTimer.isActive())
+        chartRefreshTimer.start();
+}
+
+void MainWindow::refreshChart()
+{
     if (!chartPaused) // keep recording while paused, just don't move the view
         ui->widgetChart->replot();
     updateHistoryScrollBar();
+}
+
+void MainWindow::setChartRefreshRate(int framesPerSecond)
+{
+    chartRefreshTimer.setInterval(1000 / qBound(1, framesPerSecond, 240));
 }
 
 void MainWindow::on_setSelectedLabels(QList<QString> *labels, bool customRules)
