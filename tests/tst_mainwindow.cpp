@@ -215,6 +215,14 @@ private slots:
         QTRY_COMPARE(graphNames(), (QStringList{"sin1", "sin2", "noisy"}));
         QTRY_VERIFY(find<QCustomPlot>("widgetChart")->graph(0)->dataCount() > 10);
 
+        // Each line is processed exactly once: consecutive samples must differ in time by ~10 ms (100 Hz),
+        // not come in pairs a few ms apart.
+        QCPGraph *sine = find<QCustomPlot>("widgetChart")->graph(0);
+        QTRY_VERIFY(sine->dataCount() > 20);
+        const double span = sine->dataMainKey(sine->dataCount() - 1) - sine->dataMainKey(0);
+        const double perSecond = (sine->dataCount() - 1) / span;
+        QVERIFY2(perSecond < 150, qPrintable(QString("%1 samples/s for a 100 Hz device").arg(perSecond)));
+
         // Sent text is echoed back by the demo device.
         auto *send = find<QComboBox>("comboBoxSend");
         send->setCurrentText("hello demo");

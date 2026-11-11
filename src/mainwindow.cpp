@@ -1399,8 +1399,11 @@ void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<d
 void MainWindow::connectTransport(Transport *transport, ReceivePipeline *pipeline)
 {
     connect(transport, &Transport::dataReceived, pipeline, &ReceivePipeline::append);
-    connect(pipeline, &ReceivePipeline::received, this, &MainWindow::displayIncoming);
-    connect(pipeline, &ReceivePipeline::linesReceived, this, &MainWindow::processIncomingLines);
+
+    // Several transports may share one pipeline (serial + demo) - connect its outputs only once,
+    // otherwise every line is displayed and parsed once per transport.
+    connect(pipeline, &ReceivePipeline::received, this, &MainWindow::displayIncoming, Qt::UniqueConnection);
+    connect(pipeline, &ReceivePipeline::linesReceived, this, &MainWindow::processIncomingLines, Qt::UniqueConnection);
 }
 
 // Everything received since the last batch - shown as it arrives.
