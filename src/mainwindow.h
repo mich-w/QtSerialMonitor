@@ -17,6 +17,7 @@
 #include "macrobar.h"
 #include "demotransport.h"
 #include "portidentity.h"
+#include "portscanner.h"
 #include "receivepipeline.h"
 #include "widgetsettings.h"
 
@@ -204,6 +205,10 @@ private:
     void updateHistoryScrollBar();
     PortIdentity connectedPort; // remembered for auto-reconnect
     QTimer reconnectTimer;
+    PortScanner portScanner;
+    QList<PortIdentity> knownPorts; // result of the last background scan
+    void handlePortScan(const QList<PortIdentity> &ports);
+    void refreshDeviceList();
     QTimer chartRefreshTimer;
     static constexpr int DefaultChartRefreshRate = 30; // frames per second
     void requestChartRefresh();

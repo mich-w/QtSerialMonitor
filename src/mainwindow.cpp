@@ -51,7 +51,7 @@ void MainWindow::handleSerialConnectionLost(const QString &reason)
 
 void MainWindow::tryReconnect()
 {
-    const QString portName = PortIdentity::findMatch(connectedPort, PortIdentity::available());
+    const QString portName = PortIdentity::findMatch(connectedPort, knownPorts);
     if (portName.isEmpty())
         return;
 
@@ -60,7 +60,7 @@ void MainWindow::tryReconnect()
         return;
 
     stopReconnecting();
-    on_updateSerialDeviceList();
+    refreshDeviceList();
     const int index = ui->comboBoxDevices->findData(portName);
     if (index >= 0)
         ui->comboBoxDevices->setCurrentIndex(index);
@@ -77,7 +77,7 @@ void MainWindow::startDemo(int rateHz)
 {
     demoRate = rateHz;
     demoListed = true;
-    on_updateSerialDeviceList();
+    refreshDeviceList();
 
     const int index = ui->comboBoxDevices->findData(demoPortId);
     if (index < 0)
@@ -136,7 +136,8 @@ void MainWindow::createTimers()
     setChartRefreshRate(DefaultChartRefreshRate);
 
     reconnectTimer.setInterval(500);
-    connect(&reconnectTimer, &QTimer::timeout, this, &MainWindow::tryReconnect);
+    connect(&reconnectTimer, &QTimer::timeout, &portScanner, &PortScanner::scan); // result -> handlePortScan -> tryReconnect
+    connect(&portScanner, &PortScanner::scanned, this, &MainWindow::handlePortScan);
     connect(radioButtonTimer, &QTimer::timeout, this, [this]()
             { ui->radioButtonDeviceUpdate->setChecked(false); });
 }
@@ -1237,15 +1238,33 @@ void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
     }
 }
 
+// Starts a background scan; handlePortScan() updates the list when it finishes.
 void MainWindow::on_updateSerialDeviceList()
+{
+    portScanner.scan();
+}
+
+void MainWindow::handlePortScan(const QList<PortIdentity> &ports)
+{
+    knownPorts = ports;
+    refreshDeviceList();
+
+    this->radioButtonTimer->start(RADIO_BUTTON_UPDATE_SERIAL_DEVICES_ON_INTERVAL);
+    ui->radioButtonDeviceUpdate->setChecked(true);
+
+    if (waitingForReconnect)
+        tryReconnect();
+}
+
+void MainWindow::refreshDeviceList()
 {
     static const QString noDevicesText = "No serial devices detected :(";
     static const QString demoText = "(Demo) Simulated sine waves";
 
     // Wanted entries as (text, port name); the demo device is listed only while it is in use.
     QList<QPair<QString, QString>> entries;
-    for (const auto &device : serial.getAvailiblePorts())
-        entries.append({"(" + device.portName() + ") " + device.description(), device.portName()});
+    for (const auto &device : knownPorts)
+        entries.append({"(" + device.portName + ") " + device.description, device.portName});
     if (entries.isEmpty())
         entries.append({noDevicesText, QString()});
     if (demoListed)
@@ -1267,9 +1286,6 @@ void MainWindow::on_updateSerialDeviceList()
         if (previousIndex >= 0 && !previousPort.isEmpty())
             ui->comboBoxDevices->setCurrentIndex(previousIndex);
     }
-
-    this->radioButtonTimer->start(RADIO_BUTTON_UPDATE_SERIAL_DEVICES_ON_INTERVAL);
-    ui->radioButtonDeviceUpdate->setChecked(true);
 }
 
 void MainWindow::on_pushButtonRefresh_clicked()
@@ -2054,7 +2070,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
             addLog("App >>\t Demo device stopped.", true);
             ui->pushButtonSerialConnect->setText("Connect");
             demoListed = false;
-            on_updateSerialDeviceList();
+            refreshDeviceList();
         }
         else if (serial.end())
         {

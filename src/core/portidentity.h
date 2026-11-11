@@ -2,6 +2,7 @@
 #define PORTIDENTITY_H
 
 #include <QList>
+#include <QMetaType>
 #include <QSerialPortInfo>
 #include <QString>
 
@@ -22,5 +23,7 @@ struct PortIdentity
     // Preference: same USB serial number > same VID:PID (+description) > same port name.
     static QString findMatch(const PortIdentity &wanted, const QList<PortIdentity> &candidates);
 };
+
+Q_DECLARE_METATYPE(PortIdentity)
 
 #endif // PORTIDENTITY_H

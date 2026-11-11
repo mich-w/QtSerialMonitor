@@ -14,6 +14,7 @@ qtsm_add_test(tst_utf8decoder)
 qtsm_add_test(tst_receivepipeline)
 qtsm_add_test(tst_demotransport)
 qtsm_add_test(tst_portidentity)
+qtsm_add_test(tst_portscanner)
 qtsm_add_test(tst_channelstats)
 qtsm_add_test(tst_commandhistory)
 
