@@ -742,10 +742,13 @@ void MainWindow::settingsSaveAll()
     settings.sync();
 }
 
+namespace
+{
+    enum ParsedDataColumn { Name, Value, Min, Max, Mean, Count, Rate, ColumnCount };
+}
+
 void MainWindow::processTable(QStringList labels, QList<double> values, QList<long> timeStamps)
 {
-    enum Column { Name, Value, Min, Max, Mean, Count, Rate, ColumnCount };
-
     // Missing-sample counter for each row is kept in the label item's UserRole.
     auto *table = ui->tableWidgetParsedData;
     QHash<QString, int> rowOfLabel;
@@ -768,26 +771,11 @@ void MainWindow::processTable(QStringList labels, QList<double> values, QList<lo
                 table->setItem(row, column, item);
             }
             rowOfLabel.insert(labels[i], row);
+            parsedDataRowsChanged = true;
         }
 
-        ChannelStats &stats = channelStats[labels[i]];
-        stats.add(values[i], i < timeStamps.count() ? timeStamps[i] : 0);
-
-        table->item(row, Value)->setText(QString::number(values[i]));
+        channelStats[labels[i]].add(values[i], i < timeStamps.count() ? timeStamps[i] : 0);
         table->item(row, Name)->setData(Qt::UserRole, 0);
-    }
-
-    // Statistics are refreshed once per batch, not per sample.
-    for (auto row = 0; row < table->rowCount(); ++row)
-    {
-        const auto it = channelStats.constFind(table->item(row, Name)->text());
-        if (it == channelStats.constEnd() || it->count == 0)
-            continue;
-        table->item(row, Min)->setText(QString::number(it->min));
-        table->item(row, Max)->setText(QString::number(it->max));
-        table->item(row, Mean)->setText(QString::number(it->mean));
-        table->item(row, Count)->setText(QString::number(it->count));
-        table->item(row, Rate)->setText(it->rateHz() > 0 ? QString::number(it->rateHz(), 'f', 1) : QString());
     }
 
     const int removeThreshold = ui->spinBoxRemoveOldLabels->value();
@@ -804,16 +792,44 @@ void MainWindow::processTable(QStringList labels, QList<double> values, QList<lo
             {
                 channelStats.remove(labelItem->text());
                 table->removeRow(row);
+                parsedDataRowsChanged = true;
             }
             else
                 labelItem->setData(Qt::UserRole, missing);
         }
     }
 
-    if (ui->checkBoxTableAutoResize->isChecked())
+    // Cell texts and column widths are updated on the refresh tick, not per batch
+    // (setting every cell and resizing per batch was ~15% of the GUI thread at 1000 lines/s).
+    parsedDataDirty = true;
+    requestChartRefresh();
+}
+
+void MainWindow::refreshParsedDataTable()
+{
+    parsedDataDirty = false;
+    auto *table = ui->tableWidgetParsedData;
+
+    for (auto row = 0; row < table->rowCount(); ++row)
+    {
+        const auto it = channelStats.constFind(table->item(row, Name)->text());
+        if (it == channelStats.constEnd() || it->count == 0)
+            continue;
+        table->item(row, Value)->setText(QString::number(it->last));
+        table->item(row, Min)->setText(QString::number(it->min));
+        table->item(row, Max)->setText(QString::number(it->max));
+        table->item(row, Mean)->setText(QString::number(it->mean));
+        table->item(row, Count)->setText(QString::number(it->count));
+        table->item(row, Rate)->setText(it->rateHz() > 0 ? QString::number(it->rateHz(), 'f', 1) : QString());
+    }
+
+    // Resize when rows change, otherwise at most once per second (values change width slowly).
+    if (ui->checkBoxTableAutoResize->isChecked() && (parsedDataRowsChanged || !parsedDataResizeClock.isValid() || parsedDataResizeClock.elapsed() > 1000))
     {
         table->resizeColumnsToContents();
         table->resizeRowsToContents();
+        parsedDataResizeClock.start();
+        parsedDataRowsChanged = false;
     }
 }
 
@@ -1592,6 +1608,9 @@ void MainWindow::requestChartRefresh()
 
 void MainWindow::refreshChart()
 {
+    if (parsedDataDirty)
+        refreshParsedDataTable();
+
     if (logTableScrollPending && ui->tableWidgetLogTable->isVisible())
     {
         logTableScrollPending = false;

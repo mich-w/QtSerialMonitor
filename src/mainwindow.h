@@ -249,6 +249,10 @@ private:
     void processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);
     void processTable(QStringList labels, QList<double> values, QList<long> timeStamps);
     void clearParsedDataTable();
+    void refreshParsedDataTable();
+    bool parsedDataDirty = false;
+    bool parsedDataRowsChanged = false;
+    QElapsedTimer parsedDataResizeClock;
     QHash<QString, ChannelStats> channelStats;
     void saveToRAM(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, bool saveText = false, QString text = "");
     void sendMessageLineEdit();

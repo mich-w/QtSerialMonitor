@@ -108,8 +108,8 @@ private slots:
 
         auto *table = find<QTableWidget>("tableWidgetParsedData");
         QTRY_COMPARE(table->rowCount(), 2);
-        QCOMPARE(table->item(0, 1)->text(), QString("9"));
-        QCOMPARE(table->item(1, 1)->text(), QString("100"));
+        QTRY_COMPARE(table->item(0, 1)->text(), QString("9")); // cells refresh on the chart tick
+        QTRY_COMPARE(table->item(1, 1)->text(), QString("100"));
 
         // Statistics columns for "b" (values 2, 5, 6, 7, 8, 9)
         QCOMPARE(table->horizontalHeaderItem(2)->text(), QString("Min"));
