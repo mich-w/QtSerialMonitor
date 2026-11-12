@@ -14,6 +14,17 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Every received line was displayed, plotted and logged twice, because the serial port and the demo device share a receive pipeline and its outputs were connected once per transport.
 - Up/Down in the send box walked the history in the wrong direction; Up now recalls the most recent command, like a terminal.
 
+- Settings window (Tools → Settings…, Ctrl+,): theme, chart refresh rate (30/60 fps) and line rendering (Smooth/Fast).
+
+### Performance
+Measured with the demo device at 1000 lines/s (headless, Qt 6): the app used to keep up with ~200 lines/s
+at full CPU; it now processes ~650 lines/s with smooth lines and ~950 lines/s at 38% CPU with fast lines.
+- The chart is redrawn at a fixed rate (30 or 60 fps) instead of after every batch of data.
+- Serial ports are enumerated on a background thread (~14 ms per scan used to freeze the UI twice a second).
+- The log table uses a lightweight model; auto-scroll happens once per refresh and only while visible.
+- The statistics table is updated once per refresh instead of per batch.
+- Optional fast line rendering makes a chart redraw ~12× cheaper.
+
 ### Changed
 - Refreshed look: new palettes, rounded controls, accent colour, cleaner tabs, tables and scroll bars.
 - Chart follows the theme; series use a curated palette and smooth lines instead of random marker shapes.
