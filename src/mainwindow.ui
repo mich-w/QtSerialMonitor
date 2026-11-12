@@ -1471,7 +1471,7 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item row="0" column="0" colspan="11">
-                    <widget class="QTableWidget" name="tableWidgetLogTable">
+                    <widget class="QTableView" name="tableWidgetLogTable">
                      <property name="enabled">
                       <bool>true</bool>
                      </property>

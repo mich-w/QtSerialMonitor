@@ -592,11 +592,16 @@ void MainWindow::setupTable()
     for (auto column = 0; column < parsedDataHeaders.count(); ++column)
         ui->tableWidgetParsedData->setHorizontalHeaderItem(column, new QTableWidgetItem(parsedDataHeaders[column]));
 
-    ui->tableWidgetLogTable->clear();
+    ui->tableWidgetLogTable->setModel(&logTableModel);
     ui->tableWidgetLogTable->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-    ui->tableWidgetLogTable->setColumnCount(1);
-    ui->tableWidgetLogTable->setHorizontalHeaderItem(0, new QTableWidgetItem("Time:"));
     ui->tableWidgetLogTable->setSortingEnabled(true);
+    ui->tableWidgetLogTable->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed); // no per-row size measuring
+    ui->tableWidgetLogTable->verticalHeader()->setDefaultSectionSize(ui->tableWidgetLogTable->fontMetrics().height() + 6);
+    connect(&logTableModel, &LogTableModel::columnsAdded, this, [this]()
+            {
+                if (ui->checkBoxAutoSizeColumnsLogTable->isChecked())
+                    ui->tableWidgetLogTable->resizeColumnsToContents();
+            });
 }
 
 namespace
@@ -791,65 +796,16 @@ void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, 
     if (ui->pushButtonEnableTableLog->isChecked()) // checked == logging disabled
         return;
 
-    const auto count = qMin(labelTable.count(), qMin(timeTable.count(), valueTable.count()));
-    if (count == 0)
-        return;
+    logTableModel.setMaxRows(ui->spinBoxMaxRowsLogTable->value());
+    logTableModel.append(timeTable, labelTable, valueTable);
 
-    auto *table = ui->tableWidgetLogTable;
-
-    // Inserting while sorting is enabled reorders rows mid-insert and scatters values.
-    const bool sortingWasEnabled = table->isSortingEnabled();
-    table->setSortingEnabled(false);
-
-    QHash<QString, int> columnOfLabel;
-    for (auto column = 1; column < table->columnCount(); ++column)
-        columnOfLabel.insert(table->horizontalHeaderItem(column)->text(), column);
-
-    bool resizeFlag = false;
-    int row = -1;
-    QSet<QString> labelsInRow;
-
-    for (auto i = 0; i < count; ++i)
-    {
-        const QString label = labelTable[i].trimmed();
-
-        // One row per record: a label that is already filled in starts the next row,
-        // so several lines arriving in one batch do not overwrite each other.
-        if (row < 0 || labelsInRow.contains(label))
-        {
-            row = table->rowCount();
-            table->insertRow(row);
-            table->setItem(row, 0, new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(timeTable[i]).toString(parser.searchTimeFormatList[0])));
-            labelsInRow.clear();
-        }
-        labelsInRow.insert(label);
-
-        int column = columnOfLabel.value(label, -1);
-        if (column < 0)
-        {
-            column = table->columnCount();
-            table->insertColumn(column);
-            table->setHorizontalHeaderItem(column, new QTableWidgetItem(label));
-            columnOfLabel.insert(label, column);
-            resizeFlag = true;
-        }
-
-        table->setItem(row, column, new QTableWidgetItem(QString::number(valueTable[i])));
-    }
-
-    if (ui->spinBoxMaxRowsLogTable->value() > 0)
-    {
-        while (table->rowCount() > ui->spinBoxMaxRowsLogTable->value())
-            table->removeRow(0);
-    }
-
-    table->setSortingEnabled(sortingWasEnabled);
-
+    // scrollToBottom() re-lays out the whole view (85% of processing time when done per batch),
+    // so it happens at most once per chart refresh and only while the table is visible.
     if (ui->checkBoxAutoScrollLogTable->isChecked())
-        table->scrollToBottom();
-
-    if (ui->checkBoxAutoSizeColumnsLogTable->isChecked() && resizeFlag)
-        table->resizeColumnsToContents();
+    {
+        logTableScrollPending = true;
+        requestChartRefresh();
+    }
 }
 
 void MainWindow::on_printIntroChangelog() // TODO
@@ -1603,6 +1559,12 @@ void MainWindow::requestChartRefresh()
 
 void MainWindow::refreshChart()
 {
+    if (logTableScrollPending && ui->tableWidgetLogTable->isVisible())
+    {
+        logTableScrollPending = false;
+        ui->tableWidgetLogTable->scrollToBottom();
+    }
+
     if (!chartPaused) // keep recording while paused, just don't move the view
         ui->widgetChart->replot();
     updateHistoryScrollBar();
@@ -1876,8 +1838,7 @@ void MainWindow::on_pushButtonClearAll_clicked()
     clearGraphs(true);
 
     clearParsedDataTable();
-    ui->tableWidgetLogTable->setRowCount(0);
-    ui->tableWidgetLogTable->setColumnCount(1);
+    logTableModel.clear();
 
     if (ui->checkBoxRAMClearChart->isChecked())
         parser.clearStorage();
@@ -2750,8 +2711,7 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
 
 void MainWindow::on_pushButtonClearLogTable_clicked()
 {
-    ui->tableWidgetLogTable->setRowCount(0);
-    ui->tableWidgetLogTable->setColumnCount(1);
+    logTableModel.clear();
 }
 
 void MainWindow::on_checkBoxScrollLogEnableSorting_toggled(bool checked)

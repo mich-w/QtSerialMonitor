@@ -41,6 +41,10 @@ class TestMainWindow : public QObject
 
     QString logText() { return find<QPlainTextEdit>("textBrowserLogs")->toPlainText(); }
 
+    QAbstractItemModel *logTable() { return find<QTableView>("tableWidgetLogTable")->model(); }
+    QString logCell(int row, int column) { return logTable()->index(row, column).data().toString(); }
+    QString logHeader(int column) { return logTable()->headerData(column, Qt::Horizontal).toString(); }
+
     QStringList graphNames()
     {
         QStringList names;
@@ -114,10 +118,9 @@ private slots:
         QCOMPARE(table->item(0, 4)->text(), QString::number(37.0 / 6.0));
         QCOMPARE(table->item(0, 5)->text(), QString("6"));
 
-        auto *logTable = find<QTableWidget>("tableWidgetLogTable");
-        QCOMPARE(logTable->rowCount(), 6);
-        QCOMPARE(logTable->horizontalHeaderItem(1)->text(), QString("a"));
-        QCOMPARE(logTable->item(0, 1)->text(), QString("1")); // first value of a new label is kept
+        QCOMPARE(logTable()->rowCount(), 6);
+        QCOMPARE(logHeader(1), QString("a"));
+        QCOMPARE(logCell(0, 1), QString("1")); // first value of a new label is kept
     }
 
     void logTableKeepsLinesFromOneBatch()
@@ -126,11 +129,10 @@ private slots:
         send("x 1 y 2");
         send("x 3 y 4");
 
-        auto *logTable = find<QTableWidget>("tableWidgetLogTable");
-        QTRY_COMPARE(logTable->rowCount(), 2);
-        QCOMPARE(logTable->item(0, 1)->text(), QString("1"));
-        QCOMPARE(logTable->item(1, 1)->text(), QString("3"));
-        QCOMPARE(logTable->item(1, 2)->text(), QString("4"));
+        QTRY_COMPARE(logTable()->rowCount(), 2);
+        QCOMPARE(logCell(0, 1), QString("1"));
+        QCOMPARE(logCell(1, 1), QString("3"));
+        QCOMPARE(logCell(1, 2), QString("4"));
         find<QSpinBox>("spinBoxProcessingDelay")->setValue(1);
     }
 

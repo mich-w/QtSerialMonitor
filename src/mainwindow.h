@@ -12,6 +12,7 @@
 #include "highlighter.h"
 #include "channelstats.h"
 #include "commandhistory.h"
+#include "logtablemodel.h"
 #include "icons.h"
 #include "theme.h"
 #include "macrobar.h"
@@ -252,6 +253,8 @@ private:
     void addToCommandHistory(const QString &text);
     void setRepeatSend(bool enabled);
     CommandHistory commandHistory;
+    LogTableModel logTableModel;
+    bool logTableScrollPending = false;
     MacroBar *macroBar = nullptr;
     QCheckBox *checkBoxRepeatSend = nullptr;
     QSpinBox *spinBoxRepeatInterval = nullptr;
