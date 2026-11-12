@@ -133,7 +133,7 @@ void MainWindow::createTimers()
 
     chartRefreshTimer.setSingleShot(true);
     connect(&chartRefreshTimer, &QTimer::timeout, this, &MainWindow::refreshChart);
-    setChartRefreshRate(DefaultChartRefreshRate);
+    setChartRefreshRate(preferences.chartRefreshRate);
 
     reconnectTimer.setInterval(500);
     connect(&reconnectTimer, &QTimer::timeout, &portScanner, &PortScanner::scan); // result -> handlePortScan -> tryReconnect
@@ -360,6 +360,13 @@ void MainWindow::setupToolsMenu()
     toolsMenu->setObjectName("menuTools");
     ui->menuBar->insertMenu(ui->menuHelp->menuAction(), toolsMenu);
 
+    QAction *settingsAction = toolsMenu->addAction("Settings...");
+    settingsAction->setObjectName("actionSettings");
+    settingsAction->setShortcut(QKeySequence::Preferences);
+    settingsAction->setMenuRole(QAction::PreferencesRole); // macOS: application menu
+    connect(settingsAction, &QAction::triggered, this, &MainWindow::openSettings);
+    toolsMenu->addSeparator();
+
     actionDemoDevice = toolsMenu->addAction("Demo device (simulated sine waves)");
     actionDemoDevice->setObjectName("actionDemoDevice");
     actionDemoDevice->setCheckable(true);
@@ -374,6 +381,31 @@ void MainWindow::setupToolsMenu()
             });
     connect(ui->pushButtonSerialConnect, &QPushButton::toggled, this, [this]()
             { actionDemoDevice->setChecked(demo.isOpen()); });
+}
+
+void MainWindow::openSettings()
+{
+    SettingsDialog dialog(preferences, this);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+
+    applyPreferences(dialog.preferences());
+    if (dialog.themeMode() != ThemeManager::instance().mode())
+    {
+        ThemeManager::instance().apply(dialog.themeMode());
+        ThemeManager::instance().save();
+    }
+}
+
+void MainWindow::applyPreferences(const AppPreferences &newPreferences)
+{
+    preferences = newPreferences;
+    preferences.save();
+
+    setChartRefreshRate(preferences.chartRefreshRate);
+    for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+        styleGraph(ui->widgetChart->graph(i));
+    ui->widgetChart->replot();
 }
 
 void MainWindow::setupToolBar()
@@ -473,12 +505,13 @@ QColor MainWindow::legendTextColor(bool graphVisible) const
 void MainWindow::styleGraph(QCPGraph *graph)
 {
     const auto &theme = ThemeManager::instance();
-    QPen pen(theme.seriesColor(graph->property("colorIndex").toInt()), 2.0);
+    const bool fast = preferences.lineQuality == AppPreferences::LineQuality::Fast;
+    QPen pen(theme.seriesColor(graph->property("colorIndex").toInt()), fast ? 1.0 : 2.0);
     pen.setCapStyle(Qt::RoundCap);
-    pen.setJoinStyle(Qt::RoundJoin);
+    pen.setJoinStyle(fast ? Qt::BevelJoin : Qt::RoundJoin);
     graph->setPen(pen);
     graph->setScatterStyle(QCPScatterStyle::ssNone);
-    graph->setAntialiased(true);
+    graph->setAntialiased(!fast);
 
     QPen selected(theme.colors().text, 2.0, Qt::DashLine);
     graph->selectionDecorator()->setPen(selected);

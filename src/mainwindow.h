@@ -14,6 +14,7 @@
 #include "commandhistory.h"
 #include "logtablemodel.h"
 #include "icons.h"
+#include "settingsdialog.h"
 #include "theme.h"
 #include "macrobar.h"
 #include "demotransport.h"
@@ -60,6 +61,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     void startDemo(int rateHz = DemoTransport::DefaultRateHz); // select the simulated device and connect
+    void applyPreferences(const AppPreferences &newPreferences); // apply and save
     ~MainWindow();
 public slots:
     void on_setSelectedLabels(QList<QString> *labels, bool customRules = true);
@@ -211,7 +213,8 @@ private:
     void handlePortScan(const QList<PortIdentity> &ports);
     void refreshDeviceList();
     QTimer chartRefreshTimer;
-    static constexpr int DefaultChartRefreshRate = 30; // frames per second
+    AppPreferences preferences = AppPreferences::load();
+    void openSettings();
     void requestChartRefresh();
     void refreshChart();
     void setChartRefreshRate(int framesPerSecond);

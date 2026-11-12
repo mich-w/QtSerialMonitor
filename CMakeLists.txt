@@ -73,6 +73,7 @@ add_library(qtsm_gui STATIC
     src/infodialog.cpp       src/infodialog.h       src/infodialog.ui
     src/macrobar.cpp         src/macrobar.h
     src/mainwindow.cpp       src/mainwindow.h       src/mainwindow.ui
+    src/settingsdialog.cpp   src/settingsdialog.h
     src/theme.cpp            src/theme.h
     src/widgetsettings.cpp   src/widgetsettings.h)
 

@@ -367,6 +367,27 @@ private slots:
         theme.apply(ThemeManager::Mode::System);
     }
 
+    void performanceSettings()
+    {
+        send("p 1 q 2");
+        QTRY_COMPARE(graphNames().count(), 2);
+        QCPGraph *graph = find<QCustomPlot>("widgetChart")->graph(0);
+        QVERIFY(graph->antialiased());
+
+        AppPreferences fast;
+        fast.chartRefreshRate = 60;
+        fast.lineQuality = AppPreferences::LineQuality::Fast;
+        window->applyPreferences(fast);
+        QVERIFY(!graph->antialiased());
+        QCOMPARE(graph->pen().widthF(), 1.0);
+        QCOMPARE(AppPreferences::load().chartRefreshRate, 60);
+        QVERIFY(AppPreferences::load().lineQuality == AppPreferences::LineQuality::Fast);
+
+        window->applyPreferences(AppPreferences()); // back to defaults
+        QVERIFY(graph->antialiased());
+        QCOMPARE(AppPreferences::load().chartRefreshRate, 30);
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");
