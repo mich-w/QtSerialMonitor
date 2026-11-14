@@ -15,6 +15,7 @@ bool DemoTransport::start(int requestedRateHz)
 {
     rateHz = qBound(1, requestedRateHz, 1000);
     clock.start();
+    samplesSent = 0;
     sampleTimer.start(1000 / rateHz);
     return true;
 }
@@ -76,10 +77,21 @@ void DemoTransport::setOrientationOutput(bool enabled)
     withOrientation = enabled;
 }
 
+// Sends every sample that is due by the clock, like a real device that keeps transmitting
+// while the app is busy - so the demo rate stays exact even if timer ticks are delayed.
 void DemoTransport::emitSample()
 {
-    // Use the real elapsed time so timer jitter does not distort the waves.
-    const double seconds = clock.elapsed() / 1000.0;
-    const double noise = (QRandomGenerator::global()->generateDouble() - 0.5) * 0.1;
-    emit dataReceived(sampleLine(seconds, noise, withOrientation), false);
+    const qint64 due = clock.elapsed() * rateHz / 1000 + 1;
+    if (due - samplesSent > MaxCatchUp)
+        samplesSent = due - MaxCatchUp; // after a long stall, skip ahead instead of flooding
+
+    QByteArray chunk;
+    for (; samplesSent < due; ++samplesSent)
+    {
+        const double seconds = double(samplesSent) / rateHz; // sample time, not arrival time
+        const double noise = (QRandomGenerator::global()->generateDouble() - 0.5) * 0.1;
+        chunk += sampleLine(seconds, noise, withOrientation);
+    }
+    if (!chunk.isEmpty())
+        emit dataReceived(chunk, false);
 }

@@ -49,7 +49,31 @@ private slots:
         demo.stop();
         QVERIFY(!demo.isOpen());
 
-        QVERIFY2(spy.count() >= 15 && spy.count() <= 40, qPrintable(QString::number(spy.count())));
+        int lines = 0;
+        for (const auto &args : spy)
+            lines += args.at(0).toByteArray().count('\n');
+        QVERIFY2(lines >= 25 && lines <= 36, qPrintable(QString::number(lines))); // 300 ms at 100 Hz
+    }
+
+    void keepsRateWhenTicksAreDelayed()
+    {
+        DemoTransport demo;
+        QSignalSpy spy(&demo, &Transport::dataReceived);
+        demo.start(1000);
+
+        // Block the event loop like a busy GUI thread: no timer ticks for 200 ms.
+        QElapsedTimer busy;
+        busy.start();
+        while (busy.elapsed() < 200)
+        {
+        }
+        QTest::qWait(50);
+        demo.stop();
+
+        int lines = 0;
+        for (const auto &args : spy)
+            lines += args.at(0).toByteArray().count('\n');
+        QVERIFY2(lines >= 200 && lines <= 300, qPrintable(QString::number(lines))); // ~250 ms at 1 kHz
     }
 
     void echoesSentText()

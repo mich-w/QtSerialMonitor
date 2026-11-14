@@ -38,6 +38,8 @@ private:
     QElapsedTimer clock;
     int rateHz = DefaultRateHz;
     bool withOrientation = false;
+    qint64 samplesSent = 0;
+    static constexpr qint64 MaxCatchUp = 2000; // samples
 };
 
 #endif // DEMOTRANSPORT_H
