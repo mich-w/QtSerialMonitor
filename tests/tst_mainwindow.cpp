@@ -529,6 +529,24 @@ private slots:
 #endif
     }
 
+    void autoLogWritesToLogFolder()
+    {
+        QTemporaryDir logs;
+        find<QPushButton>("pushButtonUDPConnect")->setChecked(false);
+        find<QLineEdit>("lineEditSaveLogPath")->setText(logs.filePath("my logs"));
+        find<QCheckBox>("checkBoxAutoLogging")->setChecked(true);
+
+        window->startDemo(100);
+        QTest::qWait(300);
+        find<QPushButton>("pushButtonSerialConnect")->setChecked(false); // closes the log file
+        find<QCheckBox>("checkBoxAutoLogging")->setChecked(false);
+
+        const QStringList files = QDir(logs.filePath("my logs")).entryList(QDir::Files);
+        QCOMPARE(files.count(), 1);
+        QVERIFY2(files[0].contains("_Log."), qPrintable(files[0])); // date-stamped name
+        QVERIFY(QFileInfo(logs.filePath("my logs/" + files[0])).size() > 100);
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");

@@ -268,6 +268,7 @@ private:
     void setupOrientationView();
     void setupTextViewOptions();
     void setupControlSection();
+    void setupLoggingTabs();
     void setupChartOptions();
     QFrame *makeOptionsPopup(QToolButton *button, const QString &objectName);
     QHBoxLayout *chartBarLayout = nullptr; // Pause, history scroll bar and chart actions

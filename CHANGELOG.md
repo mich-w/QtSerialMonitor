@@ -18,6 +18,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Settings window (Tools → Settings…, Ctrl+,): theme, chart refresh rate (30/60 fps) and line rendering (Smooth/Fast).
 - 3D orientation view (View → Change visualisation → 3D Orientation, Ctrl+9): a board rotated by the latest roll / pitch / yaw values, with configurable labels and degrees or radians. While it is shown, the demo device also streams roll / pitch / yaw. Drag to rotate the camera, mouse wheel to zoom, double-click to reset.
 
+- The "File storage" tab is split into "Logging" (with a full-width log folder field, Browse, Default and Open folder - auto-logging writes there) and "Load file".
 - Chart: the three rows of options under the chart are merged into the Pause row (Auto-scroll, time window, Clear plot, Parser data) and an Options popup, giving the chart more height.
 - Text view: the crowded, horizontally scrolling options area is replaced by one row (Pause text, Auto-scroll, Newest, Clear, highlight field) and an Options popup with the remaining settings, grouped and labelled.
 

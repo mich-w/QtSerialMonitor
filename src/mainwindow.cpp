@@ -420,6 +420,106 @@ void MainWindow::setupTextViewOptions()
     ui->verticalLayout_2->insertWidget(index, bar);
 }
 
+// The old "File storage" tab mixed loading files and writing logs in a cramped, scrolling layout.
+// It becomes two tabs: "Logging" (with a full-width log folder) and "Load file".
+void MainWindow::setupLoggingTabs()
+{
+    QWidget *loggingPage = ui->tabLogs;
+    QTabWidget *tabs = ui->tabWidgetControlSection;
+
+    // ----- Logging ----- //
+    ui->pushButtonLogging->setToolTip("Write received data to a file in the log folder");
+    ui->checkBoxAutoLogging->setText("Auto-log");
+    ui->checkBoxAutoLogging->setToolTip("Start a new, date-stamped log file in the log folder every time you connect");
+    ui->checkBoxSimplifyLog->setText("Simplify whitespace");
+    ui->checkBoxTruncateFileOnSave->setText("Overwrite existing file");
+    ui->lineEditSaveLogPath->setPlaceholderText("Folder for log files");
+    ui->lineEditSaveLogPath->setToolTip("Log files - including automatic ones - are written to this folder");
+    ui->lineEditSaveLogPath->setMinimumWidth(220);
+    ui->pushButtonLogPath->setText("Browse...");
+    ui->pushButtonLogPath->setMaximumWidth(QWIDGETSIZE_MAX); // the .ui sized it for "..."
+    ui->pushButtonSetDefaultLogPath->setText("Default");
+    ui->pushButtonSetDefaultLogPath->setToolTip(defaultLogPath());
+    ui->pushButtonAddDateTime->setText("Add date/time");
+    ui->lineEditSaveFileName->setPlaceholderText("Log file name");
+    ui->checkBoxAppendDate->hide(); // was never used by the code
+
+    auto *openFolder = new QPushButton("Open folder", loggingPage);
+    openFolder->setObjectName("pushButtonOpenLogFolder");
+    connect(openFolder, &QPushButton::clicked, this, [this]()
+            {
+                QDir().mkpath(ui->lineEditSaveLogPath->text());
+                QDesktopServices::openUrl(QUrl::fromLocalFile(ui->lineEditSaveLogPath->text()));
+            });
+
+    auto *logging = new QGridLayout;
+    logging->addWidget(ui->pushButtonLogging, 0, 0);
+    logging->addWidget(ui->checkBoxAutoLogging, 0, 1);
+    auto *formatRow = new QHBoxLayout;
+    formatRow->addWidget(new QLabel("Format:", loggingPage));
+    formatRow->addWidget(ui->comboBoxLogFormat);
+    formatRow->addWidget(new QLabel("Text:", loggingPage));
+    formatRow->addWidget(ui->comboBoxLoggingMode);
+    formatRow->addWidget(ui->checkBoxSimplifyLog);
+    formatRow->addWidget(ui->checkBoxTruncateFileOnSave);
+    formatRow->addStretch(1);
+    logging->addLayout(formatRow, 0, 2, 1, 4);
+
+    logging->addWidget(new QLabel("Log folder:", loggingPage), 1, 0, Qt::AlignRight);
+    auto *folderRow = new QHBoxLayout;
+    folderRow->addWidget(ui->lineEditSaveLogPath, 1);
+    folderRow->addWidget(ui->pushButtonLogPath);
+    folderRow->addWidget(ui->pushButtonSetDefaultLogPath);
+    folderRow->addWidget(openFolder);
+    folderRow->addSpacing(12);
+    folderRow->addWidget(new QLabel("File name:", loggingPage));
+    folderRow->addWidget(ui->lineEditSaveFileName);
+    folderRow->addWidget(ui->pushButtonAddDateTime);
+    logging->addLayout(folderRow, 1, 1, 1, 5);
+    logging->setColumnStretch(5, 1);
+
+    // ----- Load file (new tab) ----- //
+    auto *loadPage = new QWidget(tabs);
+    loadPage->setObjectName("tabLoadFile");
+    ui->lineEditLoadFilePath->setPlaceholderText("Log file to load (.csv or .txt)");
+    ui->pushButtonLoadPath->setText("Browse...");
+    ui->pushButtonLoadPath->setMaximumWidth(QWIDGETSIZE_MAX);
+    ui->checkBoxAppendLoadedTextToLog->setText("Show text");
+    ui->checkBoxAppendLoadedTextToLog->setToolTip("Also print the file's text in the text view");
+    ui->lineEditFileInfo->setPlaceholderText("File info");
+
+    auto *loading = new QGridLayout(loadPage);
+    loading->addWidget(new QLabel("File:", loadPage), 0, 0, Qt::AlignRight);
+    auto *fileRow = new QHBoxLayout;
+    fileRow->addWidget(ui->lineEditLoadFilePath, 1);
+    fileRow->addWidget(ui->pushButtonLoadPath);
+    fileRow->addWidget(ui->pushButtonLoadFile);
+    fileRow->addWidget(ui->progressBarLoadFile);
+    loading->addLayout(fileRow, 0, 1);
+    loading->addWidget(new QLabel("Time range:", loadPage), 1, 0, Qt::AlignRight);
+    auto *rangeRow = new QHBoxLayout;
+    rangeRow->addWidget(ui->timeEditMinParsingTime);
+    rangeRow->addWidget(new QLabel("to", loadPage));
+    rangeRow->addWidget(ui->timeEditMaxParsingTime);
+    rangeRow->addWidget(ui->checkBoxAppendLoadedTextToLog);
+    rangeRow->addSpacing(12);
+    rangeRow->addWidget(ui->lineEditFileInfo, 1);
+    loading->addLayout(rangeRow, 1, 1);
+
+    // Replace the old layout (its labels and scroll area are no longer needed).
+    for (QWidget *old : {static_cast<QWidget *>(ui->scrollArea_2), static_cast<QWidget *>(ui->line), static_cast<QWidget *>(ui->label_11),
+                         static_cast<QWidget *>(ui->label_13), static_cast<QWidget *>(ui->label_14), static_cast<QWidget *>(ui->label_15),
+                         static_cast<QWidget *>(ui->label_18), static_cast<QWidget *>(ui->label_19), static_cast<QWidget *>(ui->label_21),
+                         static_cast<QWidget *>(ui->label_22)})
+        old->hide();
+    delete loggingPage->layout();
+    loggingPage->setLayout(logging);
+
+    const int loggingIndex = tabs->indexOf(loggingPage);
+    tabs->setTabText(loggingIndex, "Logging");
+    tabs->insertTab(loggingIndex + 1, loadPage, "Load file");
+}
+
 // The connection area at the bottom: no title (the tabs say what it is), tighter margins and
 // normal-height buttons, so more height goes to the text view and the chart.
 void MainWindow::setupControlSection()
@@ -450,6 +550,7 @@ void MainWindow::setupControlSection()
 
 void MainWindow::setupGUI()
 {
+    setupLoggingTabs();
     setupControlSection();
     setupOrientationView();
     setupTextViewOptions();
