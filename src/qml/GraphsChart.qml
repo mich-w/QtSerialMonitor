@@ -69,11 +69,12 @@ Rectangle {
     function yPos(value) { return plot.y + plot.height - (value - yMin) / (yMax - yMin) * plot.height }
 
     // ----- Labels, formatted like QCustomPlot ----- //
-    function timeLabel(seconds) { // hh:mm:ss:zzz
-        const ms = Math.round(seconds * 1000)
+    function timeLabel(seconds) { // hh:mm:ss:zzz, '-' prefix for negative times
+        const sign = seconds < -0.0005 ? "-" : ""
+        const ms = Math.round(Math.abs(seconds) * 1000)
         const pad = (n, w) => String(n).padStart(w, "0")
-        return pad(Math.floor(ms / 3600000) % 24, 2) + ":" + pad(Math.floor(ms / 60000) % 60, 2) + ":"
-               + pad(Math.floor(ms / 1000) % 60, 2) + ":" + pad(((ms % 1000) + 1000) % 1000, 3)
+        return sign + pad(Math.floor(ms / 3600000) % 24, 2) + ":" + pad(Math.floor(ms / 60000) % 60, 2) + ":"
+               + pad(Math.floor(ms / 1000) % 60, 2) + ":" + pad(ms % 1000, 3)
     }
     function valueLabel(value) { // locale decimal point, no trailing zeros
         const decimals = Math.max(0, Math.ceil(-Math.log10(yStep) - 1e-9) + (yStep / Math.pow(10, Math.floor(Math.log10(yStep))) === 2.5 ? 1 : 0))
@@ -122,7 +123,7 @@ Rectangle {
         marginLeft: yLabelMetrics.width + root.tickLength + 8
         marginBottom: xLabelMetrics.height + 6
         marginTop: 8
-        marginRight: xLabelMetrics.width / 2 + 4 // last time label may extend past the plot
+        marginRight: 8 // narrow like QCustomPlot; edge labels are nudged inside below
 
         theme: GraphsTheme {
             backgroundVisible: false
@@ -178,7 +179,8 @@ Rectangle {
         model: root.xTicks
         delegate: Text {
             required property real modelData
-            x: Math.round(root.xPos(modelData) - width / 2)
+            // Centred under the tick, but kept inside the chart at both edges.
+            x: Math.round(Math.max(2, Math.min(root.width - width - 2, root.xPos(modelData) - width / 2)))
             y: Math.round(root.plot.y + root.plot.height) + 4
             text: root.timeLabel(modelData)
             color: root.mutedTextColor
