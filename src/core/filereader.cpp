@@ -115,7 +115,7 @@ QList<QTime> FileReader::getFileTimeRange(QFile *file)
 
     if (!file->open(QIODevice::ReadOnly))
     {
-        qDebug() << "Get file time range - invalid file ?";
+        qWarning() << "Unable to read" << file->fileName();
         return timeRange;
     }
 

@@ -50,11 +50,7 @@ void Serial::readString()
 
 bool Serial::setReadMode(int mode)
 {
-    //    ui->comboBoxSerialReadMode->addItem("canReadLine | readLine");
-    //    ui->comboBoxSerialReadMode->addItem("canReadLine | readAll");
-    //    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readLine");
-    //    ui->comboBoxSerialReadMode->addItem("bytesAvailable | readAll");
-
+    // Order matches the "Read mode" combo box in the UI.
     switch (mode)
     {
     case 0:
@@ -153,7 +149,6 @@ QString Serial::getSerialInfo()
         break;
     }
 
-    // outputString.append("DTR: " + QSerialPort::DataTerminalReadySignal);
 
     return outputString;
 }

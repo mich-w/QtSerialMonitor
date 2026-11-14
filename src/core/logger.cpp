@@ -31,7 +31,7 @@ bool Logger::openFile(QString fileName, bool trunc)
     logFile = new QFile(fileName);
     if (!logFile->open(QFile::ReadWrite))
     {
-        qDebug() << "Unable to open log file" << fileName << logFile->errorString();
+        qWarning() << "Unable to open log file" << fileName << logFile->errorString();
         delete logFile;
         logFile = nullptr;
         return false;
@@ -62,7 +62,7 @@ bool Logger::beginLog(QString path, bool autoLogging, QString fileName, bool tru
 
     if (!QDir().mkpath(path))
     {
-        qDebug() << "Invalid log dir" << path;
+        qWarning() << "Invalid log directory" << path;
         return false;
     }
 

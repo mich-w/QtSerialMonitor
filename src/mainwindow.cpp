@@ -95,8 +95,6 @@ void MainWindow::startDemo(int rateHz)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    // if (ui->pushButtonSerialConnect->isChecked() || ui->pushButtonUDPConnect->isChecked())
-
     if (serial.isOpen() || networkUDP.isOpen() || demo.isOpen())
     {
         QMessageBox::StandardButton resBtn = QMessageBox::question(this, "About to exit...", tr("Connection open. Are you sure ? \n"),
@@ -110,7 +108,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::on_aboutToQuitSlot()
 {
-    qDebug() << "on_aboutToQuitSlot";
     settingsSaveAll();
 }
 
@@ -430,7 +427,6 @@ void MainWindow::setupGUI()
 
 void MainWindow::createChart()
 {
-    // ui->widgetChart->setOpenGl(false);
     ui->splitterReceivedData->setSizes(QList<int>({200, 400})); // default
     ui->widgetChart->setInteractions(QCP::iRangeZoom |
                                      QCP::iRangeDrag |
@@ -465,7 +461,6 @@ void MainWindow::createChart()
     connect(ui->widgetChart, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_chartContextMenuRequest(QPoint)));
     connect(ui->widgetChart, SIGNAL(beforeReplot()), this, SLOT(on_chartBeforeReplotSlot()));
 
-    //  ui->widgetChart->setNotAntialiasedElements(QCP::aeAll);
 
     if (ui->checkBoxEnableTracer->isChecked())
     {
@@ -1048,13 +1043,11 @@ void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, 
     }
 }
 
-void MainWindow::on_printIntroChangelog() // TODO
+void MainWindow::on_printIntroChangelog()
 {
     ui->pushButtonTextLogToggle->setChecked(false);
     ui->textBrowserLogs->appendPlainText(INTRO_TEXT);
     ui->textBrowserLogs->appendPlainText("\n" CHANGELOG_TEXT);
-
-    //    ui->textBrowserLogs->horizontalScrollBar()->setValue(0);
 }
 
 void MainWindow::on_comboBoxSendReturnPressedSlot()
@@ -1211,7 +1204,7 @@ void MainWindow::on_chartContextMenuRequest(QPoint pos) // right click on chart
             if (ui->widgetChart->legend->item(i)->selectTest(pos, false) >= 0)
             {
                 ui->widgetChart->legend->item(i)->setSelected(true);
-                menu->addAction("Show excusively", this, SLOT(on_showSelectedGraphExclusively()));
+                menu->addAction("Show exclusively", this, SLOT(on_showSelectedGraphExclusively()));
 
                 if (ui->widgetChart->graph(i)->visible())
                     menu->addAction("Hide graph", this, SLOT(on_hideSelectedGraph()));
@@ -1226,7 +1219,7 @@ void MainWindow::on_chartContextMenuRequest(QPoint pos) // right click on chart
         {
             if (ui->widgetChart->legend->item(i)->selected())
             {
-                menu->addAction("Show excusively", this, SLOT(on_showSelectedGraphExclusively()));
+                menu->addAction("Show exclusively", this, SLOT(on_showSelectedGraphExclusively()));
 
                 if (ui->widgetChart->graph(i)->visible())
                     menu->addAction("Hide graph", this, SLOT(on_hideSelectedGraph()));
@@ -1421,7 +1414,6 @@ void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
         distance += event->pos().x() - lastPos;
         lastPos = event->pos().x();
 
-        //    qDebug() << "distance: " + QString::number(distance);
 
         if (abs(distance) > 200)
         {
@@ -1486,7 +1478,6 @@ void MainWindow::refreshDeviceList()
 
 void MainWindow::on_pushButtonRefresh_clicked()
 {
-    qDebug() << "Refreshing serial device list...";
     this->addLog("App >>\t Searching for COM ports...", true);
     this->on_updateSerialDeviceList();
 }
@@ -1664,7 +1655,6 @@ void MainWindow::processIncomingLines(const QString &lines)
 
 void MainWindow::clearGraphData(bool replot)
 {
-    qDebug() << "clear graph data!";
     for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
     {
         ui->widgetChart->graph(i)->data().data()->clear();
@@ -1708,7 +1698,6 @@ void MainWindow::sendUDPDatagram(QString message)
         networkUDP.write(message, QHostAddress(ui->lineEditUDPTargetIP->text()), ui->spinBoxUDPTargetPort->value());
     }
 
-    // addLog("UDP >>\t" + message);
 }
 
 void MainWindow::processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList)
@@ -1762,7 +1751,7 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
         {
             if (labelList[j] == graph->name()) // If label matches the graphs name - we can start add points to it
             {
-                if (timeStampsList[j] > 0) // if == 0 then we assume that no external clock was parsed propely
+                if (timeStampsList[j] > 0) // 0 = no external clock value was parsed yet
                     graph->addData(timeStampsList[j] / 1000.0, numericDataList[j]);
 
                 // no break - slower but if we keep checking for duplicates, we can add multiple points at once
@@ -1824,7 +1813,6 @@ void MainWindow::setChartRefreshRate(int framesPerSecond)
 
 void MainWindow::on_setSelectedLabels(QList<QString> *labels, bool customRules)
 {
-    qDebug() << "on_setSelectedLabels";
 
     if (!customRules)
     {
@@ -1880,10 +1868,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     if (ui->textBrowserLogs->hasFocus())
     {
-        if (event->key() == Qt::Key_Alt)
+        if (event->key() == Qt::Key_Alt) // Alt jumps to the newest line
         {
-            qDebug() << "Scrolling to buttom !" + QString::number(event->key());
-
             ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
         }
         else if (ui->checkBoxSendKey->isChecked())
@@ -1923,7 +1909,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 }
 
 
-void MainWindow::sendSerial(QString message) // TODO - move to serial - error via signal/slot
+void MainWindow::sendSerial(QString message)
 {
     if (ui->comboBoxLineEnding->currentIndex() == 1)
     {
@@ -2163,7 +2149,7 @@ void MainWindow::on_checkBoxAutoTrack_toggled(bool checked)
 
 void MainWindow::on_spinBoxProcessingDelay_valueChanged(int arg1)
 {
-    int newInterval = qMax(1, arg1); // Never 0 ! Couses CPU run like crazy !
+    int newInterval = qMax(1, arg1);
 
     serialPipeline.setBatchInterval(newInterval);
     udpPipeline.setBatchInterval(newInterval);
@@ -2291,7 +2277,7 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
         else
         {
             ui->pushButtonSerialConnect->setChecked(true);
-            addLog("App >>\t ERROR: Unable to close cennection !", true);
+            addLog("App >>\t Error - unable to close the connection!", true);
         }
 
         if (!ui->pushButtonSerialConnect->isChecked() && !ui->pushButtonUDPConnect->isChecked())
@@ -2303,7 +2289,6 @@ void MainWindow::on_pushButtonSerialConnect_toggled(bool checked)
 
 void MainWindow::on_actionSave_As_triggered()
 {
-    qDebug() << "Click save file !";
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save Log"), "", tr("(*.txt);;All Files (*)"));
 
     if (fileName.isEmpty())
@@ -2643,7 +2628,6 @@ void MainWindow::on_pushButtonSetSelectedToGraph_clicked()
             tableLabels.append(ui->tableWidgetParsedData->item(i, 0)->text());
     }
 
-    // clearGraphs(true);
 
     if (ui->spinBoxMaxGraphs->value() < tableLabels.count())
         ui->spinBoxMaxGraphs->setValue(tableLabels.count());
@@ -2701,7 +2685,7 @@ void MainWindow::on_pushButtonLoadPath_clicked()
 
     if (!file.exists())
     {
-        ui->lineEditFileInfo->setText("File doesnt exist !");
+        ui->lineEditFileInfo->setText("File doesn't exist");
         return;
     }
 
@@ -2826,7 +2810,6 @@ void MainWindow::on_pushButtonSaveParserMemory_clicked()
 
 void MainWindow::on_actionInfo_triggered()
 {
-    // infoDialog.setModal(true);
     infoDialog.show();
 }
 
@@ -2905,7 +2888,6 @@ void MainWindow::on_comboBoxLogFormat_currentIndexChanged(int index)
 {
     ui->comboBoxLoggingMode->setEnabled((bool)index);
     ui->checkBoxSimplifyLog->setEnabled((bool)index);
-    // ui->pushButtonLoadFile->setEnabled((bool)index);
 
     if (ui->comboBoxLogFormat->currentText().contains("txt"))
         ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("csv", "txt"));
@@ -3059,7 +3041,7 @@ void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &/*arg1*/)
 
     if (!file.exists())
     {
-        ui->lineEditFileInfo->setText("File doesnt exist !");
+        ui->lineEditFileInfo->setText("File doesn't exist");
         return;
     }
 
@@ -3101,31 +3083,6 @@ void MainWindow::on_actionImage_triggered()
 
     addLog(saved ? "App >>\t Graph saved to " + filename : "App >>\t Error - unable to save graph to " + filename, true);
 }
-
-//void MainWindow::on_actionto_csv_triggered()
-//{
-
-//    //    QStringList labelList = parser.getLabelStorage();
-
-//    //    QStringList columnNames = labelList;
-//    //    QList<QList<double>> columnsData;
-
-//    //    QList<double> numericDataList = parser.getDataStorage();
-
-//    //    columnNames.removeDuplicates();
-
-//    //    for (auto i = 0; i < columnNames.count(); ++i)
-//    //    {
-//    //        columnsData.append(*new QList<double>);
-
-//    //        while (labelList.contains(columnNames[i]))
-//    //        {
-//    //            columnsData[columnsData.count() - 1].append(numericDataList.takeAt(labelList.indexOf(columnNames[i])));
-//    //            labelList.removeAt(labelList.indexOf(columnNames[i]));
-//    //        }
-//    //    }
-
-//}
 
 void MainWindow::on_actionto_csv_triggered()
 {

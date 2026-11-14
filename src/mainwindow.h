@@ -63,7 +63,7 @@ public:
 public slots:
     void on_setSelectedLabels(QList<QString> *labels, bool customRules = true);
     void handleFileLoaded(const FileReader::Result &result);
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
 private slots:
     void on_aboutToQuitSlot();
     void on_action3D_orientation_triggered();
@@ -274,7 +274,7 @@ private:
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
-    void keyPressEvent(QKeyEvent *event);
+    void keyPressEvent(QKeyEvent *event) override;
 };
 
 enum TAB_INDEX
