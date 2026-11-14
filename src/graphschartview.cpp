@@ -2,7 +2,6 @@
 #include "qcustomplot.h"
 #include "theme.h"
 
-#include <QDateTimeAxis>
 #include <QMouseEvent>
 #include <QRubberBand>
 #include <QWheelEvent>
@@ -11,15 +10,6 @@
 #include <QValueAxis>
 
 #include <cmath>
-
-namespace
-{
-    // Chart keys are seconds of the day; Qt Graphs' time axis wants milliseconds since the epoch.
-    qint64 todayMs()
-    {
-        return QDateTime(QDate::currentDate(), QTime(0, 0)).toMSecsSinceEpoch();
-    }
-}
 
 GraphsChartView::GraphsChartView(QWidget *parent) : QQuickWidget(parent)
 {
@@ -30,7 +20,7 @@ GraphsChartView::GraphsChartView(QWidget *parent) : QQuickWidget(parent)
     if (QQuickItem *root = rootObject())
     {
         graphsView = root->findChild<QObject *>("graphsView");
-        axisX = root->findChild<QDateTimeAxis *>("axisX");
+        axisX = root->findChild<QValueAxis *>("axisX");
         axisY = root->findChild<QValueAxis *>("axisY");
     }
 }
@@ -76,7 +66,6 @@ void GraphsChartView::sync(QCustomPlot *source)
 
     const QCPRange xRange = source->xAxis->range();
     const QCPRange yRange = source->yAxis->range();
-    const qint64 base = todayMs();
 
     // About two points per horizontal pixel is all a line chart can show.
     const int maxPoints = qMax(200, width() * 2);
@@ -103,7 +92,7 @@ void GraphsChartView::sync(QCustomPlot *source)
         {
             points.reserve(count);
             for (auto it = begin; it != end; ++it)
-                points.append(QPointF(base + it->key * 1000.0, it->value));
+                points.append(QPointF(it->key, it->value));
         }
         else
         {
@@ -126,9 +115,9 @@ void GraphsChartView::sync(QCustomPlot *source)
                 }
                 const auto first = minIt->key <= maxIt->key ? minIt : maxIt;
                 const auto second = first == minIt ? maxIt : minIt;
-                points.append(QPointF(base + first->key * 1000.0, first->value));
+                points.append(QPointF(first->key, first->value));
                 if (second != first)
-                    points.append(QPointF(base + second->key * 1000.0, second->value));
+                    points.append(QPointF(second->key, second->value));
             }
         }
         line->replace(points);
@@ -155,8 +144,13 @@ void GraphsChartView::sync(QCustomPlot *source)
             root->setProperty("legendModel", legend);
     }
 
-    axisX->setMin(QDateTime::fromMSecsSinceEpoch(base + qint64(xRange.lower * 1000.0)));
-    axisX->setMax(QDateTime::fromMSecsSinceEpoch(base + qint64(xRange.upper * 1000.0)));
+    axisX->setMin(xRange.lower); // seconds of the day; labels and vertical grid are drawn in QML
+    axisX->setMax(xRange.upper);
+    if (QQuickItem *root = rootObject())
+    {
+        root->setProperty("xMin", xRange.lower);
+        root->setProperty("xMax", xRange.upper);
+    }
     axisY->setMin(yRange.lower);
     axisY->setMax(yRange.upper);
 }

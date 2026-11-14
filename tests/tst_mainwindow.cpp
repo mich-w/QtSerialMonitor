@@ -3,7 +3,7 @@
 #include "orientationview.h"
 #ifdef QTSM_HAS_QT_GRAPHS
 #include "graphschartview.h"
-#include <QDateTimeAxis>
+#include <QValueAxis>
 #include <QQuickItem>
 #include <QMouseEvent>
 #include <QWheelEvent>
@@ -478,8 +478,8 @@ private slots:
         QTRY_VERIFY(view->pointCount("sin1") > 10);
 
         // The time axis follows the live data like the QCustomPlot chart.
-        auto *axis = view->rootObject()->findChild<QDateTimeAxis *>("axisX");
-        const QDateTime before = axis->max();
+        auto *axis = view->rootObject()->findChild<QValueAxis *>("axisX");
+        const double before = axis->max();
         QTRY_VERIFY(axis->max() > before);
 
         // Mouse interactions change the chart ranges, like on the QCustomPlot chart.

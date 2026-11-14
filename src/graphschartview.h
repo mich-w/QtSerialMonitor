@@ -7,7 +7,6 @@
 
 class QCustomPlot;
 class QRubberBand;
-class QDateTimeAxis;
 class QLineSeries;
 class QValueAxis;
 
@@ -57,7 +56,7 @@ private:
     int horizontalDragDistance = 0;
 
     QPointer<QObject> graphsView;
-    QPointer<QDateTimeAxis> axisX;
+    QPointer<QValueAxis> axisX;
     QPointer<QValueAxis> axisY;
     QHash<QString, QLineSeries *> series;
     bool fast = false;

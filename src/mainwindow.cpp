@@ -614,6 +614,11 @@ void MainWindow::applyChartEngine()
         }
         int row = 0, column = 0, rowSpan = 1, columnSpan = 1;
         ui->gridLayout_12->getItemPosition(ui->gridLayout_12->indexOf(ui->widgetChart), &row, &column, &rowSpan, &columnSpan);
+        // Same sizing as the QCustomPlot widget, and the chart row takes the spare height
+        // whichever chart is shown (otherwise the options panel below grows instead).
+        graphsChartView->setSizePolicy(ui->widgetChart->sizePolicy());
+        graphsChartView->setMinimumSize(ui->widgetChart->minimumSize());
+        ui->gridLayout_12->setRowStretch(row, 1);
         ui->gridLayout_12->addWidget(graphsChartView, row, column, rowSpan, columnSpan);
 
         connect(graphsChartView, &GraphsChartView::autoTrackOffRequested, this, [this]()
