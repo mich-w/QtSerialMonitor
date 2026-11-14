@@ -23,6 +23,21 @@ public:
     double pitch() const { return pitchDeg; }
     double yaw() const { return yawDeg; }
 
+    // Orbit camera around the board, controlled with the mouse:
+    // drag = rotate, wheel = zoom, double-click = reset.
+    double cameraAzimuth() const { return azimuthDeg; }
+    double cameraElevation() const { return elevationDeg; }
+    double cameraDistance() const { return distance; }
+    void resetCamera();
+
+    static constexpr double DefaultAzimuth = -146.3;  // behind and to the right of the board
+    static constexpr double DefaultElevation = 28.0;  // looking down a little
+    static constexpr double DefaultDistance = 4.9;
+    static constexpr double MinElevation = -85.0;
+    static constexpr double MaxElevation = 85.0;
+    static constexpr double MinDistance = 2.0;
+    static constexpr double MaxDistance = 15.0;
+
     // Rotates a body-frame vector into the world frame.
     static QVector3D rotate(const QVector3D &body, double rollDegrees, double pitchDegrees, double yawDegrees);
 
@@ -31,12 +46,23 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
 
 private:
     double rollDeg = 0.0;
     double pitchDeg = 0.0;
     double yawDeg = 0.0;
     bool hasData = false;
+
+    double azimuthDeg = DefaultAzimuth;
+    double elevationDeg = DefaultElevation;
+    double distance = DefaultDistance;
+    bool dragging = false;
+    QPoint lastMousePosition;
 };
 
 #endif // ORIENTATIONVIEW_H

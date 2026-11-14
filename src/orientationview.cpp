@@ -1,28 +1,34 @@
 #include "orientationview.h"
 #include "theme.h"
 
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QWheelEvent>
 #include <QtMath>
 
 #include <algorithm>
+#include <cmath>
 #include <array>
 #include <optional>
 #include <vector>
 
 namespace
 {
-    // Fixed "chase camera": behind, slightly to the right of and above the board.
+    // Orbit camera looking at the board from azimuth/elevation/distance.
     struct Camera
     {
-        QVector3D eye{-3.6f, -2.4f, 2.2f};
         QVector3D target{0.0f, 0.0f, -0.1f};
-        QVector3D right, up, forward;
+        QVector3D eye, right, up, forward;
 
-        Camera()
+        Camera(double azimuthDegrees, double elevationDegrees, double distance)
         {
+            const double azimuth = qDegreesToRadians(azimuthDegrees);
+            const double elevation = qDegreesToRadians(elevationDegrees);
+            eye = target + float(distance) * QVector3D(float(qCos(elevation) * qCos(azimuth)), float(qCos(elevation) * qSin(azimuth)),
+                                                        float(qSin(elevation)));
             forward = (target - eye).normalized();
-            right = QVector3D::crossProduct(forward, QVector3D(0, 0, 1)).normalized();
+            right = QVector3D::crossProduct(forward, QVector3D(0, 0, 1)).normalized(); // elevation is clamped, never vertical
             up = QVector3D::crossProduct(right, forward);
         }
 
@@ -50,6 +56,67 @@ OrientationView::OrientationView(QWidget *parent) : QWidget(parent)
 {
     setObjectName("orientationView");
     setAttribute(Qt::WA_OpaquePaintEvent);
+    setCursor(Qt::OpenHandCursor);
+    setToolTip("Drag to rotate the view, mouse wheel to zoom, double-click to reset");
+}
+
+void OrientationView::resetCamera()
+{
+    azimuthDeg = DefaultAzimuth;
+    elevationDeg = DefaultElevation;
+    distance = DefaultDistance;
+    update();
+}
+
+void OrientationView::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton)
+        return QWidget::mousePressEvent(event);
+
+    dragging = true;
+    lastMousePosition = event->pos();
+    setCursor(Qt::ClosedHandCursor);
+}
+
+void OrientationView::mouseMoveEvent(QMouseEvent *event)
+{
+    if (!dragging)
+        return QWidget::mouseMoveEvent(event);
+
+    const QPoint delta = event->pos() - lastMousePosition;
+    lastMousePosition = event->pos();
+
+    // Dragging right swings the camera to the left, so the scene appears to turn with the mouse.
+    azimuthDeg = std::remainder(azimuthDeg - delta.x() * 0.4, 360.0);
+    elevationDeg = qBound(MinElevation, elevationDeg + delta.y() * 0.4, MaxElevation);
+    update();
+}
+
+void OrientationView::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        dragging = false;
+        setCursor(Qt::OpenHandCursor);
+    }
+    QWidget::mouseReleaseEvent(event);
+}
+
+void OrientationView::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+        resetCamera();
+}
+
+void OrientationView::wheelEvent(QWheelEvent *event)
+{
+    const double steps = event->angleDelta().y() / 120.0; // one notch = 120; touchpads send smaller deltas
+    if (steps == 0.0)
+        return QWidget::wheelEvent(event);
+
+    distance = qBound(MinDistance, distance * std::pow(0.88, steps), MaxDistance); // wheel up = closer
+    update();
+    event->accept();
 }
 
 void OrientationView::setOrientation(double rollDegrees, double pitchDegrees, double yawDegrees)
@@ -96,7 +163,7 @@ void OrientationView::paintEvent(QPaintEvent *)
     painter.setRenderHint(QPainter::Antialiasing);
     painter.fillRect(rect(), colors.chartBackground);
 
-    const Camera camera;
+    const Camera camera(azimuthDeg, elevationDeg, distance);
     const QPointF centre(width() / 2.0, height() / 2.0 + height() * 0.05);
     const double focal = qMin(width(), height()) * 1.55;
     auto project = [&](const QVector3D &world) { return camera.project(world, centre, focal); };
@@ -230,6 +297,10 @@ void OrientationView::paintEvent(QPaintEvent *)
         painter.drawEllipse(tip->second, 3.5, 3.5);
         painter.drawText(tip->second + QPointF(6, -6), axis.name);
     }
+
+    // ----- Controls hint ----- //
+    painter.setPen(colors.mutedText);
+    painter.drawText(rect().adjusted(12, 0, -12, -10), Qt::AlignLeft | Qt::AlignBottom, "Drag to rotate - wheel to zoom - double-click to reset");
 
     // ----- Readout ----- //
     painter.setFont(font());

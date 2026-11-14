@@ -68,7 +68,7 @@ Time stamps come from the PC clock by default. To use your device's time instead
 
 <img src="docs/_screenshots/v2-orientation.png" width="60%" alt="3D orientation view">
 
-**View → Change visualisation → 3D Orientation** (Ctrl+9) shows a board rotated by the latest `roll`, `pitch` and `yaw` values (label names and degrees/radians can be changed below the view). Positive roll lowers the right side, positive pitch raises the nose, positive yaw turns clockwise seen from above. The demo device sends these values while the view is open.
+**View → Change visualisation → 3D Orientation** (Ctrl+9) shows a board rotated by the latest `roll`, `pitch` and `yaw` values (label names and degrees/radians can be changed below the view). Positive roll lowers the right side, positive pitch raises the nose, positive yaw turns clockwise seen from above. The demo device sends these values while the view is open. Drag with the mouse to look around, use the wheel to zoom and double-click to reset the view.
 
 ## Tips
 

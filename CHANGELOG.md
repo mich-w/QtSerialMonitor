@@ -16,7 +16,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Up/Down in the send box walked the history in the wrong direction; Up now recalls the most recent command, like a terminal.
 
 - Settings window (Tools → Settings…, Ctrl+,): theme, chart refresh rate (30/60 fps) and line rendering (Smooth/Fast).
-- 3D orientation view (View → Change visualisation → 3D Orientation, Ctrl+9): a board rotated by the latest roll / pitch / yaw values, with configurable labels and degrees or radians. While it is shown, the demo device also streams roll / pitch / yaw.
+- 3D orientation view (View → Change visualisation → 3D Orientation, Ctrl+9): a board rotated by the latest roll / pitch / yaw values, with configurable labels and degrees or radians. While it is shown, the demo device also streams roll / pitch / yaw. Drag to rotate the camera, mouse wheel to zoom, double-click to reset.
 
 - Text view: the crowded, horizontally scrolling options area is replaced by one row (Pause text, Auto-scroll, Newest, Clear, highlight field) and an Options popup with the remaining settings, grouped and labelled.
 
