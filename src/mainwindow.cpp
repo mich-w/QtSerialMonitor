@@ -420,8 +420,37 @@ void MainWindow::setupTextViewOptions()
     ui->verticalLayout_2->insertWidget(index, bar);
 }
 
+// The connection area at the bottom: no title (the tabs say what it is), tighter margins and
+// normal-height buttons, so more height goes to the text view and the chart.
+void MainWindow::setupControlSection()
+{
+    ui->groupBoxSettings->setTitle(QString());
+    for (auto i = 0; i < ui->tabWidgetControlSection->count(); ++i)
+    {
+        QWidget *page = ui->tabWidgetControlSection->widget(i);
+        if (page->layout())
+            page->layout()->setContentsMargins(6, 4, 6, 4);
+        for (QGridLayout *grid : page->findChildren<QGridLayout *>())
+            grid->setVerticalSpacing(4);
+        for (QPushButton *button : page->findChildren<QPushButton *>())
+            button->setMinimumHeight(0); // the .ui forced 30 px
+    }
+
+    // A tab widget is as tall as its tallest page; size it to the current page instead.
+    auto fitCurrentTab = [this]()
+    {
+        QTabWidget *tabs = ui->tabWidgetControlSection;
+        for (auto i = 0; i < tabs->count(); ++i)
+            tabs->widget(i)->setSizePolicy(QSizePolicy::Preferred, i == tabs->currentIndex() ? QSizePolicy::Preferred : QSizePolicy::Ignored);
+        tabs->updateGeometry();
+    };
+    connect(ui->tabWidgetControlSection, &QTabWidget::currentChanged, this, fitCurrentTab);
+    fitCurrentTab();
+}
+
 void MainWindow::setupGUI()
 {
+    setupControlSection();
     setupOrientationView();
     setupTextViewOptions();
     setupChartOptions();

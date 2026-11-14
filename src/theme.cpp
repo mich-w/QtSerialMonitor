@@ -200,6 +200,7 @@ QToolTip { color: %text; background: %base; border: 1px solid %border; padding: 
 
 QGroupBox { border: 1px solid %border; border-radius: 8px; margin-top: 18px; padding: 6px 4px 4px 4px; background: %panel; }
 QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; padding: 0 4px; color: %muted; font-weight: 600; }
+QGroupBox#groupBoxSettings { margin-top: 4px; padding: 2px; } /* untitled connection area */
 
 QPushButton { background: %button; border: 1px solid %border; border-radius: 6px; padding: 4px 12px; min-height: 20px; }
 QPushButton:hover { background: %hover; border-color: %accent; }

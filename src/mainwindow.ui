@@ -2933,7 +2933,7 @@ p, li { white-space: pre-wrap; }
               <font>
                <weight>50</weight>
                <bold>false</bold>
-               <underline>true</underline>
+               <underline>false</underline>
               </font>
              </property>
              <property name="text">
