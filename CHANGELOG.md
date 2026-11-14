@@ -31,6 +31,9 @@ at full CPU; it now processes ~650 lines/s with smooth lines and ~950 lines/s at
 - The log table uses a lightweight model; auto-scroll happens once per refresh and only while visible.
 - The statistics table is updated once per refresh instead of per batch.
 - Optional fast line rendering makes a chart redraw ~12× cheaper.
+- Experimental OpenGL chart rendering (Settings → Performance, off by default). Measured on a Wayland desktop at
+  1000 lines/s: 6.8 ms per frame with smooth lines vs 14.3 ms in software; software Fast lines remain the
+  cheapest at 1.4 ms. Falls back to normal drawing if OpenGL cannot be started.
 
 ### Changed
 - Refreshed look: new palettes, rounded controls, accent colour, cleaner tabs, tables and scroll bars.

@@ -37,6 +37,31 @@ add_library(qcustomplot STATIC
     third_party/qcustomplot/qcustomplot.cpp
     third_party/qcustomplot/qcustomplot.h)
 target_include_directories(qcustomplot PUBLIC third_party/qcustomplot)
+
+# Optional OpenGL rendering of the chart (Settings -> Performance, off by default).
+# Qt 6 moved the needed classes into the separate OpenGL module; on Qt 5 they are part of QtGui.
+option(QTSM_OPENGL "Build QCustomPlot with optional OpenGL rendering" ON)
+if(QTSM_OPENGL)
+    if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+        find_package(Qt6 QUIET COMPONENTS OpenGL)
+        set(QTSM_OPENGL_AVAILABLE ${Qt6OpenGL_FOUND})
+    else()
+        find_package(OpenGL QUIET) # Qt 5's QtGui does not pass libGL on to the linker
+        set(QTSM_OPENGL_AVAILABLE ${OpenGL_FOUND})
+    endif()
+    if(QTSM_OPENGL_AVAILABLE)
+        # PUBLIC: the define changes QCustomPlot's class layout, so every user of the header needs it.
+        target_compile_definitions(qcustomplot PUBLIC QCUSTOMPLOT_USE_OPENGL)
+        if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+            target_link_libraries(qcustomplot PUBLIC Qt6::OpenGL)
+        else()
+            target_link_libraries(qcustomplot PUBLIC OpenGL::GL)
+        endif()
+        message(STATUS "OpenGL chart rendering: available")
+    else()
+        message(STATUS "OpenGL chart rendering: not available (Qt OpenGL module not found)")
+    endif()
+endif()
 target_link_libraries(qcustomplot PUBLIC Qt::Widgets Qt::PrintSupport)
 set_target_properties(qcustomplot PROPERTIES POSITION_INDEPENDENT_CODE ON)
 

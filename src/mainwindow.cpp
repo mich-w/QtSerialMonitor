@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     setupThemeControls();
     setupToolBar();
     applyTheme();
+    applyOpenGl(); // saved preference
 
     infoDialog.setFixedSize(800, 600);
 
@@ -588,9 +589,21 @@ void MainWindow::applyPreferences(const AppPreferences &newPreferences)
     preferences.save();
 
     setChartRefreshRate(preferences.chartRefreshRate);
+    applyOpenGl();
     for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
         styleGraph(ui->widgetChart->graph(i));
     ui->widgetChart->replot();
+}
+
+// Experimental: let QCustomPlot draw through OpenGL. Falls back to software drawing if no context.
+void MainWindow::applyOpenGl()
+{
+    if (ui->widgetChart->openGl() == preferences.openGl)
+        return;
+
+    ui->widgetChart->setOpenGl(preferences.openGl, 8); // 8x multisampling for smooth lines
+    if (preferences.openGl && !ui->widgetChart->openGl())
+        addLog("App >>\t OpenGL could not be started - the chart uses normal drawing.", true);
 }
 
 void MainWindow::setupToolBar()

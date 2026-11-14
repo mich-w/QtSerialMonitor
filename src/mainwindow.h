@@ -207,6 +207,7 @@ private:
     QTimer chartRefreshTimer;
     AppPreferences preferences = AppPreferences::load();
     void openSettings();
+    void applyOpenGl();
     void requestChartRefresh();
     void refreshChart();
     void setChartRefreshRate(int framesPerSecond);

@@ -20,9 +20,9 @@ jobs:
       matrix:
         include:
           - qt: 6
-            packages: qt6-base-dev qt6-serialport-dev libgl-dev
+            packages: qt6-base-dev qt6-serialport-dev libqt6opengl6-dev libgl-dev
           - qt: 5
-            packages: qtbase5-dev libqt5serialport5-dev
+            packages: qtbase5-dev libqt5serialport5-dev libgl-dev
     steps:
       - uses: actions/checkout@v4
 

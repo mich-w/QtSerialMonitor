@@ -384,7 +384,20 @@ private slots:
         QCOMPARE(AppPreferences::load().chartRefreshRate, 60);
         QVERIFY(AppPreferences::load().lineQuality == AppPreferences::LineQuality::Fast);
 
+        // OpenGL is optional: either it starts, or the app says it fell back (e.g. CI without a GPU).
+        if (AppPreferences::openGlAvailable())
+        {
+            AppPreferences gl;
+            gl.openGl = true;
+            window->applyPreferences(gl);
+            auto *chart = find<QCustomPlot>("widgetChart");
+            QVERIFY(chart->openGl() || logText().contains("OpenGL could not be started"));
+            QVERIFY(AppPreferences::load().openGl);
+            chart->replot();
+        }
+
         window->applyPreferences(AppPreferences()); // back to defaults
+        QVERIFY(!find<QCustomPlot>("widgetChart")->openGl());
         QVERIFY(graph->antialiased());
         QCOMPARE(AppPreferences::load().chartRefreshRate, 30);
     }
