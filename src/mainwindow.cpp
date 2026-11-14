@@ -239,9 +239,101 @@ void MainWindow::refreshOrientationView()
     orientationView->setOrientation(degrees(orientationValues[0]), degrees(orientationValues[1]), degrees(orientationValues[2]));
 }
 
+// Replaces the crowded, horizontally scrolling options area under the text view with one row of
+// frequently used actions and an "Options" popup for the rest. The existing widgets are re-parented,
+// so their slots and saved settings are unchanged.
+void MainWindow::setupTextViewOptions()
+{
+    // ----- Row under the text view ----- //
+    auto *bar = new QWidget(this);
+    bar->setObjectName("textViewBar");
+    auto *row = new QHBoxLayout(bar);
+    row->setContentsMargins(0, 4, 0, 0);
+
+    ui->pushButtonTextLogToggle->setText("Pause text");
+    ui->pushButtonTextLogToggle->setToolTip("Stop adding received text to the view (plotting and logging continue)");
+    ui->checkBoxScrollToButtom->setText("Auto-scroll");
+    ui->pushButtonSerialLogScrollown->setText("Newest");
+    ui->pushButtonSerialLogScrollown->setToolTip("Scroll to the newest line");
+    ui->pushButtonClear->setToolTip("Clear the text view");
+    ui->lineEditHighlight->setPlaceholderText("Highlight text (Enter)");
+    ui->lineEditHighlight->setClearButtonEnabled(true);
+    ui->lineEditHighlight->setMinimumWidth(80);
+
+    auto *optionsButton = new QToolButton(bar);
+    optionsButton->setObjectName("toolButtonTextViewOptions");
+    optionsButton->setText("Options");
+    optionsButton->setToolTip("Text view options");
+    optionsButton->setArrowType(Qt::DownArrow);
+    optionsButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+    row->addWidget(ui->pushButtonTextLogToggle);
+    row->addWidget(ui->checkBoxScrollToButtom);
+    row->addWidget(ui->pushButtonSerialLogScrollown);
+    row->addWidget(ui->pushButtonClear);
+    row->addWidget(ui->lineEditHighlight, 1);
+    row->addWidget(optionsButton);
+
+    // ----- Options popup ----- //
+    auto *panel = new QFrame(this, Qt::Popup);
+    panel->setObjectName("textViewOptionsPanel");
+    panel->setFrameShape(QFrame::StyledPanel);
+    auto *panelLayout = new QVBoxLayout(panel);
+
+    ui->checkBoxShowTime->setText("Timestamps");
+    ui->checkBoxWrapText->setText("Wrap long lines");
+    ui->checkBoxShowControlChars->setText("Show control characters (\\r \\n \\t, spaces as dots)");
+    ui->checkBoxSendKey->setText("Send key presses typed in the text view");
+    ui->spinBoxMaxLines->setPrefix(QString());
+    ui->spinBoxMaxLines->setSuffix(" lines");
+    ui->spinBoxProcessingDelay->setPrefix(QString());
+    ui->spinBoxProcessingDelay->setSuffix(" ms");
+    ui->spinBoxProcessingDelay->setToolTip("Received data is collected for this long before the view is updated");
+
+    auto *displayGroup = new QGroupBox("Display", panel);
+    auto *displayForm = new QFormLayout(displayGroup);
+    displayForm->addRow("Format:", ui->comboBoxFormat);
+    displayForm->addRow("New data:", ui->comboBoxAddTextMode);
+    displayForm->addRow("Whitespace:", ui->comboBoxTextProcessing);
+    displayForm->addRow("Show:", ui->comboBoxMessagesDisplayMode);
+    displayForm->addRow("Keep at most:", ui->spinBoxMaxLines);
+    displayForm->addRow(ui->checkBoxShowTime);
+    displayForm->addRow(ui->checkBoxWrapText);
+    displayForm->addRow(ui->checkBoxShowControlChars);
+
+    auto *inputGroup = new QGroupBox("Input", panel);
+    auto *inputForm = new QFormLayout(inputGroup);
+    inputForm->addRow(ui->checkBoxSendKey);
+    inputForm->addRow("Processing delay:", ui->spinBoxProcessingDelay);
+
+    panelLayout->addWidget(displayGroup);
+    panelLayout->addWidget(inputGroup);
+
+    connect(optionsButton, &QToolButton::clicked, this, [optionsButton, panel]()
+            {
+                panel->adjustSize();
+                QPoint position = optionsButton->mapToGlobal(QPoint(optionsButton->width() - panel->width(), optionsButton->height()));
+                if (const QScreen *screen = optionsButton->screen())
+                {
+                    const QRect available = screen->availableGeometry();
+                    if (position.y() + panel->height() > available.bottom()) // open upwards near the bottom of the screen
+                        position.setY(optionsButton->mapToGlobal(QPoint(0, 0)).y() - panel->height());
+                    position.setX(qBound(available.left(), position.x(), available.right() - panel->width()));
+                }
+                panel->move(position);
+                panel->show();
+            });
+
+    // The old area is now empty.
+    const int index = ui->verticalLayout_2->indexOf(ui->scrollAreaTextLogOptions);
+    ui->scrollAreaTextLogOptions->hide();
+    ui->verticalLayout_2->insertWidget(index, bar);
+}
+
 void MainWindow::setupGUI()
 {
     setupOrientationView();
+    setupTextViewOptions();
 
     // ----------------------- MainWindow ----------------------- //
     {
@@ -2586,11 +2678,11 @@ void MainWindow::on_pushButtonTextLogToggle_toggled(bool checked)
 {
     if (checked)
     {
-        ui->pushButtonTextLogToggle->setText("Enable");
+        ui->pushButtonTextLogToggle->setText("Resume text");
     }
     else
     {
-        ui->pushButtonTextLogToggle->setText("Disable");
+        ui->pushButtonTextLogToggle->setText("Pause text");
     }
 }
 

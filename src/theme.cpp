@@ -194,6 +194,8 @@ QString ThemeManager::styleSheet() const
     const QColor handle = c.dark ? QColor("#4a4f59") : QColor("#c4c9d2");
 
     QString sheet = R"(
+QFrame#textViewOptionsPanel { background: %panel; border: 1px solid %border; border-radius: 8px; }
+
 QToolTip { color: %text; background: %base; border: 1px solid %border; padding: 4px 6px; border-radius: 4px; }
 
 QGroupBox { border: 1px solid %border; border-radius: 8px; margin-top: 18px; padding: 6px 4px 4px 4px; background: %panel; }

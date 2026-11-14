@@ -34,6 +34,9 @@
 #include <QList>
 #include <QActionGroup>
 #include <QMainWindow>
+#include <QFormLayout>
+#include <QGroupBox>
+#include <QScreen>
 #include <QToolBar>
 #include <QToolButton>
 #include <QMessageBox>
@@ -267,6 +270,7 @@ private:
     bool orientationReceived = false;
     bool orientationDirty = false;
     void setupOrientationView();
+    void setupTextViewOptions();
     void updateOrientation(const QStringList &labels, const QList<double> &values);
     void refreshOrientationView();
     bool logTableScrollPending = false;
