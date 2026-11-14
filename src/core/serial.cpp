@@ -163,52 +163,9 @@ bool Serial::isOpen()
     return serialDevice->isOpen();
 }
 
-QList<QSerialPortInfo> Serial::getAvailiblePorts()
-{
-    return QSerialPortInfo::availablePorts();
-}
-
 QList<int> Serial::getAvailibleBaudRates()
 {
     return QSerialPortInfo::standardBaudRates();
-}
-
-bool Serial::begin(QString parsedPortName, int parsedBaudRate, int dataBits, int parity, int stopBits, int flowControl, bool dtrOn)
-{
-    if (QSerialPortInfo::availablePorts().count() < 1)
-    {
-        // this->addLog(">>\t No devices available");
-        return false;
-    }
-
-    this->serialDevice->setPortName(parsedPortName);
-
-    if (!serialDevice->isOpen())
-    {
-        if (serialDevice->open(QSerialPort::ReadWrite))
-        {
-            this->serialDevice->clear();
-            this->serialDevice->setBaudRate(parsedBaudRate);
-            this->serialDevice->setDataBits((QSerialPort::DataBits)dataBits);
-            this->serialDevice->setParity((QSerialPort::Parity)parity);
-            this->serialDevice->setStopBits((QSerialPort::StopBits)stopBits);
-            this->serialDevice->setFlowControl((QSerialPort::FlowControl)flowControl);
-            this->serialDevice->setDataTerminalReady(dtrOn);
-
-            //  I have identified that the problem is due to the EDBG chip (usb-serial bridge) which requires DTR signal to enable the serial port RXD and TXD pins.
-            //  Including the line of code "serial->setDataTerminalReady(true);" after opening the serial port, the serial port application is now working fine. I guess this is automatically carried out on hyper-terminal software and tera-term software.
-            //  Whether the communication uses the flow control or not,some of the hardware bridge requires the flow control signals to be set for the first time after power ON.
-
-            connect(this->serialDevice, SIGNAL(readyRead()), this, SLOT(readString()));
-
-            return true;
-        }
-        return false;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 bool Serial::begin(QString parsedPortName, qint32 parsedBaudRate, QString dataBits, QString parity, QString stopBits, QString flowControl, bool dtrOn)

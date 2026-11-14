@@ -383,7 +383,6 @@ void MainWindow::setupGUI()
         else
             ui->textBrowserLogs->setLineWrapMode(QPlainTextEdit::LineWrapMode::NoWrap);
 
-        //   highlighter = new Highlighter(ui->textBrowserLogs->document());
     }
     // ---------------------------------------------------------------- //
 
@@ -2892,19 +2891,6 @@ void MainWindow::on_toolButtonHideTable_clicked()
     ui->toolButtonAdvancedGraphMenu->setArrowType(Qt::ArrowType::UpArrow);
 }
 
-void MainWindow::on_comboBoxAddTextMode_currentIndexChanged(int /*index*/)
-{
-    //    if (index == 1)
-    //    {
-    //        ui->radioButtonScrollToButtom->setCheckable(false);
-    //         ui->radioButtonScrollToButtom->setChecked(false);
-    //    }
-    //    else
-    //    {
-    //        ui->radioButtonScrollToButtom->setCheckable(true);
-    //    }
-}
-
 void MainWindow::on_actionHide_parser_data_triggered()
 {
     ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), 0});
@@ -2913,11 +2899,6 @@ void MainWindow::on_actionHide_parser_data_triggered()
 void MainWindow::on_actionShow_parser_data_triggered()
 {
     ui->splitterGraphTable->setSizes({ui->splitterGraphTable->width(), ui->splitterGraphTable->height() / 2});
-}
-
-void MainWindow::on_radioButtonScrollToButtom_clicked()
-{
-    ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
 }
 
 void MainWindow::on_comboBoxLogFormat_currentIndexChanged(int index)

@@ -21,15 +21,12 @@ class Serial : public Transport
 public:
     explicit Serial(QObject *parent = nullptr);
     ~Serial();
-    bool begin(QString parsedPortName, int parsedBaudRate, int dataBits, int parity, int stopBits, int flowControl, bool dtrOn);
     bool begin(QString parsedPortName, qint32 parsedBaudRate, QString dataBits, QString parity, QString stopBits, QString flowControl, bool dtrOn);
     bool end();
     bool isOpen() override;
     bool send(const QByteArray &message);
     bool send(QString message);
     bool setReadMode(int mode);
-    int getAvailiblePortsCount();
-    QList<QSerialPortInfo> getAvailiblePorts();
     QString getSerialInfo();
     QList<int> getAvailibleBaudRates();
 public slots:

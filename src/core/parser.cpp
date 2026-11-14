@@ -347,7 +347,6 @@ QList<long> Parser::getListTimeStamp() { return listTimeStamp; }
 QList<long> Parser::getTimeStorage() { return timeStampStorage; }
 QStringList Parser::getLabelStorage() { return labelStorage; }
 QStringList Parser::getStringListLabels() { return stringListLabels; }
-QStringList Parser::getStringListNumericData() { return stringListNumericData; }
 QStringList Parser::getTextList() { return textStorage; }
 void Parser::clearExternalClock() { latestTimeStamp.setHMS(0, 0, 0, 0); }
 void Parser::restartChartTimer() { parserClock.restart(); }
@@ -368,13 +367,6 @@ void Parser::clearStorage()
     dataStorage.clear();
     timeStampStorage.clear();
     textStorage.clear();
-}
-
-void Parser::clear()
-{
-    stringListLabels.clear();
-    stringListNumericData.clear();
-    listTimeStamp.clear();
 }
 
 void Parser::setParsingTimeRange(QTime minTime, QTime maxTime)

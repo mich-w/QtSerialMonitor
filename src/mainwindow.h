@@ -9,7 +9,6 @@
 #include "qcustomplot.h"
 #include "serial.h"
 #include "infodialog.h"
-#include "highlighter.h"
 #include "channelstats.h"
 #include "commandhistory.h"
 #include "logtablemodel.h"
@@ -25,7 +24,6 @@
 #include "widgetsettings.h"
 
 #include <QCloseEvent>
-#include <QCompleter>
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <QFile>
@@ -40,15 +38,10 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QMessageBox>
-#include <QMetaType>
-#include <QPaintDevice>
-#include <QRandomGenerator>
 #include <QScrollBar>
 #include <QSettings>
-#include <QShortcut>
 #include <QStandardPaths>
 #include <QtDebug>
-#include <QTextEdit>
 #include <QTextStream>
 #include <QTime>
 #include <QTimer>
@@ -107,7 +100,6 @@ private slots:
     void on_checkBoxShowLegend_toggled(bool checked);
     void on_checkBoxWrapText_toggled(bool checked);
     void on_clearGraphSelection();
-    void on_comboBoxAddTextMode_currentIndexChanged(int index);
     void on_comboBoxClockSource_currentIndexChanged(int index);
     void on_comboBoxFormat_currentIndexChanged(int index);
     void on_comboBoxGraphDisplayMode_currentIndexChanged(int index);
@@ -155,7 +147,6 @@ private slots:
     void on_pushButtonSetSelectedToGraph_clicked();
     void on_pushButtonTextLogToggle_toggled(bool checked);
     void on_pushButtonUDPConnect_toggled(bool checked);
-    void on_radioButtonScrollToButtom_clicked();
     void on_showAllGraphs();
     void on_showSelectedGraph();
     void on_showSelectedGraphExclusively();
@@ -170,9 +161,7 @@ private slots:
     void on_updateSerialDeviceList();
 
 private:
-    // QCompleter *completer;
     FileReader fileReader;
-    Highlighter *highlighter;
     InfoDialog infoDialog;
     Logger fileLogger;
     NetworkUDP networkUDP;
@@ -181,7 +170,6 @@ private:
     QHash<QString, int> missingCount; // per graph name: consecutive updates without new data
     int graphColorIndex = 0;
     QString controlCharactersVisibleConvert(QString text);
-    QStringList lineEditCustomParsingRulesAutoCompleteWordList;
     QTimer *radioButtonTimer;
     QTimer *serialDeviceCheckTimer;
     Serial serial;
@@ -237,7 +225,6 @@ private:
     Ui::MainWindow *ui;
     void addLog(QString text, bool appendAsLine = false);
     void addLogBytes(QByteArray bytes, bool hexToBinary = false, bool appendAsLine = false);
-    void chartPrintPreview();
     void clearGraphData(bool replot);
     void clearGraphs(bool replot);
     void createChart();
@@ -247,7 +234,6 @@ private:
     void exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep = ',');
     void exportTableLogToCSV(QTableView *table, QChar sep = ',');
     void loadFromRAM(bool loadText);
-    void menageAutoCompleteList(QString input);
     void processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList);
     void processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable);
     void processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);

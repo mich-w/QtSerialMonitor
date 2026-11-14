@@ -68,7 +68,6 @@ target_link_libraries(qtsm_core PUBLIC Qt::Core Qt::Network Qt::SerialPort)
 add_library(qtsm_gui STATIC
     src/codeeditor.cpp       src/codeeditor.h
     src/config.h
-    src/highlighter.cpp      src/highlighter.h
     src/icons.cpp            src/icons.h
     src/infodialog.cpp       src/infodialog.h       src/infodialog.ui
     src/macrobar.cpp         src/macrobar.h
