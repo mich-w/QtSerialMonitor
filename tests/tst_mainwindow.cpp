@@ -412,6 +412,29 @@ private slots:
         find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
     }
 
+    void saveChartToParserMemory()
+    {
+        find<QCheckBox>("checkBoxAutoSaveBuffer")->setChecked(false); // enables the Save button
+        auto *save = find<QPushButton>("pushButtonSaveParserMemory");
+        QVERIFY(save->isEnabled());
+
+        send("m 1 n 2");
+        QTest::qWait(30);
+        send("m 3 n 4");
+        QTRY_VERIFY(graphNames().contains("m"));
+        QTRY_COMPARE(find<QCustomPlot>("widgetChart")->graph(0)->dataCount(), 2);
+
+        save->click();
+        QTRY_VERIFY(logText().contains("Saved 4 values to parser memory"));
+
+        // Reload from memory into a cleared chart.
+        find<QCheckBox>("checkBoxRAMClearChart")->setChecked(true);
+        find<QPushButton>("pushButtonClearGraphs")->click();
+        find<QPushButton>("pushButtonLoadRAMBuffer")->click();
+        QTRY_COMPARE(find<QCustomPlot>("widgetChart")->graph(0)->dataCount(), 2);
+        find<QCheckBox>("checkBoxAutoSaveBuffer")->setChecked(true);
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");

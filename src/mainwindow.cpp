@@ -2802,33 +2802,27 @@ void MainWindow::on_lineEditLoadFilePath_customContextMenuRequested(const QPoint
     menu->popup(ui->lineEditLoadFilePath->mapToGlobal(pos));
 }
 
-void MainWindow::on_pushButtonSaveRAMBuffer_clicked()
+// "Save" on the Parser memory tab (enabled when automatic saving is off): stores the plotted data.
+void MainWindow::on_pushButtonSaveParserMemory_clicked()
 {
-    //QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, QString text)
-
-    QStringList newlabelList;
-    QList<double> newDataList;
-    QList<long> newTimeList;
-    QString text = "";
+    QStringList labels;
+    QList<double> values;
+    QList<long> timeStamps;
 
     for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
     {
-        newlabelList.append(ui->widgetChart->graph(i)->name());
-
-        QCPGraphDataContainer::const_iterator begin = ui->widgetChart->graph(i)->data()->at(ui->widgetChart->graph(i)->data()->dataRange().begin()); // get range begin iterator from index
-        QCPGraphDataContainer::const_iterator end = ui->widgetChart->graph(i)->data()->at(ui->widgetChart->graph(i)->data()->dataRange().end());     // get range end iterator from index
-
-        for (QCPGraphDataContainer::const_iterator it = begin; it != end; ++it)
+        const QCPGraph *graph = ui->widgetChart->graph(i);
+        for (auto it = graph->data()->constBegin(); it != graph->data()->constEnd(); ++it)
         {
-            newTimeList.append(it->key);
-            newDataList.append(it->value);
+            labels.append(graph->name()); // one label per value - the lists are parallel
+            values.append(it->value);
+            timeStamps.append(qRound64(it->key * 1000.0)); // chart keys are seconds, storage is milliseconds
         }
     }
 
-    if (ui->comboBoxRAMSaveMode->currentIndex() == 1)
-        text.append(ui->textBrowserLogs->toPlainText());
-
-    parser.appendSetToMemory(newlabelList, newDataList, newTimeList, text);
+    const QString text = ui->comboBoxRAMSaveMode->currentIndex() == 1 ? ui->textBrowserLogs->toPlainText() : QString();
+    parser.appendSetToMemory(labels, values, timeStamps, text);
+    addLog("App >>\t Saved " + QString::number(values.count()) + " values to parser memory.", true);
 }
 
 void MainWindow::on_actionInfo_triggered()

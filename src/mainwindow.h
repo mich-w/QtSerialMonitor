@@ -147,7 +147,7 @@ private slots:
     void on_pushButtonLogPath_clicked();
     void on_pushButtonRAMClear_clicked();
     void on_pushButtonRefresh_clicked();
-    void on_pushButtonSaveRAMBuffer_clicked();
+    void on_pushButtonSaveParserMemory_clicked();
     void on_pushButtonSend_clicked();
     void on_pushButtonSerialConnect_toggled(bool checked);
     void on_pushButtonSerialLogScrollown_clicked();
