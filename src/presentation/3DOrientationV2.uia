@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<application xmlns="http://qt.io/qt3dstudio/uia">
-    <assets initial="3DOrientationV2">
-        <presentation id="3DOrientationV2" src="presentations/3DOrientationV2.uip"/>
-    </assets>
-</application>
