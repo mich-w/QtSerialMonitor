@@ -1,6 +1,13 @@
 // Integration test: drives the real MainWindow headlessly and feeds it data over UDP.
 #include "mainwindow.h"
 #include "orientationview.h"
+#ifdef QTSM_HAS_QT_GRAPHS
+#include "graphschartview.h"
+#include <QDateTimeAxis>
+#include <QQuickItem>
+#include <QMouseEvent>
+#include <QWheelEvent>
+#endif
 #include "theme.h"
 #include <QCheckBox>
 #include <QComboBox>
@@ -446,6 +453,80 @@ private slots:
         find<QPushButton>("pushButtonLoadRAMBuffer")->click();
         QTRY_COMPARE(find<QCustomPlot>("widgetChart")->graph(0)->dataCount(), 2);
         find<QCheckBox>("checkBoxAutoSaveBuffer")->setChecked(true);
+    }
+
+    void qtGraphsChartEngine()
+    {
+#ifdef QTSM_HAS_QT_GRAPHS
+        find<QPushButton>("pushButtonUDPConnect")->setChecked(false);
+        AppPreferences graphs;
+        graphs.chartEngine = AppPreferences::ChartEngine::QtGraphs;
+        window->applyPreferences(graphs);
+
+        auto *view = window->findChild<GraphsChartView *>("graphsChartView");
+        if (!view)
+        {
+            QVERIFY(logText().contains("Qt Graphs could not be started")); // e.g. no GPU on CI
+            window->applyPreferences(AppPreferences());
+            return;
+        }
+        QVERIFY(view->isVisible());
+        QVERIFY(!find<QCustomPlot>("widgetChart")->isVisible());
+
+        window->startDemo(100);
+        QTRY_COMPARE(view->seriesCount(), 3);
+        QTRY_VERIFY(view->pointCount("sin1") > 10);
+
+        // The time axis follows the live data like the QCustomPlot chart.
+        auto *axis = view->rootObject()->findChild<QDateTimeAxis *>("axisX");
+        const QDateTime before = axis->max();
+        QTRY_VERIFY(axis->max() > before);
+
+        // Mouse interactions change the chart ranges, like on the QCustomPlot chart.
+        find<QCheckBox>("checkBoxAutoTrack")->setChecked(false);
+        auto *chart = find<QCustomPlot>("widgetChart");
+        const QPoint centre(view->width() / 2, view->height() / 2);
+        auto mouse = [view](QEvent::Type type, QPoint pos, Qt::MouseButton button, Qt::MouseButtons buttons)
+        {
+            QMouseEvent event(type, QPointF(pos), QPointF(view->mapToGlobal(pos)), button, buttons, Qt::NoModifier);
+            QApplication::sendEvent(view, &event);
+        };
+
+        const double width = chart->xAxis->range().size();
+        QWheelEvent wheel(QPointF(centre), QPointF(view->mapToGlobal(centre)), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QApplication::sendEvent(view, &wheel);
+        QVERIFY(chart->xAxis->range().size() < width); // zoomed in
+
+        find<QCheckBox>("checkBoxAutoTrack")->setChecked(true);
+        const double lower = chart->xAxis->range().lower;
+        mouse(QEvent::MouseButtonPress, centre, Qt::LeftButton, Qt::LeftButton);
+        mouse(QEvent::MouseMove, centre + QPoint(250, 0), Qt::NoButton, Qt::LeftButton);
+        mouse(QEvent::MouseButtonRelease, centre + QPoint(250, 0), Qt::LeftButton, Qt::NoButton);
+        QVERIFY(chart->xAxis->range().lower < lower);                 // dragged to the right = earlier data
+        QVERIFY(!find<QCheckBox>("checkBoxAutoTrack")->isChecked()); // long drag stops auto-scroll
+
+        mouse(QEvent::MouseButtonPress, centre - QPoint(40, 30), Qt::MiddleButton, Qt::MiddleButton);
+        mouse(QEvent::MouseMove, centre + QPoint(40, 30), Qt::NoButton, Qt::MiddleButton);
+        const double beforeRect = chart->xAxis->range().size();
+        mouse(QEvent::MouseButtonRelease, centre + QPoint(40, 30), Qt::MiddleButton, Qt::NoButton);
+        QVERIFY(chart->xAxis->range().size() < beforeRect); // rectangle zoom
+
+        // Fit all data: the X range then covers exactly the recorded data.
+        QTest::mouseDClick(view, Qt::LeftButton, {}, centre);
+        bool found = false;
+        const QCPRange data = chart->graph(0)->getKeyRange(found);
+        QVERIFY(found);
+        QVERIFY(qAbs(chart->xAxis->range().lower - data.lower) < 1e-6);
+        QVERIFY(qAbs(chart->xAxis->range().upper - data.upper) < 1e-6);
+
+        window->applyPreferences(AppPreferences()); // back to QCustomPlot
+        QVERIFY(!view->isVisible());
+        QVERIFY(find<QCustomPlot>("widgetChart")->isVisible());
+        find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
+#else
+        QSKIP("Built without Qt Graphs");
+#endif
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot

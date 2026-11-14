@@ -50,7 +50,7 @@ jobs:
         with:
           version: '6.8.*'
           arch: win64_msvc2022_64
-          modules: qtserialport
+          modules: qtserialport qtgraphs qtquick3d qtshadertools
           cache: true
 
       - name: Configure
@@ -67,7 +67,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
           Copy-Item build/Release/QtSerialMonitor.exe dist/
-          windeployqt --release --no-translations --no-opengl-sw dist/QtSerialMonitor.exe
+          windeployqt --release --no-translations --no-opengl-sw --qmldir src/qml dist/QtSerialMonitor.exe
 
       - uses: actions/upload-artifact@v4
         with:
@@ -83,7 +83,7 @@ jobs:
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.*'
-          modules: qtserialport
+          modules: qtserialport qtgraphs qtquick3d qtshadertools
           cache: true
 
       - name: Configure
@@ -96,7 +96,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure
 
       - name: Package
-        run: macdeployqt build/QtSerialMonitor.app -dmg
+        run: macdeployqt build/QtSerialMonitor.app -qmldir=src/qml -dmg
 
       - uses: actions/upload-artifact@v4
         with:

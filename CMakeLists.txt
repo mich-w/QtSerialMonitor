@@ -117,6 +117,21 @@ target_link_libraries(qtsm_gui PUBLIC
     Qt::PrintSupport
     Qt::Network)
 
+# Optional experimental chart engine drawn with Qt Graphs (Settings -> Performance). Needs Qt 6.8+.
+option(QTSM_QT_GRAPHS "Build the optional Qt Graphs chart engine" ON)
+if(QTSM_QT_GRAPHS AND QT_VERSION_MAJOR GREATER_EQUAL 6 AND QTSM_QT_VERSION VERSION_GREATER_EQUAL 6.8)
+    find_package(Qt6 QUIET COMPONENTS Graphs Quick QuickWidgets Qml)
+endif()
+if(Qt6Graphs_FOUND AND Qt6QuickWidgets_FOUND)
+    target_sources(qtsm_gui PRIVATE src/graphschartview.cpp src/graphschartview.h)
+    qt_add_resources(qtsm_gui graphs_qml PREFIX /qml BASE src/qml FILES src/qml/GraphsChart.qml)
+    target_link_libraries(qtsm_gui PUBLIC Qt6::Graphs Qt6::Quick Qt6::QuickWidgets Qt6::Qml)
+    target_compile_definitions(qtsm_gui PUBLIC QTSM_HAS_QT_GRAPHS)
+    message(STATUS "Qt Graphs chart engine: available")
+else()
+    message(STATUS "Qt Graphs chart engine: not available (needs Qt 6.8+ with Graphs, Quick and QuickWidgets)")
+endif()
+
 set(APP_SOURCES src/main.cpp)
 
 if(WIN32)

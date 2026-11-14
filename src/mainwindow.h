@@ -15,6 +15,9 @@
 #include "orientationview.h"
 #include "icons.h"
 #include "settingsdialog.h"
+#ifdef QTSM_HAS_QT_GRAPHS
+#include "graphschartview.h"
+#endif
 #include "theme.h"
 #include "macrobar.h"
 #include "demotransport.h"
@@ -31,6 +34,7 @@
 #include <QKeyEvent>
 #include <QList>
 #include <QActionGroup>
+#include <QPointer>
 #include <QMainWindow>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -208,6 +212,11 @@ private:
     AppPreferences preferences = AppPreferences::load();
     void openSettings();
     void applyOpenGl();
+    void applyChartEngine();
+    void updateChartRanges();
+#ifdef QTSM_HAS_QT_GRAPHS
+    QPointer<GraphsChartView> graphsChartView;
+#endif
     void requestChartRefresh();
     void refreshChart();
     void setChartRefreshRate(int framesPerSecond);

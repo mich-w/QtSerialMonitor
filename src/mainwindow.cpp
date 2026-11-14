@@ -16,7 +16,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     setupThemeControls();
     setupToolBar();
     applyTheme();
-    applyOpenGl(); // saved preference
+    applyOpenGl(); // saved preferences
+    applyChartEngine();
 
     infoDialog.setFixedSize(800, 600);
 
@@ -590,9 +591,67 @@ void MainWindow::applyPreferences(const AppPreferences &newPreferences)
 
     setChartRefreshRate(preferences.chartRefreshRate);
     applyOpenGl();
+    applyChartEngine();
     for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
         styleGraph(ui->widgetChart->graph(i));
     ui->widgetChart->replot();
+}
+
+// Experimental: draw the chart with Qt Graphs instead of QCustomPlot (see GraphsChartView).
+void MainWindow::applyChartEngine()
+{
+#ifdef QTSM_HAS_QT_GRAPHS
+    const bool useQtGraphs = preferences.chartEngine == AppPreferences::ChartEngine::QtGraphs;
+    if (useQtGraphs && !graphsChartView)
+    {
+        graphsChartView = new GraphsChartView(this);
+        if (!graphsChartView->isReady())
+        {
+            addLog("App >>\t Qt Graphs could not be started (" + graphsChartView->errorString() + ") - using QCustomPlot.", true);
+            delete graphsChartView;
+            graphsChartView = nullptr;
+            return;
+        }
+        int row = 0, column = 0, rowSpan = 1, columnSpan = 1;
+        ui->gridLayout_12->getItemPosition(ui->gridLayout_12->indexOf(ui->widgetChart), &row, &column, &rowSpan, &columnSpan);
+        ui->gridLayout_12->addWidget(graphsChartView, row, column, rowSpan, columnSpan);
+
+        connect(graphsChartView, &GraphsChartView::autoTrackOffRequested, this, [this]()
+                { ui->checkBoxAutoTrack->setChecked(false); });
+        connect(graphsChartView, &GraphsChartView::autoTrackToggleRequested, ui->checkBoxAutoTrack, &QCheckBox::toggle);
+        connect(graphsChartView, &GraphsChartView::contextMenuRequested, this, [this](const QPoint &globalPos)
+                {
+                    QMenu menu(this);
+                    menu.addAction("Fit all data", this, [this]()
+                                   {
+                                       ui->widgetChart->rescaleAxes(true);
+                                       ui->widgetChart->yAxis->scaleRange(1.20);
+                                       graphsChartView->sync(ui->widgetChart);
+                                   });
+                    menu.addSeparator();
+                    menu.addAction("Show all graphs", this, [this]()
+                                   {
+                                       on_showAllGraphs();
+                                       graphsChartView->sync(ui->widgetChart);
+                                   });
+                    menu.addAction("Hide all graphs", this, [this]()
+                                   {
+                                       on_hideAllGraphs();
+                                       graphsChartView->sync(ui->widgetChart);
+                                   });
+                    menu.exec(globalPos);
+                });
+    }
+
+    if (graphsChartView)
+    {
+        graphsChartView->setVisible(useQtGraphs);
+        graphsChartView->applyTheme(preferences.lineQuality == AppPreferences::LineQuality::Fast);
+        graphsChartView->setLegendVisible(ui->checkBoxShowLegend->isChecked());
+    }
+    ui->widgetChart->setVisible(!useQtGraphs || !graphsChartView);
+    requestChartRefresh();
+#endif
 }
 
 // Experimental: let QCustomPlot draw through OpenGL. Falls back to software drawing if no context.
@@ -757,6 +816,10 @@ void MainWindow::applyTheme()
     }
 
     ui->textBrowserLogs->setColors(colors.currentLine, colors.gutter, colors.gutterText);
+#ifdef QTSM_HAS_QT_GRAPHS
+    if (graphsChartView)
+        graphsChartView->applyTheme(preferences.lineQuality == AppPreferences::LineQuality::Fast);
+#endif
     on_highlighLog(ui->lineEditHighlight->text());
     plot->replot();
 }
@@ -1153,6 +1216,12 @@ void MainWindow::setRepeatSend(bool enabled)
 // Auto-scroll X and rescale Y
 void MainWindow::on_chartBeforeReplotSlot()
 {
+    updateChartRanges();
+}
+
+// Auto-scroll X and rescale Y. Runs before every QCustomPlot redraw and on each refresh tick with Qt Graphs.
+void MainWindow::updateChartRanges()
+{
     static bool isChartEmpty = false;
     if (ui->widgetChart->graphCount() > 0 && isChartEmpty == true)
     {
@@ -1193,13 +1262,9 @@ void MainWindow::on_chartBeforeReplotSlot()
             if (atLeastOneGraphVisible && atLeastOneGraphIsNotFlat)
             {
                 ui->widgetChart->yAxis->rescale(true);
-                ui->widgetChart->yAxis->scaleRange(1.20); // leave some space at the top and buttom of the chart.
+                ui->widgetChart->yAxis->scaleRange(1.20); // leave some space at the top and bottom of the chart
             }
         }
-    }
-    else
-    {
-        // do nothing ?
     }
 }
 
@@ -1815,7 +1880,17 @@ void MainWindow::refreshChart()
     }
 
     if (!chartPaused) // keep recording while paused, just don't move the view
-        ui->widgetChart->replot();
+    {
+#ifdef QTSM_HAS_QT_GRAPHS
+        if (graphsChartView && graphsChartView->isVisible())
+        {
+            updateChartRanges(); // QCustomPlot is hidden and not redrawn, but still holds data and ranges
+            graphsChartView->sync(ui->widgetChart);
+        }
+        else
+#endif
+            ui->widgetChart->replot();
+    }
     updateHistoryScrollBar();
 }
 
@@ -2382,6 +2457,10 @@ void MainWindow::on_checkBoxShowLegend_toggled(bool checked)
 {
     ui->widgetChart->legend->setVisible(checked);
     ui->widgetChart->replot();
+#ifdef QTSM_HAS_QT_GRAPHS
+    if (graphsChartView)
+        graphsChartView->setLegendVisible(checked);
+#endif
 }
 
 void MainWindow::on_actionSave_graph_as_triggered()

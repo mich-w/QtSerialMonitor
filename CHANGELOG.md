@@ -34,6 +34,11 @@ at full CPU; it now processes ~650 lines/s with smooth lines and ~950 lines/s at
 - Experimental OpenGL chart rendering (Settings → Performance, off by default). Measured on a Wayland desktop at
   1000 lines/s: 6.8 ms per frame with smooth lines vs 14.3 ms in software; software Fast lines remain the
   cheapest at 1.4 ms. Falls back to normal drawing if OpenGL cannot be started.
+- Experimental Qt Graphs chart engine (Settings → Performance → Chart engine, Qt 6.8+ builds): the chart is
+  drawn on the GPU with Qt Quick while QCustomPlot keeps the data. Zoom, pan, rectangle zoom, fit and a context
+  menu work; the tracer does not yet. Measured with the demo at 1000 lines/s: ~20-24% CPU vs ~60% with
+  QCustomPlot.
+- The demo device now sends every sample that is due, so its rate stays exact when the app is busy.
 
 ### Changed
 - Refreshed look: new palettes, rounded controls, accent colour, cleaner tabs, tables and scroll bars.

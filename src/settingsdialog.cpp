@@ -24,6 +24,9 @@ AppPreferences AppPreferences::load()
     preferences.chartRefreshRate = settings.value("performance/chartRefreshRate", 30).toInt() >= 60 ? 60 : 30;
     preferences.lineQuality = settings.value("performance/lineQuality").toString() == "fast" ? LineQuality::Fast : LineQuality::Smooth;
     preferences.openGl = openGlAvailable() && settings.value("performance/openGl", false).toBool();
+    preferences.chartEngine = qtGraphsAvailable() && settings.value("performance/chartEngine").toString() == "qtgraphs"
+                                  ? ChartEngine::QtGraphs
+                                  : ChartEngine::QCustomPlot;
     return preferences;
 }
 
@@ -33,6 +36,16 @@ void AppPreferences::save() const
     settings.setValue("performance/chartRefreshRate", chartRefreshRate);
     settings.setValue("performance/lineQuality", lineQuality == LineQuality::Fast ? "fast" : "smooth");
     settings.setValue("performance/openGl", openGl);
+    settings.setValue("performance/chartEngine", chartEngine == ChartEngine::QtGraphs ? "qtgraphs" : "qcustomplot");
+}
+
+bool AppPreferences::qtGraphsAvailable()
+{
+#ifdef QTSM_HAS_QT_GRAPHS
+    return true;
+#else
+    return false;
+#endif
 }
 
 bool AppPreferences::openGlAvailable()
@@ -86,8 +99,24 @@ SettingsDialog::SettingsDialog(const AppPreferences &preferences, QWidget *paren
         openGl->setToolTip("Not available in this build (Qt OpenGL module missing).");
     }
 
+    chartEngine = new QComboBox(this);
+    chartEngine->setObjectName("comboBoxSettingsChartEngine");
+    chartEngine->addItem("QCustomPlot (default)", int(AppPreferences::ChartEngine::QCustomPlot));
+    chartEngine->addItem("Qt Graphs (experimental, GPU)", int(AppPreferences::ChartEngine::QtGraphs));
+    chartEngine->setCurrentIndex(chartEngine->findData(int(preferences.chartEngine)));
+    if (AppPreferences::qtGraphsAvailable())
+        chartEngine->setToolTip("Qt Graphs draws the chart on the GPU with Qt Quick.\n"
+                                "Not available with it: tracer, mouse zoom/drag and the chart's context menu.\n"
+                                "Export and printing still use QCustomPlot.");
+    else
+    {
+        chartEngine->setEnabled(false);
+        chartEngine->setToolTip("Qt Graphs is not available in this build (needs Qt 6.8 or newer with the Qt Graphs module).");
+    }
+
     auto *performance = new QGroupBox("Performance", this);
     auto *performanceForm = new QFormLayout(performance);
+    performanceForm->addRow("Chart engine:", chartEngine);
     performanceForm->addRow("Chart refresh rate:", refreshRate);
     performanceForm->addRow("Line rendering:", lineQuality);
     performanceForm->addRow(openGl);
@@ -114,6 +143,7 @@ AppPreferences SettingsDialog::preferences() const
     result.chartRefreshRate = refreshRate->currentData().toInt();
     result.lineQuality = AppPreferences::LineQuality(lineQuality->currentData().toInt());
     result.openGl = openGl->isChecked();
+    result.chartEngine = AppPreferences::ChartEngine(chartEngine->currentData().toInt());
     return result;
 }
 

@@ -21,6 +21,14 @@ struct AppPreferences
     LineQuality lineQuality = LineQuality::Smooth;
     bool openGl = false; // experimental hardware acceleration of the chart
 
+    enum class ChartEngine
+    {
+        QCustomPlot, // default
+        QtGraphs     // experimental, Qt 6.8+ with the Qt Graphs module
+    };
+    ChartEngine chartEngine = ChartEngine::QCustomPlot;
+    static bool qtGraphsAvailable();
+
     static bool openGlAvailable(); // compiled with OpenGL support
 
     static AppPreferences load();
@@ -41,6 +49,7 @@ private:
     QComboBox *refreshRate;
     QComboBox *lineQuality;
     QCheckBox *openGl;
+    QComboBox *chartEngine;
 };
 
 #endif // SETTINGSDIALOG_H

@@ -74,7 +74,7 @@ Time stamps come from the PC clock by default. To use your device's time instead
 
 | | |
 |---|---|
-| Ctrl+, | Settings - theme, chart refresh rate, line quality, OpenGL |
+| Ctrl+, | Settings - theme, chart engine, refresh rate, line quality, OpenGL |
 | Space or P (chart focused) | pause / resume the chart |
 | T / X / Y / L (chart focused) | toggle tracer / auto scroll X / auto scale Y / legend |
 | Double-click the chart | fit all data |
@@ -83,7 +83,7 @@ Time stamps come from the PC clock by default. To use your device's time instead
 | Ctrl+8 / Ctrl+9 | plotter / 3D orientation |
 | F1 | "What's this?" mode - click any control to see what it does |
 
-At high data rates (hundreds of lines per second) choose **Fast** line rendering in the settings.
+At high data rates (hundreds of lines per second) choose **Fast** line rendering in the settings, or try the experimental **Qt Graphs** chart engine, which draws on the GPU (Qt 6.8+ builds; the tracer is not available there yet).
 
 ## Command line
 
@@ -104,12 +104,13 @@ cmake --build build -j
 ./build/QtSerialMonitor
 ```
 
-On Debian/Ubuntu the dependencies are `cmake g++ qt6-base-dev qt6-serialport-dev libqt6opengl6-dev`, on Arch/Manjaro `cmake qt6-base qt6-serialport`.
+On Debian/Ubuntu the dependencies are `cmake g++ qt6-base-dev qt6-serialport-dev libqt6opengl6-dev`, on Arch/Manjaro `cmake qt6-base qt6-serialport`. For the optional Qt Graphs chart engine add Qt Graphs (Qt 6.8+, e.g. `qt6-graphs` on Arch).
 
 Options:
 
 - `-DQTSM_QT_MAJOR=5` - build against Qt 5.15 instead of Qt 6
 - `-DQTSM_OPENGL=OFF` - build without the optional OpenGL chart rendering
+- `-DQTSM_QT_GRAPHS=OFF` - build without the optional Qt Graphs chart engine
 - `-DCMAKE_PREFIX_PATH=/path/to/Qt/6.x/gcc_64` - if CMake can't find Qt
 
 Run the tests with `ctest --test-dir build`.
