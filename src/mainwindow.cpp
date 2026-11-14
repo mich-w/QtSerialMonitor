@@ -487,7 +487,7 @@ void MainWindow::setupGUI()
         // Macros
         macroBar = new MacroBar(this);
         macroBar->setObjectName("macroBar");
-        ui->gridLayout_3->addWidget(macroBar, 2, 1, 1, 7);
+        ui->gridLayout_3->addWidget(macroBar, 1, 8); // same row as the send box, no extra line
         connect(macroBar, &MacroBar::sendRequested, this, [this](const QString &text)
                 { sendText(text); });
         this->setWindowTitle(this->windowTitle() + " " + VERSION);

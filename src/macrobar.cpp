@@ -87,8 +87,7 @@ void MacroBar::rebuild()
         layout->addWidget(button);
     }
 
-    layout->addWidget(addButton);
-    layout->addStretch(1);
+    layout->addWidget(addButton); // no trailing stretch: the bar only takes the room its buttons need
 }
 
 bool MacroBar::editMacro(Macro &macro, const QString &title)
