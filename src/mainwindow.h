@@ -13,6 +13,7 @@
 #include "channelstats.h"
 #include "commandhistory.h"
 #include "logtablemodel.h"
+#include "orientationview.h"
 #include "icons.h"
 #include "settingsdialog.h"
 #include "theme.h"
@@ -261,6 +262,13 @@ private:
     void setRepeatSend(bool enabled);
     CommandHistory commandHistory;
     LogTableModel logTableModel;
+    OrientationView *orientationView = nullptr;
+    double orientationValues[3] = {0, 0, 0}; // roll, pitch, yaw as received
+    bool orientationReceived = false;
+    bool orientationDirty = false;
+    void setupOrientationView();
+    void updateOrientation(const QStringList &labels, const QList<double> &values);
+    void refreshOrientationView();
     bool logTableScrollPending = false;
     MacroBar *macroBar = nullptr;
     QCheckBox *checkBoxRepeatSend = nullptr;

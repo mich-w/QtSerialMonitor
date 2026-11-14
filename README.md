@@ -21,6 +21,7 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 - Live plotter with multiple graphs, pause and history scroll bar, tracer, filtering - uses [QCustomPlot](https://www.qcustomplot.com/),
 - Understands plain `label value` text, CSV, Arduino Serial Plotter (`a:1,b:2`) and [Teleplot](https://github.com/nesnes/teleplot) (`>a:1`) formats,
 - Per-channel statistics: min, max, mean, count and sample rate,
+- 3D orientation view for IMUs: a board rotated by your `roll` / `pitch` / `yaw` values (View → Change visualisation → 3D Orientation),
 - Auto-reconnect when a USB device is unplugged and plugged back in,
 - Read/write ".csv", ".txt" data logs; large files load in the background,
 - Light and dark themes (or follow the system),
@@ -31,16 +32,6 @@ Universal serial monitor with data plotting capabilities, based on [Qt](https://
 Downloads for Windows and macOS are attached to each [release](https://github.com/mich-w/QtSerialMonitor/releases). See [CHANGELOG.md](CHANGELOG.md) for what changed.
 -
 ---
-
-**Work in progress:**
-  
-    - 3D Orientation Demo - for IMU testing (user will be able to toggle between chart view
-      and a simple 3D scene containing an object rotating accordingly to received roll,
-      pitch and yaw values, representing the sensor's orientation),
-
-    - Improvements, fixes etc.
-
-----
 
 **Building from source:**
 

@@ -1,5 +1,6 @@
 // Integration test: drives the real MainWindow headlessly and feeds it data over UDP.
 #include "mainwindow.h"
+#include "orientationview.h"
 #include "theme.h"
 #include <QCheckBox>
 #include <QComboBox>
@@ -386,6 +387,29 @@ private slots:
         window->applyPreferences(AppPreferences()); // back to defaults
         QVERIFY(graph->antialiased());
         QCOMPARE(AppPreferences::load().chartRefreshRate, 30);
+    }
+
+    void orientationViewWithDemo()
+    {
+        find<QPushButton>("pushButtonUDPConnect")->setChecked(false);
+        auto *view = find<OrientationView>("orientationView");
+
+        // Plain chart: the demo sends no orientation.
+        window->startDemo(100);
+        QTRY_VERIFY(graphNames().contains("sin1"));
+        QVERIFY(!graphNames().contains("roll"));
+
+        // 3D view shown: the demo adds roll/pitch/yaw and the board follows them.
+        window->findChild<QAction *>("action3D_orientation")->trigger();
+        QVERIFY(view->isVisible());
+        QTRY_VERIFY(graphNames().contains("roll"));
+        QTRY_VERIFY(view->roll() != 0.0 || view->pitch() != 0.0);
+        const double yawBefore = view->yaw();
+        QTRY_VERIFY(view->yaw() != yawBefore); // keeps moving
+
+        find<QPushButton>("pushButtonOrientationBack")->click();
+        QVERIFY(!view->isVisible());
+        find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot

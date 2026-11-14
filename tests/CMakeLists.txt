@@ -24,3 +24,8 @@ add_executable(tst_mainwindow tst_mainwindow.cpp)
 target_link_libraries(tst_mainwindow PRIVATE qtsm_gui Qt::Test)
 add_test(NAME tst_mainwindow COMMAND tst_mainwindow)
 set_tests_properties(tst_mainwindow PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_executable(tst_orientationview tst_orientationview.cpp)
+target_link_libraries(tst_orientationview PRIVATE qtsm_gui Qt::Test)
+add_test(NAME tst_orientationview COMMAND tst_orientationview)
+set_tests_properties(tst_orientationview PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

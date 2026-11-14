@@ -3,6 +3,8 @@
 #include <QRandomGenerator>
 #include <QtMath>
 
+#include <cmath>
+
 DemoTransport::DemoTransport(QObject *parent) : Transport(parent)
 {
     sampleTimer.setTimerType(Qt::PreciseTimer);
@@ -43,7 +45,7 @@ bool DemoTransport::send(const QByteArray &bytes)
     return true;
 }
 
-QByteArray DemoTransport::sampleLine(double seconds, double noise)
+QByteArray DemoTransport::sampleLine(double seconds, double noise, bool orientation)
 {
     constexpr double period = 5.0; // seconds, like the README animation
     const double phase = 2.0 * M_PI * seconds / period;
@@ -52,11 +54,26 @@ QByteArray DemoTransport::sampleLine(double seconds, double noise)
     const double sin2 = 0.7 * qSin(phase - M_PI / 3.0);
     const double noisy = 0.3 * qSin(2.0 * M_PI * seconds / 13.0) + noise;
 
-    return QString("sin1 %1 sin2 %2 noisy %3\r\n")
-        .arg(sin1, 0, 'f', 2)
-        .arg(sin2, 0, 'f', 2)
-        .arg(noisy, 0, 'f', 2)
-        .toLatin1();
+    QString line = QString("sin1 %1 sin2 %2 noisy %3")
+                       .arg(sin1, 0, 'f', 2)
+                       .arg(sin2, 0, 'f', 2)
+                       .arg(noisy, 0, 'f', 2);
+
+    if (orientation)
+    {
+        // A gently rocking board that slowly turns around - like an IMU on a boat.
+        const double roll = 35.0 * qSin(2.0 * M_PI * seconds / 6.0);
+        const double pitch = 20.0 * qSin(2.0 * M_PI * seconds / 9.0 + 1.0);
+        const double yaw = std::fmod(seconds * 24.0, 360.0) - 180.0;
+        line += QString(" roll %1 pitch %2 yaw %3").arg(roll, 0, 'f', 1).arg(pitch, 0, 'f', 1).arg(yaw, 0, 'f', 1);
+    }
+
+    return (line + "\r\n").toLatin1();
+}
+
+void DemoTransport::setOrientationOutput(bool enabled)
+{
+    withOrientation = enabled;
 }
 
 void DemoTransport::emitSample()
@@ -64,5 +81,5 @@ void DemoTransport::emitSample()
     // Use the real elapsed time so timer jitter does not distort the waves.
     const double seconds = clock.elapsed() / 1000.0;
     const double noise = (QRandomGenerator::global()->generateDouble() - 0.5) * 0.1;
-    emit dataReceived(sampleLine(seconds, noise), false);
+    emit dataReceived(sampleLine(seconds, noise, withOrientation), false);
 }

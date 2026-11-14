@@ -142,8 +142,107 @@ void MainWindow::createTimers()
             { ui->radioButtonDeviceUpdate->setChecked(false); });
 }
 
+void MainWindow::setupOrientationView()
+{
+    auto *page = new QWidget(this);
+    page->setObjectName("pageOrientation");
+    auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
+
+    orientationView = new OrientationView(page);
+    layout->addWidget(orientationView, 1);
+
+    auto makeLabelEdit = [page](const char *name, const QString &text, const QString &tip)
+    {
+        auto *edit = new QLineEdit(text, page);
+        edit->setObjectName(name);
+        edit->setToolTip(tip);
+        edit->setMaximumWidth(110);
+        return edit;
+    };
+    auto *roll = makeLabelEdit("lineEditOrientationRoll", "roll", "Label whose value is the roll angle (right side down = positive)");
+    auto *pitch = makeLabelEdit("lineEditOrientationPitch", "pitch", "Label whose value is the pitch angle (nose up = positive)");
+    auto *yaw = makeLabelEdit("lineEditOrientationYaw", "yaw", "Label whose value is the yaw / heading (clockwise from above = positive)");
+    auto *radians = new QCheckBox("Values in radians", page);
+    radians->setObjectName("checkBoxOrientationRadians");
+    auto *back = new QPushButton("Back to chart", page);
+    back->setObjectName("pushButtonOrientationBack");
+    connect(back, &QPushButton::clicked, this, &MainWindow::on_actionPlotter_triggered);
+
+    auto *controls = new QHBoxLayout;
+    controls->addWidget(new QLabel("Roll:", page));
+    controls->addWidget(roll);
+    controls->addWidget(new QLabel("Pitch:", page));
+    controls->addWidget(pitch);
+    controls->addWidget(new QLabel("Yaw:", page));
+    controls->addWidget(yaw);
+    controls->addWidget(radians);
+    controls->addStretch(1);
+    controls->addWidget(back);
+    layout->addLayout(controls);
+
+    ui->stackedWidgetGraphView->addWidget(page);
+    ui->action3D_orientation->setEnabled(true);
+
+    // The demo device adds roll/pitch/yaw while the 3D view is shown.
+    connect(ui->stackedWidgetGraphView, &QStackedWidget::currentChanged, this, [this, page](int)
+            {
+                const bool orientationShown = ui->stackedWidgetGraphView->currentWidget() == page;
+                demo.setOrientationOutput(orientationShown);
+                if (orientationShown)
+                {
+                    orientationDirty = true;
+                    requestChartRefresh();
+                }
+            });
+}
+
+// Keeps the latest roll / pitch / yaw from parsed data; the view is updated on the refresh tick.
+void MainWindow::updateOrientation(const QStringList &labels, const QList<double> &values)
+{
+    const QString names[3] = {findChild<QLineEdit *>("lineEditOrientationRoll")->text().trimmed(),
+                              findChild<QLineEdit *>("lineEditOrientationPitch")->text().trimmed(),
+                              findChild<QLineEdit *>("lineEditOrientationYaw")->text().trimmed()};
+    bool changed = false;
+    const auto count = qMin(labels.count(), values.count());
+    for (auto i = 0; i < count; ++i)
+    {
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            if (!names[axis].isEmpty() && labels[i].compare(names[axis], Qt::CaseInsensitive) == 0)
+            {
+                orientationValues[axis] = values[i];
+                orientationReceived = true;
+                changed = true;
+            }
+        }
+    }
+
+    if (changed)
+    {
+        orientationDirty = true;
+        requestChartRefresh();
+    }
+}
+
+void MainWindow::refreshOrientationView()
+{
+    orientationDirty = false;
+    if (!orientationReceived)
+    {
+        orientationView->setHasData(false);
+        return;
+    }
+
+    const bool radians = findChild<QCheckBox *>("checkBoxOrientationRadians")->isChecked();
+    auto degrees = [radians](double value) { return radians ? qRadiansToDegrees(value) : value; };
+    orientationView->setOrientation(degrees(orientationValues[0]), degrees(orientationValues[1]), degrees(orientationValues[2]));
+}
+
 void MainWindow::setupGUI()
 {
+    setupOrientationView();
+
     // ----------------------- MainWindow ----------------------- //
     {
         connect(ui->comboBoxSend->lineEdit(), SIGNAL(returnPressed()), this, SLOT(on_comboBoxSendReturnPressedSlot()));
@@ -660,7 +759,8 @@ namespace
     "pushButtonEnableTableLog", "spinBoxMaxGraphs", "spinBoxMaxLines",
     "spinBoxMaxRowsLogTable", "spinBoxMaxTimeRange", "spinBoxProcessingDelay", "spinBoxRepeatInterval",
     "spinBoxRemoveOldLabels", "spinBoxScrollingTimeRange", "spinBoxUDPReceivePort",
-    "spinBoxUDPTargetPort", "tabWidgetControlSection", "tabWidgetTableView"};
+    "spinBoxUDPTargetPort", "tabWidgetControlSection", "tabWidgetTableView",
+    "lineEditOrientationRoll", "lineEditOrientationPitch", "lineEditOrientationYaw", "checkBoxOrientationRadians"};
 
     QSettings appSettings()
     {
@@ -1468,6 +1568,7 @@ void MainWindow::processIncomingLines(const QString &lines)
     this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), lines);
     this->processTable(labelList, numericDataList, timeStamps);
     this->processLogTable(timeStamps, labelList, numericDataList);
+    this->updateOrientation(labelList, numericDataList);
 }
 
 void MainWindow::clearGraphData(bool replot)
@@ -1608,6 +1709,9 @@ void MainWindow::requestChartRefresh()
 
 void MainWindow::refreshChart()
 {
+    if (orientationDirty && orientationView->isVisible())
+        refreshOrientationView();
+
     if (parsedDataDirty)
         refreshParsedDataTable();
 
@@ -1887,6 +1991,9 @@ void MainWindow::on_pushButtonClearAll_clicked()
 
     parser.restartChartTimer();
     parser.clearExternalClock();
+
+    orientationReceived = false;
+    orientationView->setHasData(false);
     clearGraphs(true);
 
     clearParsedDataTable();
@@ -2159,7 +2266,7 @@ void MainWindow::on_actionPlotter_triggered()
 
 void MainWindow::on_action3D_orientation_triggered()
 {
-    //  ui->stackedWidget->setCurrentIndex(1); // WIP
+    ui->stackedWidgetGraphView->setCurrentWidget(findChild<QWidget *>("pageOrientation"));
 }
 
 void MainWindow::on_printPlot(QPrinter *printer)

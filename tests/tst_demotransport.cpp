@@ -20,6 +20,19 @@ private slots:
         QCOMPARE(values[1], 0.35); // 0.7 * sin(pi/2 - pi/3)
     }
 
+    void orientationOutputOnRequest()
+    {
+        Parser parser;
+        parser.parse(QString::fromLatin1(DemoTransport::sampleLine(1.5, 0, true)), false);
+        QCOMPARE(parser.getStringListLabels(), (QStringList{"sin1", "sin2", "noisy", "roll", "pitch", "yaw"}));
+        QCOMPARE(parser.getListNumericValues()[3], 35.0); // quarter of the 6 s roll period
+
+        DemoTransport demo;
+        QVERIFY(!demo.orientationOutput());
+        demo.setOrientationOutput(true);
+        QVERIFY(demo.orientationOutput());
+    }
+
     void linesEndLikeArduinoPrintln()
     {
         QVERIFY(DemoTransport::sampleLine(0).endsWith("\r\n"));

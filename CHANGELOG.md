@@ -15,6 +15,10 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Up/Down in the send box walked the history in the wrong direction; Up now recalls the most recent command, like a terminal.
 
 - Settings window (Tools → Settings…, Ctrl+,): theme, chart refresh rate (30/60 fps) and line rendering (Smooth/Fast).
+- 3D orientation view (View → Change visualisation → 3D Orientation, Ctrl+9): a board rotated by the latest roll / pitch / yaw values, with configurable labels and degrees or radians. While it is shown, the demo device also streams roll / pitch / yaw.
+
+### Removed
+- The unused Qt 3D Studio orientation prototype and its resource files.
 
 ### Performance
 Measured with the demo device at 1000 lines/s (headless, Qt 6): the app used to keep up with ~200 lines/s
