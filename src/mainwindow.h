@@ -267,6 +267,9 @@ private:
     bool orientationDirty = false;
     void setupOrientationView();
     void setupTextViewOptions();
+    void setupChartOptions();
+    QFrame *makeOptionsPopup(QToolButton *button, const QString &objectName);
+    QHBoxLayout *chartBarLayout = nullptr; // Pause, history scroll bar and chart actions
     void updateOrientation(const QStringList &labels, const QList<double> &values);
     void refreshOrientationView();
     bool logTableScrollPending = false;

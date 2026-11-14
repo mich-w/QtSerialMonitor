@@ -238,6 +238,117 @@ void MainWindow::refreshOrientationView()
     orientationView->setOrientation(degrees(orientationValues[0]), degrees(orientationValues[1]), degrees(orientationValues[2]));
 }
 
+// An "Options" button with a popup panel below (or above, near the screen bottom).
+QFrame *MainWindow::makeOptionsPopup(QToolButton *button, const QString &objectName)
+{
+    button->setText("Options");
+    button->setArrowType(Qt::DownArrow);
+    button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+    auto *panel = new QFrame(this, Qt::Popup);
+    panel->setObjectName(objectName);
+    panel->setProperty("optionsPopup", true); // styled by the theme
+    panel->setFrameShape(QFrame::StyledPanel);
+
+    connect(button, &QToolButton::clicked, this, [button, panel]()
+            {
+                panel->adjustSize();
+                QPoint position = button->mapToGlobal(QPoint(button->width() - panel->width(), button->height()));
+                if (const QScreen *screen = button->screen())
+                {
+                    const QRect available = screen->availableGeometry();
+                    if (position.y() + panel->height() > available.bottom())
+                        position.setY(button->mapToGlobal(QPoint(0, 0)).y() - panel->height());
+                    position.setX(qBound(available.left(), position.x(), available.right() - panel->width()));
+                }
+                panel->move(position);
+                panel->show();
+            });
+    return panel;
+}
+
+// Same idea for the chart: the three rows of options under the chart become part of the Pause row
+// plus an "Options" popup, so the chart gets the height.
+void MainWindow::setupChartOptions()
+{
+    // ----- Row under the chart (next to Pause and the history scroll bar) ----- //
+    ui->checkBoxAutoTrack->setText("Auto-scroll");
+    ui->checkBoxAutoTrack->setToolTip("Follow the newest data (X on the chart)");
+    ui->spinBoxScrollingTimeRange->setPrefix("Last ");
+    ui->spinBoxScrollingTimeRange->setSuffix(" s");
+    ui->spinBoxScrollingTimeRange->setToolTip("Visible time window while auto-scrolling");
+    ui->pushButtonClearGraphs->setToolTip("Remove the plotted data, keep the graphs");
+
+    auto *optionsButton = new QToolButton(this);
+    optionsButton->setObjectName("toolButtonChartOptions");
+    optionsButton->setToolTip("Chart options");
+
+    chartBarLayout->addWidget(ui->checkBoxAutoTrack);
+    chartBarLayout->addWidget(ui->spinBoxScrollingTimeRange);
+    chartBarLayout->addWidget(ui->pushButtonClearGraphs);
+    ui->toolButtonAdvancedGraphMenu->setMinimumWidth(0); // sized for the old grid
+    ui->toolButtonAdvancedGraphMenu->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    chartBarLayout->addWidget(ui->toolButtonAdvancedGraphMenu);
+    chartBarLayout->addWidget(optionsButton);
+
+    // ----- Options popup ----- //
+    QFrame *panel = makeOptionsPopup(optionsButton, "chartOptionsPanel");
+    auto *panelLayout = new QVBoxLayout(panel);
+
+    ui->checkBoxEnableTracer->setText("Tracer");
+    ui->checkBoxAutoRescaleY->setText("Auto-scale Y");
+    ui->checkBoxAutoRescaleY->setToolTip("Fit the value axis to the data while auto-scrolling");
+    ui->pushButtonEnablePlot->setToolTip("Stop adding new data to the chart (the text view and logging continue)");
+    on_pushButtonEnablePlot_toggled(ui->pushButtonEnablePlot->isChecked()); // new button texts
+
+    auto *tracerRow = new QHBoxLayout;
+    tracerRow->addWidget(ui->checkBoxEnableTracer);
+    tracerRow->addWidget(ui->comboBoxTracerStyle, 1);
+
+    auto *viewGroup = new QGroupBox("View", panel);
+    auto *viewForm = new QFormLayout(viewGroup);
+    viewForm->addRow(ui->checkBoxShowLegend);
+    viewForm->addRow(tracerRow);
+    viewForm->addRow(ui->checkBoxAutoRescaleY);
+    viewForm->addRow("Plotting:", ui->pushButtonEnablePlot);
+
+    ui->spinBoxMaxGraphs->setPrefix(QString());
+    ui->spinBoxMaxGraphs->setSuffix(QString());
+    ui->spinBoxMaxTimeRange->setPrefix(QString());
+    ui->spinBoxMaxTimeRange->setSuffix(" s");
+    ui->spinBoxMaxTimeRange->setSpecialValueText("forever"); // 0 = keep everything
+    ui->spinBoxRemoveOldLabels->setPrefix(QString());
+    ui->spinBoxRemoveOldLabels->setSuffix(" updates");
+    ui->spinBoxRemoveOldLabels->setSpecialValueText("never"); // 0 = keep graphs
+    ui->spinBoxRemoveOldLabels->setToolTip("Remove a graph after this many updates without new data for it");
+    ui->lineEditCustomParsingRules->setMinimumWidth(180);
+
+    auto *graphsGroup = new QGroupBox("Graphs", panel);
+    auto *graphsForm = new QFormLayout(graphsGroup);
+    graphsForm->addRow("Show graphs:", ui->comboBoxGraphDisplayMode);
+    graphsForm->addRow("Labels:", ui->lineEditCustomParsingRules);
+    graphsForm->addRow("Max graphs:", ui->spinBoxMaxGraphs);
+    graphsForm->addRow("Keep data for:", ui->spinBoxMaxTimeRange);
+    graphsForm->addRow("Remove silent graph after:", ui->spinBoxRemoveOldLabels);
+
+    auto *clockRow = new QHBoxLayout;
+    clockRow->addWidget(ui->lineEditExternalClockLabel, 1);
+    clockRow->addWidget(ui->comboBoxExternalTimeFormat);
+
+    auto *timeGroup = new QGroupBox("Time", panel);
+    auto *timeForm = new QFormLayout(timeGroup);
+    timeForm->addRow("Time reference:", ui->comboBoxClockSource);
+    timeForm->addRow("External clock:", clockRow);
+
+    panelLayout->addWidget(viewGroup);
+    panelLayout->addWidget(graphsGroup);
+    panelLayout->addWidget(timeGroup);
+    panelLayout->addWidget(ui->pushButtonClearAll);
+
+    // The old panel is now empty.
+    ui->scrollArea->hide();
+}
+
 // Replaces the crowded, horizontally scrolling options area under the text view with one row of
 // frequently used actions and an "Options" popup for the rest. The existing widgets are re-parented,
 // so their slots and saved settings are unchanged.
@@ -261,10 +372,7 @@ void MainWindow::setupTextViewOptions()
 
     auto *optionsButton = new QToolButton(bar);
     optionsButton->setObjectName("toolButtonTextViewOptions");
-    optionsButton->setText("Options");
     optionsButton->setToolTip("Text view options");
-    optionsButton->setArrowType(Qt::DownArrow);
-    optionsButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
     row->addWidget(ui->pushButtonTextLogToggle);
     row->addWidget(ui->checkBoxScrollToButtom);
@@ -274,9 +382,7 @@ void MainWindow::setupTextViewOptions()
     row->addWidget(optionsButton);
 
     // ----- Options popup ----- //
-    auto *panel = new QFrame(this, Qt::Popup);
-    panel->setObjectName("textViewOptionsPanel");
-    panel->setFrameShape(QFrame::StyledPanel);
+    QFrame *panel = makeOptionsPopup(optionsButton, "textViewOptionsPanel");
     auto *panelLayout = new QVBoxLayout(panel);
 
     ui->checkBoxShowTime->setText("Timestamps");
@@ -308,21 +414,6 @@ void MainWindow::setupTextViewOptions()
     panelLayout->addWidget(displayGroup);
     panelLayout->addWidget(inputGroup);
 
-    connect(optionsButton, &QToolButton::clicked, this, [optionsButton, panel]()
-            {
-                panel->adjustSize();
-                QPoint position = optionsButton->mapToGlobal(QPoint(optionsButton->width() - panel->width(), optionsButton->height()));
-                if (const QScreen *screen = optionsButton->screen())
-                {
-                    const QRect available = screen->availableGeometry();
-                    if (position.y() + panel->height() > available.bottom()) // open upwards near the bottom of the screen
-                        position.setY(optionsButton->mapToGlobal(QPoint(0, 0)).y() - panel->height());
-                    position.setX(qBound(available.left(), position.x(), available.right() - panel->width()));
-                }
-                panel->move(position);
-                panel->show();
-            });
-
     // The old area is now empty.
     const int index = ui->verticalLayout_2->indexOf(ui->scrollAreaTextLogOptions);
     ui->scrollAreaTextLogOptions->hide();
@@ -333,6 +424,7 @@ void MainWindow::setupGUI()
 {
     setupOrientationView();
     setupTextViewOptions();
+    setupChartOptions();
 
     // ----------------------- MainWindow ----------------------- //
     {
@@ -480,7 +572,8 @@ void MainWindow::createChart()
     scrollBarChartHistory->setObjectName("scrollBarChartHistory");
     scrollBarChartHistory->setToolTip("Scroll through the recorded history. Moving it pauses the chart.");
 
-    auto *historyRow = new QHBoxLayout;
+    chartBarLayout = new QHBoxLayout;
+    auto *historyRow = chartBarLayout;
     historyRow->addWidget(pushButtonPauseChart);
     historyRow->addWidget(scrollBarChartHistory, 1);
     // Insert directly under the chart; the chart options panel moves one row down.
@@ -2175,10 +2268,7 @@ void MainWindow::on_pushButtonClearAll_clicked()
 
 void MainWindow::on_pushButtonEnablePlot_toggled(bool checked)
 {
-    if (checked)
-        ui->pushButtonEnablePlot->setText("Enable");
-    else
-        ui->pushButtonEnablePlot->setText("Disable");
+    ui->pushButtonEnablePlot->setText(checked ? "Resume plotting" : "Stop plotting"); // checked = stopped
 }
 
 void MainWindow::on_pushButtonSend_clicked()
