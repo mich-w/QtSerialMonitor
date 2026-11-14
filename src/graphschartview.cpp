@@ -150,6 +150,8 @@ void GraphsChartView::sync(QCustomPlot *source)
     {
         root->setProperty("xMin", xRange.lower);
         root->setProperty("xMax", xRange.upper);
+        root->setProperty("yMin", yRange.lower);
+        root->setProperty("yMax", yRange.upper);
     }
     axisY->setMin(yRange.lower);
     axisY->setMax(yRange.upper);
