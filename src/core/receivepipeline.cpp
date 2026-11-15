@@ -1,5 +1,8 @@
 #include "receivepipeline.h"
 
+#include <QRegularExpression>
+#include <QTime>
+
 ReceivePipeline::ReceivePipeline(QObject *parent) : QObject(parent)
 {
     batchTimer.setSingleShot(true);
@@ -27,8 +30,16 @@ void ReceivePipeline::reset()
     partialLineTimer.stop();
     pendingBytes.clear();
     pendingText.clear();
-    lineBuffer.clear();
+    partialLine.clear();
+    pendingLines.clear();
+    pendingTimes.clear();
+    lastChunkTime = -1;
     decoder.reset();
+}
+
+void ReceivePipeline::setClock(std::function<long()> newClock)
+{
+    clock = std::move(newClock);
 }
 
 void ReceivePipeline::append(const QByteArray &bytes, bool isCompleteMessage)
@@ -36,13 +47,32 @@ void ReceivePipeline::append(const QByteArray &bytes, bool isCompleteMessage)
     if (bytes.isEmpty())
         return;
 
+    const long now = clock ? clock() : QTime::currentTime().msecsSinceStartOfDay();
     const QString text = decoder.decode(bytes);
     pendingBytes += bytes;
     pendingText += text;
-    lineBuffer += text;
 
-    if (isCompleteMessage && !lineBuffer.isEmpty() && !lineBuffer.endsWith('\n') && !lineBuffer.endsWith('\r'))
-        lineBuffer += '\n';
+    // Split off the lines completed by this chunk.
+    QString buffer = partialLine + text;
+    if (isCompleteMessage && !buffer.isEmpty() && !buffer.endsWith('\n') && !buffer.endsWith('\r'))
+        buffer += '\n';
+    const int lastLineEnd = qMax(buffer.lastIndexOf('\n'), buffer.lastIndexOf('\r'));
+    partialLine = buffer.mid(lastLineEnd + 1);
+
+    if (lastLineEnd >= 0)
+    {
+        static const QRegularExpression lineBreaks("[\\r\\n]+");
+        const QStringList lines = buffer.left(lastLineEnd).split(lineBreaks, Qt::SkipEmptyParts);
+
+        // They were transmitted one after another since the previous chunk - spread their times.
+        const long window = lastChunkTime < 0 ? 0 : qBound(0L, now - lastChunkTime, MaxSpreadMs);
+        for (auto i = 0; i < lines.count(); ++i)
+        {
+            pendingLines.append(lines[i]);
+            pendingTimes.append(now - window * (lines.count() - 1 - i) / lines.count());
+        }
+    }
+    lastChunkTime = now;
 
     // The timer only runs while there is data - no polling when idle.
     if (!batchTimer.isActive())
@@ -62,15 +92,16 @@ void ReceivePipeline::flush()
         emit received(bytes, text);
     }
 
-    const int lastLineEnd = qMax(lineBuffer.lastIndexOf('\n'), lineBuffer.lastIndexOf('\r'));
-    if (lastLineEnd >= 0)
+    if (!pendingLines.isEmpty())
     {
-        const QString lines = lineBuffer.left(lastLineEnd + 1);
-        lineBuffer.remove(0, lastLineEnd + 1);
-        emit linesReceived(lines);
+        const QString lines = pendingLines.join('\n') + '\n';
+        const QList<long> times = pendingTimes;
+        pendingLines.clear();
+        pendingTimes.clear();
+        emit linesReceived(lines, times);
     }
 
-    if (lineBuffer.isEmpty())
+    if (partialLine.isEmpty())
         partialLineTimer.stop();
     else
         partialLineTimer.start();
@@ -78,10 +109,10 @@ void ReceivePipeline::flush()
 
 void ReceivePipeline::flushPartialLine()
 {
-    if (lineBuffer.isEmpty())
+    if (partialLine.trimmed().isEmpty())
         return;
 
-    const QString line = lineBuffer;
-    lineBuffer.clear();
-    emit linesReceived(line);
+    const QString line = partialLine;
+    partialLine.clear();
+    emit linesReceived(line, {lastChunkTime});
 }

@@ -580,6 +580,23 @@ private slots:
         rules->clear();
     }
 
+    void highRatePointsDoNotPileUp() // issue #8
+    {
+        find<QPushButton>("pushButtonUDPConnect")->setChecked(false);
+        find<QSpinBox>("spinBoxProcessingDelay")->setValue(50); // batches of ~25 lines at 500 Hz
+        window->startDemo(500);
+        QCPGraph *graph = nullptr;
+        QTRY_VERIFY((graph = find<QCustomPlot>("widgetChart")->graph(0)) && graph->dataCount() > 300);
+        find<QPushButton>("pushButtonSerialConnect")->setChecked(false);
+        find<QSpinBox>("spinBoxProcessingDelay")->setValue(1);
+
+        int sameTime = 0;
+        for (int i = 1; i < graph->dataCount(); ++i)
+            if (graph->dataMainKey(i) == graph->dataMainKey(i - 1))
+                ++sameTime;
+        QVERIFY2(sameTime < graph->dataCount() / 10, qPrintable(QString("%1 of %2 points share a time stamp").arg(sameTime).arg(graph->dataCount())));
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");

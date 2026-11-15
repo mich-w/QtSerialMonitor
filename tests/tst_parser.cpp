@@ -1,4 +1,7 @@
 #include "parser.h"
+#include "receivepipeline.h"
+
+#include <cmath>
 
 #include <QtTest>
 
@@ -189,6 +192,52 @@ private slots:
         QCOMPARE(result[1].label, QString("v"));
         QCOMPARE(result[1].time, 1000L);
         QCOMPARE(result[3].time, 2000L);
+    }
+
+    void highSpeedArduinoOutputSplitAnywhere() // issue #9
+    {
+        // The reporter's sketch: five comma-separated values per line, no labels.
+        QByteArray stream;
+        QList<QList<double>> expected;
+        for (float x = 0.0f; x < 3.0f; x += 0.1f)
+        {
+            const QList<double> values = {std::sin(x) * 100.0, std::cos(x) * 100.0, std::sin(x) * 50.0, std::cos(x) * 50.0, std::sin(x)};
+            QStringList fields;
+            for (double v : values)
+                fields << QString::number(v, 'f', 2); // Serial.print(float) prints 2 decimals
+            stream += fields.join(',').toLatin1() + "\r\n";
+            QList<double> rounded;
+            for (const auto &f : fields)
+                rounded << f.toDouble();
+            expected << rounded;
+        }
+
+        // Serial data arrives in arbitrary chunks: try every split point.
+        for (int split = 1; split < stream.size(); split += 7)
+        {
+            ReceivePipeline pipeline;
+            QList<double> values;
+            QStringList labels;
+            connect(&pipeline, &ReceivePipeline::linesReceived, [&](const QString &lines, const QList<long> &times)
+                    {
+                        Parser parser;
+                        parser.parse(lines, true, false, QString(), times);
+                        values << parser.getListNumericValues();
+                        labels << parser.getStringListLabels();
+                    });
+            pipeline.append(stream.left(split));
+            pipeline.flush();
+            pipeline.append(stream.mid(split));
+            pipeline.flush();
+
+            QCOMPARE(values.count(), expected.count() * 5);
+            for (int line = 0; line < expected.count(); ++line)
+                for (int column = 0; column < 5; ++column)
+                {
+                    QCOMPARE(values[line * 5 + column], expected[line][column]);
+                    QCOMPARE(labels[line * 5 + column], "Graph " + QString::number(column));
+                }
+        }
     }
 
     void storageToCsvColumns()

@@ -231,7 +231,7 @@ private:
     ReceivePipeline udpPipeline;
     void connectTransport(Transport *transport, ReceivePipeline *pipeline);
     void displayIncoming(const QByteArray &bytes, const QString &text);
-    void processIncomingLines(const QString &lines);
+    void processIncomingLines(const QString &lines, const QList<long> &arrivalTimes);
     Ui::MainWindow *ui;
     void addLog(QString text, bool appendAsLine = false);
     void addLogBytes(QByteArray bytes, bool hexToBinary = false, bool appendAsLine = false);

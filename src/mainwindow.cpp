@@ -1957,12 +1957,13 @@ void MainWindow::displayIncoming(const QByteArray &bytes, const QString &text)
 }
 
 // Complete lines only - a value split across two reads is never parsed in halves.
-void MainWindow::processIncomingLines(const QString &lines)
+void MainWindow::processIncomingLines(const QString &lines, const QList<long> &arrivalTimes)
 {
     if (lines.trimmed().isEmpty())
         return;
 
-    parser.parse(lines, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text()); // Parse string - split into labels + numeric data
+    parser.parse(lines, ui->comboBoxClockSource->currentIndex() == 0, ui->comboBoxClockSource->currentIndex() == 1, ui->lineEditExternalClockLabel->text(),
+                 arrivalTimes); // each line keeps the time it arrived, not the time it was processed
     QStringList labelList = parser.getStringListLabels();
     QList<double> numericDataList = parser.getListNumericValues();
     QList<long> timeStamps = parser.getListTimeStamp();

@@ -3,6 +3,8 @@
 #include <QSignalSpy>
 #include <QtTest>
 
+Q_DECLARE_METATYPE(QList<long>)
+
 class TestReceivePipeline : public QObject
 {
     Q_OBJECT
@@ -79,6 +81,43 @@ private slots:
         pipeline.append(QByteArray("A\0\xff", 3));
         pipeline.flush();
         QCOMPARE(rawSpy.at(0).at(0).toByteArray(), QByteArray("A\0\xff", 3));
+    }
+
+    void linesInOneChunkGetSpreadArrivalTimes() // issue #8
+    {
+        ReceivePipeline pipeline;
+        long now = 1000;
+        pipeline.setClock([&now]() { return now; });
+        QSignalSpy lineSpy(&pipeline, &ReceivePipeline::linesReceived);
+
+        pipeline.append("a 1\n");
+        now = 1060;
+        pipeline.append("a 2\na 3\na 4\n"); // three lines arrived together
+        pipeline.flush();
+
+        const auto times = lineSpy.at(0).at(1).value<QList<long>>();
+        QCOMPARE(times.count(), 4);
+        QCOMPARE(times[0], 1000L);
+        QCOMPARE(times[1], 1020L); // spread over the 60 ms since the previous chunk
+        QCOMPARE(times[2], 1040L);
+        QCOMPARE(times[3], 1060L);
+    }
+
+    void burstAfterIdleIsNotSpreadBackwards()
+    {
+        ReceivePipeline pipeline;
+        long now = 1000;
+        pipeline.setClock([&now]() { return now; });
+        QSignalSpy lineSpy(&pipeline, &ReceivePipeline::linesReceived);
+
+        pipeline.append("a 1\n");
+        now = 9000; // 8 s of silence
+        pipeline.append("a 2\na 3\n");
+        pipeline.flush();
+
+        const auto times = lineSpy.at(0).at(1).value<QList<long>>();
+        QCOMPARE(times[1], 9000 - ReceivePipeline::MaxSpreadMs / 2);
+        QCOMPARE(times[2], 9000L);
     }
 
     void resetDropsPendingData()

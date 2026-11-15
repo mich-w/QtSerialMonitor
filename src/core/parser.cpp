@@ -33,22 +33,27 @@ namespace
     }
 }
 
-void Parser::appendSample(const QString &label, double value, bool syncToSystemClock, bool useExternalClock)
+void Parser::appendSample(const QString &label, double value, bool syncToSystemClock, bool useExternalClock, long arrivalTime)
 {
     stringListLabels.append(label);
     listNumericData.append(value);
 
     if (useExternalClock)
         listTimeStamp.append(latestTimeStamp.msecsSinceStartOfDay());
-    else if (syncToSystemClock)
-        listTimeStamp.append(QTime::currentTime().msecsSinceStartOfDay());
     else
-        listTimeStamp.append(parserClock.elapsed());
+    {
+        const long now = QTime::currentTime().msecsSinceStartOfDay();
+        const long time = arrivalTime >= 0 ? arrivalTime : now;
+        if (syncToSystemClock)
+            listTimeStamp.append(time);
+        else // time since the chart clock started, shifted back by how long ago the line arrived
+            listTimeStamp.append(parserClock.elapsed() - (now - time));
+    }
 }
 
 // Teleplot line: ">name:value", ">name:timestamp_ms:value", optionally followed by "§unit" and/or "|flags".
 // Returns false if the line is not a numeric Teleplot sample.
-bool Parser::parseTeleplotLine(const QString &line, bool syncToSystemClock, bool useExternalClock)
+bool Parser::parseTeleplotLine(const QString &line, bool syncToSystemClock, bool useExternalClock, long arrivalTime)
 {
     QString body = line.trimmed().mid(1);
 
@@ -79,7 +84,7 @@ bool Parser::parseTeleplotLine(const QString &line, bool syncToSystemClock, bool
             latestTimeStamp = QDateTime::fromMSecsSinceEpoch(epochMs).time();
     }
 
-    appendSample(parts[0].trimmed(), value.toDouble(), syncToSystemClock, useExternalClock);
+    appendSample(parts[0].trimmed(), value.toDouble(), syncToSystemClock, useExternalClock, arrivalTime);
     return true;
 }
 
@@ -119,7 +124,7 @@ QTime Parser::findTimeStamp(const QStringList &tokens) const
     return QTime();
 }
 
-void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternalClock, QString externalClockLabel)
+void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternalClock, QString externalClockLabel, const QList<long> &lineTimes)
 {
     lastParseAborted = false;
     listNumericData.clear();
@@ -128,15 +133,17 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
 
     QStringList inputStringSplitArrayLines = inputString.split(lineSeparators, Qt::SkipEmptyParts);
     lineCount = inputStringSplitArrayLines.count();
+    const bool haveLineTimes = lineTimes.count() == lineCount;
 
     for (auto l = 0; l < lineCount; ++l)
     {
         if (shouldStop(l))
             break;
+        const long arrivalTime = haveLineTimes ? lineTimes[l] : -1;
 
         if (inputStringSplitArrayLines[l].startsWith('>'))
         {
-            parseTeleplotLine(inputStringSplitArrayLines[l], syncToSystemClock, useExternalClock);
+            parseTeleplotLine(inputStringSplitArrayLines[l], syncToSystemClock, useExternalClock, arrivalTime);
             continue;
         }
 
@@ -179,7 +186,7 @@ void Parser::parse(QString inputString, bool syncToSystemClock, bool useExternal
                     label.chop(1);
             }
 
-            appendSample(label, tokens[i].toDouble(), syncToSystemClock, useExternalClock);
+            appendSample(label, tokens[i].toDouble(), syncToSystemClock, useExternalClock, arrivalTime);
         }
     }
 }

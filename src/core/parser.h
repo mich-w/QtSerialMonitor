@@ -28,7 +28,9 @@ public:
     void appendSetToMemory(QStringList newlabelList, QList<double> newDataList, QList<long> newTimeList, QString text = "");
     void clearExternalClock();
     void clearStorage();
-    void parse(QString inputString, bool syncToSystemClock = true, bool useExternalClock = false, QString externalClockLabel = QString());
+    // lineTimes (optional): arrival time of each non-empty line in ms since midnight, used instead of "now".
+    void parse(QString inputString, bool syncToSystemClock = true, bool useExternalClock = false, QString externalClockLabel = QString(),
+               const QList<long> &lineTimes = {});
     void parseCSV(QString inputString, bool useExternalLabel = false, QString externalClockLabel = "");
     void resetTimeRange();
     void restartChartTimer();
@@ -40,8 +42,8 @@ private:
     bool lastParseAborted = false;
     std::function<void(int)> progressCallback;
     bool shouldStop(int line); // reports progress, returns true when aborted
-    void appendSample(const QString &label, double value, bool syncToSystemClock, bool useExternalClock);
-    bool parseTeleplotLine(const QString &line, bool syncToSystemClock, bool useExternalClock);
+    void appendSample(const QString &label, double value, bool syncToSystemClock, bool useExternalClock, long arrivalTime = -1);
+    bool parseTeleplotLine(const QString &line, bool syncToSystemClock, bool useExternalClock, long arrivalTime = -1);
     int lineCount = 0;
     QList<double> dataStorage;
     QList<double> listNumericData;

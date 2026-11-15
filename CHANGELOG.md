@@ -12,6 +12,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Tools menu with *Demo device*; the demo device is listed among serial devices only while it runs.
 
 ### Fixed
+- Points piled up on the same time stamp at high data rates. Each line now gets the time it arrived, and lines that arrive together are spread over the time since the previous chunk (#8).
+- Glitches with fast data: values split across two reads were plotted in halves. Fixed by parsing only complete lines; a test feeds the reporter's sketch output split at every possible point (#9).
 - "Plot only" split labels with spaces ("Graph 0" became "Graph || 0") and matched parts of labels ("Graph 1" also showed "Graph 10"). Labels are now separated by `||` or commas and matched exactly (#10).
 - The "Save" button on the Parser memory tab did nothing: its handler was named after a renamed widget and never connected. It also stored one label per graph instead of per value and time stamps in seconds instead of milliseconds.
 - Every received line was displayed, plotted and logged twice, because the serial port and the demo device share a receive pipeline and its outputs were connected once per transport.
