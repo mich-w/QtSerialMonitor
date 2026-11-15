@@ -92,6 +92,7 @@ target_link_libraries(qtsm_core PUBLIC Qt::Core Qt::Network Qt::SerialPort)
 # ---------------------------------------------------------------------------
 # GUI code as a library so integration tests can drive MainWindow.
 add_library(qtsm_gui STATIC
+    src/chartdatamodel.cpp   src/chartdatamodel.h
     src/codeeditor.cpp       src/codeeditor.h
     src/config.h
     src/icons.cpp            src/icons.h

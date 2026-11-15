@@ -30,3 +30,8 @@ add_executable(tst_orientationview tst_orientationview.cpp)
 target_link_libraries(tst_orientationview PRIVATE qtsm_gui Qt::Test)
 add_test(NAME tst_orientationview COMMAND tst_orientationview)
 set_tests_properties(tst_orientationview PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_executable(tst_chartdatamodel tst_chartdatamodel.cpp)
+target_link_libraries(tst_chartdatamodel PRIVATE qtsm_gui Qt::Test)
+add_test(NAME tst_chartdatamodel COMMAND tst_chartdatamodel)
+set_tests_properties(tst_chartdatamodel PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
