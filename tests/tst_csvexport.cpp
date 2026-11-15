@@ -2,8 +2,26 @@
 #include "parser.h"
 
 #include <QElapsedTimer>
+#include <QAbstractTableModel>
 #include <QTemporaryDir>
 #include <QtTest>
+
+class TableModel : public QAbstractTableModel // QStandardItemModel needs Qt Gui
+{
+public:
+    QStringList header;
+    QList<QStringList> rows;
+    int rowCount(const QModelIndex & = {}) const override { return int(rows.count()); }
+    int columnCount(const QModelIndex & = {}) const override { return int(header.count()); }
+    QVariant data(const QModelIndex &index, int role) const override
+    {
+        return role == Qt::DisplayRole ? rows[index.row()].value(index.column()) : QVariant();
+    }
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override
+    {
+        return role == Qt::DisplayRole && orientation == Qt::Horizontal ? header.value(section) : QVariant();
+    }
+};
 
 class TestCsvExport : public QObject
 {
@@ -19,6 +37,25 @@ private slots:
         QFile file(path);
         QVERIFY(file.open(QIODevice::ReadOnly));
         QCOMPARE(QString::fromUtf8(file.readAll()), QString("\"a\",\"b \"\"x\"\"\"\n1,0.5\n2,\n3,\n"));
+    }
+
+    void writesTable() // the log table export did not escape quotes
+    {
+        TableModel model;
+        model.header = QStringList{"name", "say \"hi\""};
+        model.rows = QList<QStringList>{{"a,b", "\"quoted\""}, {"", "2"}};
+
+        QTemporaryDir dir;
+        const QString path = dir.filePath("table.csv");
+        QVERIFY(CsvExport::writeTable(path, &model));
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        QCOMPARE(QString::fromUtf8(file.readAll()),
+                 QString("\"name\",\"say \"\"hi\"\"\"\n\"a,b\",\"\"\"quoted\"\"\"\n,\"2\"\n"));
+
+        QString error;
+        QVERIFY(!CsvExport::writeTable(dir.filePath("missing/dir/table.csv"), &model, ',', &error));
+        QVERIFY(!error.isEmpty());
     }
 
     void bigExportIsFast() // issue #7: 200 000 rows used to take hours

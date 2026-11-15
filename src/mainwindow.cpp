@@ -3293,42 +3293,18 @@ void MainWindow::on_checkBoxScrollLogEnableSorting_toggled(bool checked)
 // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
 void MainWindow::exportTableLogToCSV(QTableView *table, QChar sep)
 {
-    QString filters("CSV files (*.csv);;All files (*.*)");
-    QString defaultFilter("CSV files (*.csv)");
-    QString fileName = QFileDialog::getSaveFileName(0, "Save file", QCoreApplication::applicationDirPath(),
-                                                    filters, &defaultFilter);
-    QFile file(fileName);
+    const QString fileName = QFileDialog::getSaveFileName(this, "Save file", QDir::homePath() + "/log_table.csv", "CSV files (*.csv);;All files (*.*)");
+    if (fileName.isEmpty())
+        return;
 
-    QAbstractItemModel *model = table->model();
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    QString error;
+    const bool saved = CsvExport::writeTable(fileName, table->model(), sep, &error);
+    QApplication::restoreOverrideCursor();
 
-    if (file.open(QFile::WriteOnly | QFile::Truncate))
-    {
-        QTextStream data(&file);
-        QStringList strList;
-        for (int i = 0; i < model->columnCount(); ++i)
-        {
-            if (model->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString().length() > 0)
-                strList.append("\"" + model->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() + "\"");
-            else
-                strList.append("");
-        }
-
-        data << strList.join(sep) << "\n";
-
-        for (int i = 0; i < model->rowCount(); ++i)
-        {
-            strList.clear();
-            for (int j = 0; j < model->columnCount(); ++j)
-            {
-                if (model->data(model->index(i, j)).toString().length() > 0)
-                    strList.append("\"" + model->data(model->index(i, j)).toString() + "\"");
-                else
-                    strList.append("");
-            }
-            data << strList.join(sep) + "\n";
-        }
-        file.close();
-    }
+    addLog(saved ? "App >>\t Exported " + QString::number(table->model()->rowCount()) + " rows to " + fileName
+                 : "App >>\t Error - unable to export: " + error,
+           true);
 }
 
 void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep)
