@@ -124,7 +124,6 @@ void MainWindow::createTimers()
     this->radioButtonTimer = new QTimer(this);
 
     connect(serialDeviceCheckTimer, SIGNAL(timeout()), this, SLOT(on_updateSerialDeviceList()));
-    connect(&fileReader, &FileReader::progress, ui->progressBarLoadFile, &QProgressBar::setValue);
     connect(&fileReader, &FileReader::loaded, this, &MainWindow::handleFileLoaded);
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &MainWindow::applyTheme);
@@ -496,46 +495,16 @@ void MainWindow::setupLoggingTabs()
     logging->addLayout(folderRow, 1, 1, 1, 5);
     logging->setColumnStretch(5, 1);
 
-    // ----- Load file (new tab) ----- //
-    auto *loadPage = new QWidget(tabs);
-    loadPage->setObjectName("tabLoadFile");
-    ui->lineEditLoadFilePath->setPlaceholderText("Log file to load (.csv or .txt)");
-    ui->pushButtonLoadPath->setText("Browse...");
-    ui->pushButtonLoadPath->setMaximumWidth(QWIDGETSIZE_MAX);
-    ui->checkBoxAppendLoadedTextToLog->setText("Show text");
-    ui->checkBoxAppendLoadedTextToLog->setToolTip("Also print the file's text in the text view");
-    ui->lineEditFileInfo->setPlaceholderText("File info");
-
-    auto *loading = new QGridLayout(loadPage);
-    loading->addWidget(new QLabel("File:", loadPage), 0, 0, Qt::AlignRight);
-    auto *fileRow = new QHBoxLayout;
-    fileRow->addWidget(ui->lineEditLoadFilePath, 1);
-    fileRow->addWidget(ui->pushButtonLoadPath);
-    fileRow->addWidget(ui->pushButtonLoadFile);
-    fileRow->addWidget(ui->progressBarLoadFile);
-    loading->addLayout(fileRow, 0, 1);
-    loading->addWidget(new QLabel("Time range:", loadPage), 1, 0, Qt::AlignRight);
-    auto *rangeRow = new QHBoxLayout;
-    rangeRow->addWidget(ui->timeEditMinParsingTime);
-    rangeRow->addWidget(new QLabel("to", loadPage));
-    rangeRow->addWidget(ui->timeEditMaxParsingTime);
-    rangeRow->addWidget(ui->checkBoxAppendLoadedTextToLog);
-    rangeRow->addSpacing(12);
-    rangeRow->addWidget(ui->lineEditFileInfo, 1);
-    loading->addLayout(rangeRow, 1, 1);
-
     // Replace the old layout (its labels and scroll area are no longer needed).
     for (QWidget *old : {static_cast<QWidget *>(ui->scrollArea_2), static_cast<QWidget *>(ui->line), static_cast<QWidget *>(ui->label_11),
-                         static_cast<QWidget *>(ui->label_13), static_cast<QWidget *>(ui->label_14), static_cast<QWidget *>(ui->label_15),
-                         static_cast<QWidget *>(ui->label_18), static_cast<QWidget *>(ui->label_19), static_cast<QWidget *>(ui->label_21),
+                         static_cast<QWidget *>(ui->label_13), static_cast<QWidget *>(ui->label_21),
                          static_cast<QWidget *>(ui->label_22)})
         old->hide();
     delete loggingPage->layout();
     loggingPage->setLayout(logging);
 
     const int loggingIndex = tabs->indexOf(loggingPage);
-    tabs->setTabText(loggingIndex, "Logging");
-    tabs->insertTab(loggingIndex + 1, loadPage, "Load file");
+    tabs->setTabText(loggingIndex, "Logging"); // loading files: File -> Import...
 }
 
 // The connection area at the bottom: no title (the tabs say what it is), tighter margins and
@@ -659,7 +628,6 @@ void MainWindow::setupGUI()
 
     ui->comboBoxExternalTimeFormat->addItem("[ms]");
     ui->comboBoxExternalTimeFormat->setCurrentIndex(0);
-    ui->lineEditLoadFilePath->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
     ui->lineEditSaveFileName->setText("Log.txt");
     ui->lineEditSaveLogPath->setText(defaultLogPath());
     ui->splitterGraphTable->setSizes({this->height(), 0});
@@ -1182,7 +1150,7 @@ namespace
     "comboBoxRAMLoadMode", "comboBoxRAMSaveMode", "comboBoxSerialReadMode",
     "comboBoxStopBits", "comboBoxTextProcessing", "comboBoxTracerStyle",
     "comboBoxUDPReceiveMode", "comboBoxUDPSendMode", "lineEditCustomParsingRules",
-    "lineEditExternalClockLabel", "lineEditLoadFilePath", "lineEditSaveFileName",
+    "lineEditExternalClockLabel", "lineEditSaveFileName",
     "lineEditSaveLogPath", "lineEditUDPTargetIP", "pushButtonEnablePlot",
     "spinBoxMaxGraphs", "spinBoxMaxLines",
     "spinBoxMaxTimeRange", "spinBoxProcessingDelay", "spinBoxRepeatInterval",
@@ -1246,13 +1214,6 @@ void MainWindow::settingsLoadAll()
     else if (const int index = settings.value("GUI_Elements/comboBoxBaudRates.currentIndex", -1).toInt(); index >= 0 && index < ui->comboBoxBaudRates->count())
         ui->comboBoxBaudRates->setCurrentIndex(index);
 
-    if (!ui->lineEditLoadFilePath->text().isEmpty())
-    {
-        QFile file(ui->lineEditLoadFilePath->text());
-        const QList<QTime> timeRange = FileReader::getFileTimeRange(&file);
-        ui->timeEditMinParsingTime->setTime(timeRange.first());
-        ui->timeEditMaxParsingTime->setTime(timeRange.last());
-    }
 }
 
 void MainWindow::settingsSaveAll()
@@ -3101,44 +3062,66 @@ void MainWindow::on_lineEditExternalClockLabel_editingFinished()
     ui->lineEditExternalClockLabel->setText(ui->lineEditExternalClockLabel->text().simplified());
 }
 
-void MainWindow::on_pushButtonLoadPath_clicked()
+void MainWindow::on_actionImport_triggered()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open Log File:"), "",
-                                                    tr("(*.txt *.csv);;All Files (*)"));
+    if (fileReader.isBusy())
+        return; // the progress dialog has the Cancel button
 
-    ui->lineEditLoadFilePath->setText(fileName);
-    QFile file(fileName);
-
-    if (!file.exists())
-    {
-        ui->lineEditFileInfo->setText("File doesn't exist");
+    QSettings settings = appSettings();
+    const QString lastFile = settings.value("data/lastImportFile", ui->lineEditSaveLogPath->text()).toString();
+    const QString path = QFileDialog::getOpenFileName(this, "Import data", lastFile, "Logs (*.csv *.txt);;CSV files (*.csv);;Text files (*.txt);;All files (*)");
+    if (path.isEmpty())
         return;
+    settings.setValue("data/lastImportFile", path);
+    importFile(path);
+}
+
+// Loads a CSV or text log (by extension) on a worker thread, replacing the chart data.
+bool MainWindow::importFile(const QString &path)
+{
+    const QFileInfo fileInfo(path);
+    if (fileReader.isBusy() || !fileInfo.isFile() || !fileInfo.isReadable())
+    {
+        addLog("App >>\t Error - unable to import " + path, true);
+        return false;
     }
 
-    QList<QTime> timeRange = FileReader::getFileTimeRange(&file);
-    ui->timeEditMinParsingTime->setTime(timeRange.first());
-    ui->timeEditMaxParsingTime->setTime(timeRange.last());
+    FileReader::Options options;
+    options.csv = fileInfo.suffix().compare("csv", Qt::CaseInsensitive) == 0;
+    options.useExternalClockLabel = ui->comboBoxClockSource->currentIndex() == 1;
+    options.clockLabel = ui->lineEditExternalClockLabel->text();
 
-    QString info = "Size: " + QString::number(file.size());
-    ui->lineEditFileInfo->setText(info);
+    this->clearGraphs(true);
+    if (!fileReader.load(path, options))
+        return false;
+
+    // Shown only if loading takes a moment; Cancel stops the worker (handleFileLoaded closes it).
+    auto *progress = new QProgressDialog("Importing " + fileInfo.fileName() + "...", "Cancel", 0, 100, this);
+    progress->setObjectName("importProgress");
+    progress->setWindowTitle("Import");
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setMinimumDuration(400);
+    progress->setAutoClose(false);
+    progress->setAutoReset(false);
+    progress->setAttribute(Qt::WA_DeleteOnClose);
+    connect(&fileReader, &FileReader::progress, progress, &QProgressDialog::setValue);
+    connect(&fileReader, &FileReader::loaded, progress, &QProgressDialog::close);
+    connect(progress, &QProgressDialog::canceled, &fileReader, &FileReader::cancel);
+    importFileName = fileInfo.fileName();
+    return true;
 }
 
 void MainWindow::handleFileLoaded(const FileReader::Result &result)
 {
-    ui->pushButtonLoadFile->setText("Load File");
-
     if (!result.error.isEmpty())
     {
         addLog("App >>\t Error - unable to read file: " + result.error, true);
-        ui->progressBarLoadFile->setValue(0);
         return;
     }
 
     if (result.cancelled)
     {
-        addLog("App >>\t File loading cancelled.", true);
-        ui->progressBarLoadFile->setValue(0);
+        addLog("App >>\t Import cancelled.", true);
         return;
     }
 
@@ -3148,11 +3131,7 @@ void MainWindow::handleFileLoaded(const FileReader::Result &result)
     this->processTable(result.labels, result.values, result.timeStamps);
     this->saveToRAM(result.labels, result.values, result.timeStamps);
 
-    if (ui->checkBoxAppendLoadedTextToLog->isChecked())
-        ui->textBrowserLogs->appendPlainText(result.text);
-
-    ui->progressBarLoadFile->setValue(100);
-    addLog("App >>\t Loaded " + QString::number(result.values.count()) + " values from file.", true);
+    addLog("App >>\t Imported " + QString::number(result.values.count()) + " values from " + importFileName + ".", true);
 }
 
 void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
@@ -3166,51 +3145,6 @@ void MainWindow::on_pushButtonLoadRAMBuffer_clicked()
 void MainWindow::on_pushButtonRAMClear_clicked()
 {
     parser.clearStorage();
-}
-
-void MainWindow::on_pushButtonLoadFile_clicked()
-{
-    if (fileReader.isBusy())
-    {
-        fileReader.cancel(); // handleFileLoaded() resets the UI
-        return;
-    }
-
-    ui->progressBarLoadFile->setValue(0);
-
-    const QString path = ui->lineEditLoadFilePath->text().trimmed();
-    const QFileInfo fileInfo(path);
-    if (!fileInfo.isFile() || !fileInfo.isReadable())
-    {
-        addLog("App >>\t Error - invalid file path !", true);
-        return;
-    }
-
-    FileReader::Options options;
-    options.csv = fileInfo.suffix().compare("csv", Qt::CaseInsensitive) == 0; // the logging format setting is for writing
-    options.useExternalClockLabel = ui->comboBoxClockSource->currentIndex() == 1;
-    options.clockLabel = ui->lineEditExternalClockLabel->text();
-    options.minTime = ui->timeEditMinParsingTime->time();
-    options.maxTime = ui->timeEditMaxParsingTime->time();
-
-    this->clearGraphs(true);
-
-    if (fileReader.load(path, options))
-        ui->pushButtonLoadFile->setText("Cancel");
-}
-
-void MainWindow::on_lineEditLoadFilePath_customContextMenuRequested(const QPoint &pos)
-{
-    QMenu *menu = new QMenu(this);
-    menu->setAttribute(Qt::WidgetAttribute::WA_DeleteOnClose);
-
-    menu->addAction("Open file", this, [this]()
-                    { QDesktopServices::openUrl(QUrl::fromLocalFile(ui->lineEditLoadFilePath->text())); }); // C++ lambda expression
-
-    menu->addAction("Open folder", this, [this]()
-                    { QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(ui->lineEditLoadFilePath->text()).absolutePath())); }); // C++ lambda expression
-
-    menu->popup(ui->lineEditLoadFilePath->mapToGlobal(pos));
 }
 
 // "Save" on the Parser memory tab (enabled when automatic saving is off): stores the plotted data.
@@ -3386,24 +3320,6 @@ void MainWindow::on_pushButtonExportLogTableToCSV_clicked()
 void MainWindow::on_pushButtonSerialLogScrollown_clicked()
 {
     ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
-}
-
-void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &/*arg1*/)
-{
-    QFile file(ui->lineEditLoadFilePath->text());
-
-    if (!file.exists())
-    {
-        ui->lineEditFileInfo->setText("File doesn't exist");
-        return;
-    }
-
-    QList<QTime> timeRange = FileReader::getFileTimeRange(&file);
-    ui->timeEditMinParsingTime->setTime(timeRange.first());
-    ui->timeEditMaxParsingTime->setTime(timeRange.last());
-
-    QString info = "Size: " + QString::number(file.size());
-    ui->lineEditFileInfo->setText(info);
 }
 
 void MainWindow::on_actionFull_parser_data_triggered()

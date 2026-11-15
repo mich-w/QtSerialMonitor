@@ -62,7 +62,7 @@ Every received line is searched for label/value pairs. Values without a label ar
 
 Time stamps come from the PC clock by default. To use your device's time instead, set **Time reference** under the chart to an external clock - either a label carrying milliseconds (e.g. `time 12345`) or a time of day in the line (`12:34:56.789`).
 
-**CSV files** (also the app's own logs) can be loaded in the **File storage** tab. The first row is the header; `,` `;` and tab delimiters, quoted fields and empty cells are handled.
+**CSV files** (also the app's own logs) can be loaded with **File → Import...** (Ctrl+O). The first row is the header; `,` `;` and tab delimiters, quoted fields and empty cells are handled.
 
 ## 3D orientation view
 

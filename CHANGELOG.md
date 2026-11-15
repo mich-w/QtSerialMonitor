@@ -23,7 +23,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Every received line was displayed, plotted and logged twice, because the serial port and the demo device share a receive pipeline and its outputs were connected once per transport.
 - Up/Down in the send box walked the history in the wrong direction; Up now recalls the most recent command, like a terminal.
 - CSV and parsed-data logs kept only the last line of each received chunk; every line now gets its own row, time-stamped with when it arrived.
-- Load file read the file as CSV or text depending on the logging format setting; it now goes by the file extension.
+- Loading a file read it as CSV or text depending on the logging format setting; it now goes by the file extension.
 - Qt Graphs chart: Clear, show/hide graphs and other manual changes were not shown until new data arrived (or at all while paused).
 - Chart keyboard shortcuts (Space/P, X, Y, T, L) did nothing on the Qt Graphs chart.
 - With the Qt Graphs chart, Save graph as image used the size of the hidden QCustomPlot widget, and printing could divide by zero.
@@ -36,7 +36,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Settings window (Tools → Settings…, Ctrl+,): theme, chart refresh rate (30/60 fps) and line rendering (Smooth/Fast).
 - 3D orientation view (View → Change visualisation → 3D Orientation, Ctrl+9): a board rotated by the latest roll / pitch / yaw values, with configurable labels and degrees or radians. While it is shown, the demo device also streams roll / pitch / yaw. Drag to rotate the camera, mouse wheel to zoom, double-click to reset.
 
-- The "File storage" tab is split into "Logging" (with a full-width log folder field, Browse, Default and Open folder - auto-logging writes there) and "Load file".
+- The "File storage" tab is now "Logging" (with a full-width log folder field, Browse, Default and Open folder - auto-logging writes there). Loading a file moved to File → Import... (Ctrl+O), with a progress dialog that can cancel; the time-range filter and "Print text" options are gone.
 - Chart: the three rows of options under the chart are merged into the Pause row (Auto-scroll, time window, Clear plot, Parser data) and an Options popup, giving the chart more height.
 - Text view: the crowded, horizontally scrolling options area is replaced by one row (Pause text, Auto-scroll, Newest, Clear, highlight field) and an Options popup with the remaining settings, grouped and labelled.
 

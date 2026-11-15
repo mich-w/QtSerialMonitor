@@ -13,6 +13,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QPlainTextEdit>
+#include <QProgressDialog>
 #include <QPushButton>
 #include <QTextBrowser>
 #include <QScrollBar>
@@ -793,7 +794,7 @@ private slots:
         changelog->window()->close();
     }
 
-    void loadFileFormatFollowsExtension() // the logging format used to decide how a file was read
+    void importFormatFollowsExtension() // the logging format used to decide how a file was read
     {
         QTemporaryDir dir;
         QFile csv(dir.filePath("data.CSV"));
@@ -802,8 +803,7 @@ private slots:
         csv.close();
 
         find<QComboBox>("comboBoxLogFormat")->setCurrentIndex(1); // TXT logging
-        find<QLineEdit>("lineEditLoadFilePath")->setText(csv.fileName());
-        find<QPushButton>("pushButtonLoadFile")->click();
+        QVERIFY(window->importFile(csv.fileName()));
         QTRY_COMPARE(graphNames(), QStringList{"a"});
         QCOMPARE(find<QCustomPlot>("widgetChart")->graph(0)->dataCount(), 2);
         find<QComboBox>("comboBoxLogFormat")->setCurrentIndex(0);
@@ -875,6 +875,48 @@ private slots:
         send("v 2");
         QTRY_COMPARE(table->item(0, 5)->text(), QString("1"));
         QCOMPARE(table->item(0, 3)->text(), QString("2"));
+    }
+
+    void importFromFileMenu() // replaces the Load file tab
+    {
+        auto *import = window->findChild<QAction *>("actionImport");
+        QVERIFY(import && import->isEnabled());
+        QCOMPARE(import->shortcut(), QKeySequence(QKeySequence::Open));
+        QVERIFY(!window->findChild<QWidget *>("tabLoadFile"));
+
+        QTemporaryDir dir;
+        QFile text(dir.filePath("log.txt"));
+        QVERIFY(text.open(QIODevice::WriteOnly));
+        for (int i = 0; i < 5; ++i)
+            text.write(QString("10:00:0%1.000 u %2 v %3\n").arg(i).arg(i).arg(-i).toUtf8());
+        text.close();
+
+        showSamples();
+        QVERIFY(window->importFile(text.fileName()));
+        QTRY_VERIFY(logText().contains("Imported 10 values from log.txt"));
+        QCOMPARE(graphNames(), (QStringList{"u", "v"}));
+        QTRY_COMPARE(logTable()->rowCount(), 5); // the Samples table shows the imported data (next chart tick)
+
+        QVERIFY(!window->importFile(dir.filePath("missing.csv")));
+        QVERIFY(logText().contains("unable to import"));
+
+        // Big import: Cancel in the progress dialog stops it.
+        QFile big(dir.filePath("big.txt"));
+        QVERIFY(big.open(QIODevice::WriteOnly));
+        QByteArray chunk;
+        for (int i = 0; i < 1000; ++i)
+            chunk += "a 1 b 2 c 3 d 4\n";
+        for (int i = 0; i < 1000; ++i)
+            big.write(chunk);
+        big.close();
+        QVERIFY(window->importFile(big.fileName()));
+        auto *progress = window->findChild<QProgressDialog *>("importProgress");
+        QVERIFY(progress);
+        QPushButton *cancel = progress->findChild<QPushButton *>();
+        QVERIFY(cancel);
+        cancel->click();
+        QTRY_VERIFY(logText().contains("Import cancelled"));
+        QTRY_VERIFY(!window->findChild<QProgressDialog *>("importProgress"));
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot

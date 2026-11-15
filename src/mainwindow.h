@@ -44,6 +44,7 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QMessageBox>
+#include <QProgressDialog>
 
 #include <cmath>
 #include <limits>
@@ -68,6 +69,7 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     void startDemo(int rateHz = DemoTransport::DefaultRateHz); // select the simulated device and connect
     void applyPreferences(const AppPreferences &newPreferences); // apply and save
+    bool importFile(const QString &path);                         // CSV or text log, by extension
     bool saveChartImage(QString filename);                        // PNG, JPG, BMP or PDF, by extension
     ~MainWindow();
 public slots:
@@ -126,8 +128,6 @@ private slots:
     void on_lineEditCustomParsingRules_editingFinished();
     void on_lineEditExternalClockLabel_editingFinished();
     void on_lineEditHighlight_returnPressed();
-    void on_lineEditLoadFilePath_customContextMenuRequested(const QPoint &pos);
-    void on_lineEditLoadFilePath_textChanged(const QString &arg1);
     void on_lineEditSaveFileName_editingFinished();
     void on_printIntroChangelog();
     void on_printLog(QPrinter *printer);
@@ -140,8 +140,7 @@ private slots:
     void on_pushButtonClearTable_clicked();
     void on_pushButtonEnablePlot_toggled(bool checked);
     void on_pushButtonExportLogTableToCSV_clicked();
-    void on_pushButtonLoadFile_clicked();
-    void on_pushButtonLoadPath_clicked();
+    void on_actionImport_triggered();
     void on_pushButtonLoadRAMBuffer_clicked();
     void on_pushButtonLogging_toggled(bool checked);
     void on_pushButtonLogPath_clicked();
@@ -222,6 +221,7 @@ private:
     QString withLogExtension(QString fileName) const;
     static constexpr const char *autoLogFileName = "%DateTime%_Log"; // the logger fills in the date
     QString manualLogFileName;
+    QString importFileName;
     int chartDragDistance = 0; // horizontal, for turning auto-scroll off
     int chartDragLastX = 0;
     void updateChartRanges();
