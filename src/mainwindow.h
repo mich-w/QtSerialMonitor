@@ -65,6 +65,7 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     void startDemo(int rateHz = DemoTransport::DefaultRateHz); // select the simulated device and connect
     void applyPreferences(const AppPreferences &newPreferences); // apply and save
+    bool saveChartImage(QString filename);                        // PNG, JPG, BMP or PDF, by extension
     ~MainWindow();
 public slots:
     void on_setSelectedLabels(QList<QString> *labels, bool customRules = true);
@@ -216,6 +217,7 @@ private:
     void applyOpenGl();
     void applyChartEngine();
     bool chartHasFocus() const; // QCustomPlot or the Qt Graphs chart
+    QSize chartSize() const;     // of the chart on screen
     void updateChartRanges();
 #ifdef QTSM_HAS_QT_GRAPHS
     QPointer<GraphsChartView> graphsChartView;

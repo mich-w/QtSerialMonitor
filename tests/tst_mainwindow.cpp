@@ -560,6 +560,13 @@ private slots:
         QTest::keyClick(view, Qt::Key_Space);
         autoTrack->setChecked(tracking);
 
+        // Export uses the size of the chart on screen; the hidden QCustomPlot is not resized with the window.
+        window->resize(window->size() + QSize(200, 150));
+        QTRY_VERIFY(view->width() > 0);
+        QTemporaryDir dir;
+        QVERIFY(window->saveChartImage(dir.filePath("chart.png")));
+        QCOMPARE(QImage(dir.filePath("chart.png")).size(), view->size());
+
         window->applyPreferences(AppPreferences());
 #else
         QSKIP("Built without Qt Graphs");

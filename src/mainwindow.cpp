@@ -2712,8 +2712,8 @@ void MainWindow::on_printPlot(QPrinter *printer)
     QCPPainter painter(printer);
     QRectF pageRect = printer->pageRect(QPrinter::DevicePixel);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform, true);
-    int plotWidth = ui->widgetChart->viewport().width(), plotHeight = ui->widgetChart->viewport().height();
-    double scale = pageRect.width() / (float)plotWidth;
+    const int plotWidth = qMax(1, chartSize().width()), plotHeight = qMax(1, chartSize().height());
+    const double scale = pageRect.width() / plotWidth;
 
     painter.setMode(QCPPainter::pmNoCaching);
     painter.scale(scale, scale);
@@ -3403,23 +3403,40 @@ void MainWindow::on_actionImage_triggered()
     if (filename.isEmpty())
         return;
 
+    saveChartImage(filename);
+}
+
+QSize MainWindow::chartSize() const
+{
+    // With Qt Graphs the QCustomPlot widget is hidden and its own size may never have been set.
+#ifdef QTSM_HAS_QT_GRAPHS
+    if (graphsChartView && graphsChartView->isVisible())
+        return graphsChartView->size();
+#endif
+    return ui->widgetChart->size();
+}
+
+bool MainWindow::saveChartImage(QString filename)
+{
     const QString suffix = QFileInfo(filename).suffix().toLower();
+    const QSize size = chartSize();
     bool saved = false;
 
     if (suffix == "jpg" || suffix == "jpeg")
-        saved = ui->widgetChart->saveJpg(filename);
+        saved = ui->widgetChart->saveJpg(filename, size.width(), size.height());
     else if (suffix == "bmp")
-        saved = ui->widgetChart->saveBmp(filename);
+        saved = ui->widgetChart->saveBmp(filename, size.width(), size.height());
     else if (suffix == "pdf")
-        saved = ui->widgetChart->savePdf(filename);
+        saved = ui->widgetChart->savePdf(filename, size.width(), size.height());
     else
     {
         if (suffix != "png")
             filename += ".png";
-        saved = ui->widgetChart->savePng(filename);
+        saved = ui->widgetChart->savePng(filename, size.width(), size.height());
     }
 
     addLog(saved ? "App >>\t Graph saved to " + filename : "App >>\t Error - unable to save graph to " + filename, true);
+    return saved;
 }
 
 void MainWindow::on_actionto_csv_triggered()
