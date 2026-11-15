@@ -530,6 +530,29 @@ private slots:
 #endif
     }
 
+    void qtGraphsFollowsManualChanges() // clearing the chart used to leave the old lines on screen
+    {
+#ifdef QTSM_HAS_QT_GRAPHS
+        AppPreferences graphs;
+        graphs.chartEngine = AppPreferences::ChartEngine::QtGraphs;
+        window->applyPreferences(graphs);
+        auto *view = window->findChild<GraphsChartView *>("graphsChartView");
+        if (!view)
+            QSKIP("Qt Graphs could not be started");
+
+        send("x 1 y 2");
+        QTRY_COMPARE(view->seriesCount(), 2);
+        find<QPushButton>("pushButtonPauseChart")->setChecked(true); // no periodic redraws while paused
+        find<QPushButton>("pushButtonClearAll")->click();
+        QCOMPARE(view->seriesCount(), 0);
+
+        find<QPushButton>("pushButtonPauseChart")->setChecked(false);
+        window->applyPreferences(AppPreferences());
+#else
+        QSKIP("Built without Qt Graphs");
+#endif
+    }
+
     void autoLogWritesToLogFolder()
     {
         QTemporaryDir logs;

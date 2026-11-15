@@ -866,6 +866,12 @@ void MainWindow::applyChartEngine()
         ui->gridLayout_12->setRowStretch(row, 1);
         ui->gridLayout_12->addWidget(graphsChartView, row, column, rowSpan, columnSpan);
 
+        // Clear, show/hide graphs, legend... replot the hidden QCustomPlot; show the result.
+        connect(ui->widgetChart, &QCustomPlot::afterReplot, graphsChartView, [this]()
+                {
+                    if (graphsChartView->isVisible())
+                        graphsChartView->sync(ui->widgetChart);
+                });
         connect(graphsChartView, &GraphsChartView::autoTrackOffRequested, this, [this]()
                 { ui->checkBoxAutoTrack->setChecked(false); });
         connect(graphsChartView, &GraphsChartView::autoTrackToggleRequested, ui->checkBoxAutoTrack, &QCheckBox::toggle);
@@ -879,16 +885,8 @@ void MainWindow::applyChartEngine()
                                        graphsChartView->sync(ui->widgetChart);
                                    });
                     menu.addSeparator();
-                    menu.addAction("Show all graphs", this, [this]()
-                                   {
-                                       on_showAllGraphs();
-                                       graphsChartView->sync(ui->widgetChart);
-                                   });
-                    menu.addAction("Hide all graphs", this, [this]()
-                                   {
-                                       on_hideAllGraphs();
-                                       graphsChartView->sync(ui->widgetChart);
-                                   });
+                    menu.addAction("Show all graphs", this, &MainWindow::on_showAllGraphs);
+                    menu.addAction("Hide all graphs", this, &MainWindow::on_hideAllGraphs);
                     menu.exec(globalPos);
                 });
     }
