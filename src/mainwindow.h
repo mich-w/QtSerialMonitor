@@ -270,6 +270,7 @@ private:
     void setupControlSection();
     void setupLoggingTabs();
     void setupChartOptions();
+    QStringList customGraphLabels() const;
     QFrame *makeOptionsPopup(QToolButton *button, const QString &objectName);
     QHBoxLayout *chartBarLayout = nullptr; // Pause, history scroll bar and chart actions
     QCheckBox *checkBoxShowPointMarkers = nullptr;

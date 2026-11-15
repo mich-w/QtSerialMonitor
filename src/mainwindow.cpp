@@ -333,6 +333,8 @@ void MainWindow::setupChartOptions()
     ui->spinBoxRemoveOldLabels->setSpecialValueText("never"); // 0 = keep graphs
     ui->spinBoxRemoveOldLabels->setToolTip("Remove a graph after this many updates without new data for it");
     ui->lineEditCustomParsingRules->setMinimumWidth(180);
+    ui->lineEditCustomParsingRules->setPlaceholderText("label1 || label2, label 3 ...");
+    ui->lineEditCustomParsingRules->setToolTip("Graph labels to include or exclude, separated by || or commas (spaces are part of a label)");
 
     auto *graphsGroup = new QGroupBox("Graphs", panel);
     auto *graphsForm = new QFormLayout(graphsGroup);
@@ -2046,11 +2048,8 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
 
             ((ui->comboBoxGraphDisplayMode->currentIndex() == 0) ||
 
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 &&
-              ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive)) ||
-
-             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 &&
-              !ui->lineEditCustomParsingRules->text().simplified().contains(label, Qt::CaseSensitivity::CaseSensitive))))
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 1 && customGraphLabels().contains(label)) || // exact match:
+             (ui->comboBoxGraphDisplayMode->currentIndex() == 2 && !customGraphLabels().contains(label))))  // "Graph 1" != "Graph 10"
         {
             ui->widgetChart->addGraph();
             ui->widgetChart->graph()->setName(label);
@@ -2173,11 +2172,7 @@ void MainWindow::on_setSelectedLabels(QList<QString> *labels, bool customRules)
         ui->comboBoxGraphDisplayMode->setCurrentIndex(1);
     }
 
-    QString labelsToAppend;
-    foreach (QString item, *labels)
-        labelsToAppend.append(item + " ");
-
-    ui->lineEditCustomParsingRules->setText(labelsToAppend);
+    ui->lineEditCustomParsingRules->setText(labels->join(" || "));
     emit on_lineEditCustomParsingRules_editingFinished();
 }
 
@@ -2431,10 +2426,21 @@ void MainWindow::on_pushButtonClearGraphs_clicked()
     clearGraphData(true);
 }
 
+// Labels for "Show graphs: Include/Exclude", separated by ||, commas or semicolons.
+// Spaces belong to the label ("Graph 0", "Motor speed"), they are not separators (issue #10).
+QStringList MainWindow::customGraphLabels() const
+{
+    static const QRegularExpression separators("\\s*(\\|\\||,|;)\\s*");
+    QStringList labels;
+    for (const QString &label : ui->lineEditCustomParsingRules->text().split(separators, Qt::SkipEmptyParts))
+        if (!label.trimmed().isEmpty())
+            labels.append(label.trimmed());
+    return labels;
+}
+
 void MainWindow::on_lineEditCustomParsingRules_editingFinished()
 {
-    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().replace(" || ", " "));
-    ui->lineEditCustomParsingRules->setText(ui->lineEditCustomParsingRules->text().simplified().replace(" ", " || "));
+    ui->lineEditCustomParsingRules->setText(customGraphLabels().join(" || "));
     clearGraphs(true);
     loadFromRAM(false);
 }

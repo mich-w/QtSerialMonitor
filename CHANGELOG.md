@@ -12,6 +12,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Tools menu with *Demo device*; the demo device is listed among serial devices only while it runs.
 
 ### Fixed
+- "Plot only" split labels with spaces ("Graph 0" became "Graph || 0") and matched parts of labels ("Graph 1" also showed "Graph 10"). Labels are now separated by `||` or commas and matched exactly (#10).
 - The "Save" button on the Parser memory tab did nothing: its handler was named after a renamed widget and never connected. It also stored one label per graph instead of per value and time stamps in seconds instead of milliseconds.
 - Every received line was displayed, plotted and logged twice, because the serial port and the demo device share a receive pipeline and its outputs were connected once per transport.
 - Up/Down in the send box walked the history in the wrong direction; Up now recalls the most recent command, like a terminal.

@@ -563,6 +563,23 @@ private slots:
         QCOMPARE(graph->scatterStyle().shape(), QCPScatterStyle::ssNone);
     }
 
+    void plotOnlyLabelsWithSpaces() // issue #10
+    {
+        auto *rules = find<QLineEdit>("lineEditCustomParsingRules");
+        find<QComboBox>("comboBoxGraphDisplayMode")->setCurrentIndex(1); // Include
+        rules->setText("Graph 0, Graph 10");
+        QVERIFY(QMetaObject::invokeMethod(window, "on_lineEditCustomParsingRules_editingFinished"));
+        QCOMPARE(rules->text(), QString("Graph 0 || Graph 10")); // not "Graph || 0 || ..."
+
+        send("0 1 2 3 4 5 6 7 8 9 10 11"); // Graph 0 ... Graph 11
+        QTRY_VERIFY(!graphNames().isEmpty());
+        QTest::qWait(100);
+        QCOMPARE(graphNames(), (QStringList{"Graph 0", "Graph 10"})); // exact matches only, no "Graph 1"
+
+        find<QComboBox>("comboBoxGraphDisplayMode")->setCurrentIndex(0);
+        rules->clear();
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");
