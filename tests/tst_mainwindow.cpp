@@ -547,6 +547,22 @@ private slots:
         QVERIFY(QFileInfo(logs.filePath("my logs/" + files[0])).size() > 100);
     }
 
+    void pointMarkersCheckbox() // issue #11
+    {
+        send("m 1 n 2");
+        QTRY_COMPARE(graphNames().count(), 2);
+        QCPGraph *graph = find<QCustomPlot>("widgetChart")->graph(0);
+        auto *markers = find<QCheckBox>("checkBoxShowPointMarkers");
+
+        QVERIFY(!markers->isChecked()); // plain lines by default
+        QCOMPARE(graph->scatterStyle().shape(), QCPScatterStyle::ssNone);
+        markers->setChecked(true);
+        QCOMPARE(graph->scatterStyle().shape(), QCPScatterStyle::ssDisc);
+        QCOMPARE(find<QCustomPlot>("widgetChart")->graph(1)->scatterStyle().shape(), QCPScatterStyle::ssDisc); // all graphs, same marker
+        markers->setChecked(false);
+        QCOMPARE(graph->scatterStyle().shape(), QCPScatterStyle::ssNone);
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");

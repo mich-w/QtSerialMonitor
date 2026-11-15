@@ -6,6 +6,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased] – towards 2.0.0
 
 ### Added
+- "Mark data points" option in the chart options (off by default) - plain lines otherwise (#11).
 - Light and dark themes, or follow the system setting; theme button in the menu bar and View → Theme.
 - Main toolbar: Connect, Pause, Clear, Save log, Export chart.
 - Tools menu with *Demo device*; the demo device is listed among serial devices only while it runs.

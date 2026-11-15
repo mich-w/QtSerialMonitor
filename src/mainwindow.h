@@ -272,6 +272,7 @@ private:
     void setupChartOptions();
     QFrame *makeOptionsPopup(QToolButton *button, const QString &objectName);
     QHBoxLayout *chartBarLayout = nullptr; // Pause, history scroll bar and chart actions
+    QCheckBox *checkBoxShowPointMarkers = nullptr;
     void updateOrientation(const QStringList &labels, const QList<double> &values);
     void refreshOrientationView();
     bool logTableScrollPending = false;

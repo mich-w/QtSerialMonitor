@@ -305,9 +305,20 @@ void MainWindow::setupChartOptions()
     tracerRow->addWidget(ui->checkBoxEnableTracer);
     tracerRow->addWidget(ui->comboBoxTracerStyle, 1);
 
+    checkBoxShowPointMarkers = new QCheckBox("Mark data points", panel);
+    checkBoxShowPointMarkers->setObjectName("checkBoxShowPointMarkers");
+    checkBoxShowPointMarkers->setToolTip("Draw a small dot on every data point (useful for sparse data)");
+    connect(checkBoxShowPointMarkers, &QCheckBox::toggled, this, [this]()
+            {
+                for (auto i = 0; i < ui->widgetChart->graphCount(); ++i)
+                    styleGraph(ui->widgetChart->graph(i));
+                ui->widgetChart->replot();
+            });
+
     auto *viewGroup = new QGroupBox("View", panel);
     auto *viewForm = new QFormLayout(viewGroup);
     viewForm->addRow(ui->checkBoxShowLegend);
+    viewForm->addRow(checkBoxShowPointMarkers);
     viewForm->addRow(tracerRow);
     viewForm->addRow(ui->checkBoxAutoRescaleY);
     viewForm->addRow("Plotting:", ui->pushButtonEnablePlot);
@@ -995,7 +1006,9 @@ void MainWindow::styleGraph(QCPGraph *graph)
     pen.setCapStyle(Qt::RoundCap);
     pen.setJoinStyle(fast ? Qt::BevelJoin : Qt::RoundJoin);
     graph->setPen(pen);
-    graph->setScatterStyle(QCPScatterStyle::ssNone);
+    // Optional small dots on the data points (off by default - issue #11 found the old random markers too heavy).
+    const bool markers = checkBoxShowPointMarkers && checkBoxShowPointMarkers->isChecked();
+    graph->setScatterStyle(markers ? QCPScatterStyle(QCPScatterStyle::ssDisc, fast ? 3.0 : 4.0) : QCPScatterStyle(QCPScatterStyle::ssNone));
     graph->setAntialiased(!fast);
 
     QPen selected(theme.colors().text, 2.0, Qt::DashLine);
@@ -1150,7 +1163,8 @@ namespace
     "spinBoxMaxRowsLogTable", "spinBoxMaxTimeRange", "spinBoxProcessingDelay", "spinBoxRepeatInterval",
     "spinBoxRemoveOldLabels", "spinBoxScrollingTimeRange", "spinBoxUDPReceivePort",
     "spinBoxUDPTargetPort", "tabWidgetControlSection", "tabWidgetTableView",
-    "lineEditOrientationRoll", "lineEditOrientationPitch", "lineEditOrientationYaw", "checkBoxOrientationRadians"};
+    "lineEditOrientationRoll", "lineEditOrientationPitch", "lineEditOrientationYaw", "checkBoxOrientationRadians",
+    "checkBoxShowPointMarkers"};
 
     QSettings appSettings()
     {
