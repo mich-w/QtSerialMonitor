@@ -62,6 +62,20 @@ jobs:
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
 
+      # ctest showed nothing for a failing GUI test on Windows: run it directly, log to a file too, show the exit code.
+      - name: Test details (on failure)
+        if: failure()
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          exe=$(find build -type f \( -name tst_mainwindow -o -name tst_mainwindow.exe \) | head -1)
+          set +e
+          "$exe" -o tst_mainwindow.txt,txt -o -,txt
+          echo "exit code: $?"
+          echo "----- log file -----"
+          cat tst_mainwindow.txt
+
       - name: Package
         shell: pwsh
         run: |
@@ -94,6 +108,20 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+      # ctest showed nothing for a failing GUI test on Windows: run it directly, log to a file too, show the exit code.
+      - name: Test details (on failure)
+        if: failure()
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          exe=$(find build -type f \( -name tst_mainwindow -o -name tst_mainwindow.exe \) | head -1)
+          set +e
+          "$exe" -o tst_mainwindow.txt,txt -o -,txt
+          echo "exit code: $?"
+          echo "----- log file -----"
+          cat tst_mainwindow.txt
 
       - name: Package
         run: macdeployqt build/QtSerialMonitor.app -qmldir=src/qml -dmg
