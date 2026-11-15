@@ -21,6 +21,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     infoDialog.setFixedSize(800, 600);
 
+    // Help -> What's new: the changelog tab of the info window (the action was defined but never shown).
+    ui->actionWhat_s_new->setText("What's new");
+    ui->actionWhat_s_new->setEnabled(true);
+    ui->menuHelp->insertAction(ui->actionInfo, ui->actionWhat_s_new);
+
     connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(on_aboutToQuitSlot()));
 }
 
@@ -2673,7 +2678,7 @@ void MainWindow::on_action50_50_view_triggered()
 
 void MainWindow::on_actionWhat_s_new_triggered()
 {
-    on_printIntroChangelog();
+    infoDialog.showChangelog();
 }
 
 void MainWindow::on_actionQuit_triggered()

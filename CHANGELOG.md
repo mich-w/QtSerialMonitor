@@ -6,6 +6,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased] – towards 2.0.0
 
 ### Added
+- Changelog tab in Help → Application Info; Help → What's new opens it.
 - Custom baud rates: type any rate (e.g. 1152000, 2000000); it is kept between sessions (#5).
 - "Mark data points" option in the chart options (off by default) - plain lines otherwise (#11).
 - Light and dark themes, or follow the system setting; theme button in the menu bar and View → Theme.

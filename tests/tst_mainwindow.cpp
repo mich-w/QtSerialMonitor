@@ -14,6 +14,7 @@
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QTextBrowser>
 #include <QScrollBar>
 #include <QSpinBox>
 #include <QToolButton>
@@ -611,6 +612,25 @@ private slots:
 
         MainWindow restarted;
         QCOMPARE(restarted.findChild<QComboBox *>("comboBoxBaudRates")->currentText(), QString("2000000"));
+    }
+
+    void whatsNewShowsChangelog()
+    {
+        QAction *whatsNew = window->findChild<QAction *>("actionWhat_s_new");
+        QVERIFY(whatsNew && whatsNew->isEnabled());
+        whatsNew->trigger();
+
+        QTextBrowser *changelog = nullptr; // the info window is a separate top-level window
+        for (QWidget *topLevel : QApplication::topLevelWidgets())
+            if (!changelog)
+                changelog = topLevel->findChild<QTextBrowser *>("textBrowserChangelog");
+        QVERIFY(changelog);
+        QVERIFY(changelog->isVisible());
+        const QString text = changelog->toPlainText();
+        QVERIFY(text.contains("2.0.0"));
+        QVERIFY(text.contains("1.6.0"));
+        QVERIFY(!text.contains("##")); // rendered, not raw Markdown
+        changelog->window()->close();
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot

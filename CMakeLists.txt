@@ -96,6 +96,7 @@ add_library(qtsm_gui STATIC
     src/config.h
     src/icons.cpp            src/icons.h
     src/infodialog.cpp       src/infodialog.h       src/infodialog.ui
+    src/resources.qrc
     src/macrobar.cpp         src/macrobar.h
     src/mainwindow.cpp       src/mainwindow.h       src/mainwindow.ui
     src/orientationview.cpp  src/orientationview.h

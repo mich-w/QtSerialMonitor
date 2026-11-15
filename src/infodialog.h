@@ -15,11 +15,14 @@ public:
     explicit InfoDialog(QWidget *parent = nullptr);
     ~InfoDialog();
 
+    void showChangelog(); // open on the Changelog tab
+
 private slots:
     void on_pushButtonClose_clicked();
 
 private:
     Ui::InfoDialog *ui;
+    QWidget *changelogTab = nullptr;
 };
 
 #endif // INFODIALOG_H
