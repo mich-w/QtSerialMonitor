@@ -3308,45 +3308,18 @@ void MainWindow::exportTableLogToCSV(QTableView *table, QChar sep)
 
 void MainWindow::exportArraysToCSV(QStringList labelList, QList<QList<double>> dataColums, QChar sep)
 {
-    QString filters("CSV files (*.csv);;All files (*.*)");
-    QString defaultFilter("CSV files (*.csv)");
-    QString fileName = QFileDialog::getSaveFileName(0, "Save file", QCoreApplication::applicationDirPath(),
-                                                    filters, &defaultFilter);
-    QFile file(fileName);
+    const QString fileName = QFileDialog::getSaveFileName(this, "Save file", QDir::homePath() + "/data.csv", "CSV files (*.csv);;All files (*.*)");
+    if (fileName.isEmpty())
+        return;
 
-    if (file.open(QFile::WriteOnly | QFile::Truncate))
-    {
-        QTextStream data(&file);
-        QStringList strList;
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    QString error;
+    const bool saved = CsvExport::writeColumns(fileName, labelList, dataColums, sep, &error);
+    QApplication::restoreOverrideCursor();
 
-        foreach (auto label, labelList)
-        {
-            if (label.length() > 0)
-                strList.append("\"" + label + "\"");
-            else
-                strList.append("");
-        }
-
-        data << strList.join(sep) << "\n";
-
-        int maxRowCount = 0;
-        foreach (auto column, dataColums)
-            maxRowCount = qMax(maxRowCount, column.count());
-
-        for (int i = 0; i < maxRowCount; ++i) // rows
-        {
-            strList.clear();
-            for (int j = 0; j < dataColums.count(); ++j) // columns
-            {
-                if (i < dataColums[j].count())
-                    strList.append(QString::number(dataColums[j][i], 'f'));
-                else
-                    strList.append("\"\"");
-            }
-            data << strList.join(sep) + "\n";
-        }
-        file.close();
-    }
+    addLog(saved ? "App >>\t Exported " + QString::number(dataColums.isEmpty() ? 0 : dataColums.first().count()) + " rows to " + fileName
+                 : "App >>\t Error - unable to export: " + error,
+           true);
 }
 
 void MainWindow::on_pushButtonExportLogTableToCSV_clicked()

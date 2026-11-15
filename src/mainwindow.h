@@ -11,6 +11,7 @@
 #include "infodialog.h"
 #include "channelstats.h"
 #include "commandhistory.h"
+#include "csvexport.h"
 #include "logtablemodel.h"
 #include "orientationview.h"
 #include "icons.h"

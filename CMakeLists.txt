@@ -71,6 +71,7 @@ set_target_properties(qcustomplot PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_library(qtsm_core STATIC
     src/core/channelstats.h
     src/core/commandhistory.cpp src/core/commandhistory.h
+    src/core/csvexport.cpp    src/core/csvexport.h
     src/core/demotransport.cpp src/core/demotransport.h
     src/core/filereader.cpp   src/core/filereader.h
     src/core/logger.cpp       src/core/logger.h
