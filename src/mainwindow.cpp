@@ -2888,7 +2888,9 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->pushButtonAddDateTime->setEnabled(false);
         ui->comboBoxLogFormat->setEnabled(false);
 
-        ui->lineEditSaveFileName->setText("%DateTime%_Log" + ui->comboBoxLogFormat->currentText());
+        if (!ui->lineEditSaveFileName->text().startsWith(autoLogFileName))
+            manualLogFileName = ui->lineEditSaveFileName->text(); // given back when auto-logging is turned off
+        ui->lineEditSaveFileName->setText(withLogExtension(autoLogFileName));
 
         ui->pushButtonLogging->setChecked(true); // Trigger begin log
         ui->pushButtonLogging->setText("Auto");
@@ -2902,7 +2904,7 @@ void MainWindow::on_checkBoxAutoLogging_toggled(bool checked)
         ui->pushButtonLogging->setChecked(false);
         ui->pushButtonLogging->setText("Enable Logging");
 
-        ui->lineEditSaveFileName->clear();
+        ui->lineEditSaveFileName->setText(withLogExtension(manualLogFileName.isEmpty() ? "Log" : manualLogFileName));
         ui->comboBoxLogFormat->setEnabled(true);
     }
 }
@@ -3188,18 +3190,20 @@ void MainWindow::on_actionWhats_this_triggered()
     QWhatsThis::enterWhatsThisMode();
 }
 
+// "name", "name.txt" or "name.csv" -> name with the extension of the selected log format.
+QString MainWindow::withLogExtension(QString fileName) const
+{
+    fileName = fileName.trimmed();
+    if (fileName.isEmpty())
+        return fileName;
+    if (fileName.endsWith(".txt", Qt::CaseInsensitive) || fileName.endsWith(".csv", Qt::CaseInsensitive))
+        fileName.chop(4);
+    return fileName + ui->comboBoxLogFormat->currentText();
+}
+
 void MainWindow::on_lineEditSaveFileName_editingFinished()
 {
-    if (ui->comboBoxLogFormat->currentText() == ".txt")
-    {
-        if (ui->lineEditSaveFileName->text().endsWith(".txt") == false)
-            ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().append(".txt")); // auto-complete filename with .txt extension
-    }
-    else if (ui->comboBoxLogFormat->currentText() == ".csv")
-    {
-        if (ui->lineEditSaveFileName->text().endsWith(".csv") == false)
-            ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().append(".csv")); // auto-complete filename with .txt extension
-    }
+    ui->lineEditSaveFileName->setText(withLogExtension(ui->lineEditSaveFileName->text()));
 }
 
 void MainWindow::on_checkBoxAutoSaveBuffer_toggled(bool checked)
@@ -3251,10 +3255,7 @@ void MainWindow::on_comboBoxLogFormat_currentIndexChanged(int index)
     ui->comboBoxLoggingMode->setEnabled((bool)index);
     ui->checkBoxSimplifyLog->setEnabled((bool)index);
 
-    if (ui->comboBoxLogFormat->currentText().contains("txt"))
-        ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("csv", "txt"));
-    else if (ui->comboBoxLogFormat->currentText().contains("csv"))
-        ui->lineEditSaveFileName->setText(ui->lineEditSaveFileName->text().replace("txt", "csv"));
+    ui->lineEditSaveFileName->setText(withLogExtension(ui->lineEditSaveFileName->text())); // only the extension, not "csv" inside the name
 }
 
 void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)

@@ -591,6 +591,28 @@ private slots:
         QVERIFY(QFileInfo(logs.filePath("my logs/" + files[0])).size() > 100);
     }
 
+    void logFileNameIsKept() // auto-logging used to wipe the file name; the format switch replaced "txt" anywhere in it
+    {
+        auto *name = find<QLineEdit>("lineEditSaveFileName");
+        auto *format = find<QComboBox>("comboBoxLogFormat");
+        format->setCurrentIndex(format->findText(".txt"));
+        name->setText("my_txt_data.txt");
+
+        format->setCurrentIndex(format->findText(".csv"));
+        QCOMPARE(name->text(), QString("my_txt_data.csv"));
+
+        find<QCheckBox>("checkBoxAutoLogging")->setChecked(true);
+        QVERIFY(name->text().startsWith("%DateTime%"));
+        find<QCheckBox>("checkBoxAutoLogging")->setChecked(false);
+        QCOMPARE(name->text(), QString("my_txt_data.csv"));
+
+        name->setText("other.csv");
+        QVERIFY(QMetaObject::invokeMethod(window, "on_lineEditSaveFileName_editingFinished"));
+        QCOMPARE(name->text(), QString("other.csv")); // not other.csv.csv
+        format->setCurrentIndex(format->findText(".txt"));
+        QCOMPARE(name->text(), QString("other.txt"));
+    }
+
     void pointMarkersCheckbox() // issue #11
     {
         send("m 1 n 2");

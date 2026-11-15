@@ -218,6 +218,9 @@ private:
     void applyChartEngine();
     bool chartHasFocus() const; // QCustomPlot or the Qt Graphs chart
     QSize chartSize() const;     // of the chart on screen
+    QString withLogExtension(QString fileName) const;
+    static constexpr const char *autoLogFileName = "%DateTime%_Log"; // the logger fills in the date
+    QString manualLogFileName;
     void updateChartRanges();
 #ifdef QTSM_HAS_QT_GRAPHS
     QPointer<GraphsChartView> graphsChartView;
