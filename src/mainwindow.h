@@ -215,6 +215,7 @@ private:
     void openSettings();
     void applyOpenGl();
     void applyChartEngine();
+    bool chartHasFocus() const; // QCustomPlot or the Qt Graphs chart
     void updateChartRanges();
 #ifdef QTSM_HAS_QT_GRAPHS
     QPointer<GraphsChartView> graphsChartView;

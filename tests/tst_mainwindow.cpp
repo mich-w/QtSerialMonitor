@@ -547,6 +547,19 @@ private slots:
         QCOMPARE(view->seriesCount(), 0);
 
         find<QPushButton>("pushButtonPauseChart")->setChecked(false);
+
+        // Chart shortcuts work on the Qt Graphs chart too.
+        view->setFocus();
+        QVERIFY(view->hasFocus());
+        auto *autoTrack = find<QCheckBox>("checkBoxAutoTrack");
+        const bool tracking = autoTrack->isChecked();
+        QTest::keyClick(view, Qt::Key_X);
+        QCOMPARE(autoTrack->isChecked(), !tracking);
+        QTest::keyClick(view, Qt::Key_Space);
+        QVERIFY(find<QPushButton>("pushButtonPauseChart")->isChecked());
+        QTest::keyClick(view, Qt::Key_Space);
+        autoTrack->setChecked(tracking);
+
         window->applyPreferences(AppPreferences());
 #else
         QSKIP("Built without Qt Graphs");

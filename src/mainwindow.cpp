@@ -2208,6 +2208,15 @@ void MainWindow::clearGraphs(bool replot)
         ui->widgetChart->replot();
 }
 
+bool MainWindow::chartHasFocus() const
+{
+#ifdef QTSM_HAS_QT_GRAPHS
+    if (graphsChartView && graphsChartView->hasFocus())
+        return true;
+#endif
+    return ui->widgetChart->hasFocus();
+}
+
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     if (ui->textBrowserLogs->hasFocus())
@@ -2222,7 +2231,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
                 sendText(event->text());
         }
     }
-    else if (ui->widgetChart->hasFocus())
+    else if (chartHasFocus())
     {
         if (event->key() == Qt::Key_T)
         {
