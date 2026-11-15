@@ -27,7 +27,13 @@ Rectangle {
 
     color: backgroundColor
 
-    readonly property rect plot: graphs.plotArea
+    // GraphsView.plotArea is new in Qt 6.9; on 6.8 the plot fills the view minus the margins (the axes are hidden).
+    readonly property bool hasPlotArea: graphs.plotArea !== undefined
+    readonly property rect plot: hasPlotArea ? graphs.plotArea
+        : Qt.rect(graphs.marginLeft, graphs.marginTop,
+                  Math.max(0, graphs.width - graphs.marginLeft - graphs.marginRight), plotHeight)
+    // Separate from plot: the y ticks set the left margin (label width), so they must not depend on it.
+    readonly property real plotHeight: Math.max(0, graphs.height - graphs.marginTop - graphs.marginBottom)
     readonly property int tickLength: 5
     readonly property int subTickLength: 2
 
@@ -61,7 +67,7 @@ Rectangle {
         return 86400
     }
     // QCustomPlot aims for about 10 value ticks; fewer on short charts.
-    readonly property real yStep: niceStep((yMax - yMin) / Math.max(2, Math.min(10, Math.floor(plot.height / 22))), [1, 2, 2.5, 5, 10])
+    readonly property real yStep: niceStep((yMax - yMin) / Math.max(2, Math.min(10, Math.floor(plotHeight / 22))), [1, 2, 2.5, 5, 10])
     readonly property var xTicks: ticks(xMin, xMax, xStep)
     readonly property var yTicks: ticks(yMin, yMax, yStep)
     readonly property var xSubTicks: ticks(xMin, xMax, xStep / 5)

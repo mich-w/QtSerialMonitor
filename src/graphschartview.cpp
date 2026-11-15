@@ -196,11 +196,23 @@ void GraphsChartView::setLegendVisible(bool visible)
         root->setProperty("legendVisible", visible);
 }
 
+// Keys are not used by the QML scene. Not forwarding them lets the chart shortcuts (Space, X, Y...)
+// reach the main window on every Qt version - Qt Quick 6.8 kept Space for itself.
+void GraphsChartView::keyPressEvent(QKeyEvent *event)
+{
+    event->ignore();
+}
+
+void GraphsChartView::keyReleaseEvent(QKeyEvent *event)
+{
+    event->ignore();
+}
+
 // ----- Mouse interaction: same gestures as the QCustomPlot chart ----- //
 
 QRectF GraphsChartView::plotArea() const
 {
-    const QRectF area = graphsView ? graphsView->property("plotArea").toRectF() : QRectF();
+    const QRectF area = rootObject() ? rootObject()->property("plot").toRectF() : QRectF(); // same rect the QML draws with
     return area.isValid() ? area : QRectF(rect());
 }
 
