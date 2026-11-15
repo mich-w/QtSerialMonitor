@@ -221,6 +221,8 @@ private:
     QString withLogExtension(QString fileName) const;
     static constexpr const char *autoLogFileName = "%DateTime%_Log"; // the logger fills in the date
     QString manualLogFileName;
+    int chartDragDistance = 0; // horizontal, for turning auto-scroll off
+    int chartDragLastX = 0;
     void updateChartRanges();
 #ifdef QTSM_HAS_QT_GRAPHS
     QPointer<GraphsChartView> graphsChartView;

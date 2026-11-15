@@ -1739,27 +1739,27 @@ void MainWindow::on_chartMousePressHandler(QMouseEvent *event)
     else
         ui->widgetChart->setSelectionRectMode(QCP::srmNone);
 
+    // A new drag starts here - not where the previous one ended.
+    chartDragDistance = 0;
+    chartDragLastX = event->pos().x();
+
     ui->widgetChart->replot();
 }
 
 void MainWindow::on_chartMouseMoveHandler(QMouseEvent *event)
 {
-    static int distance = 0, lastPos = 0;
-
     if (event->buttons() & Qt::LeftButton)
     {
-        distance += event->pos().x() - lastPos;
-        lastPos = event->pos().x();
+        chartDragDistance += event->pos().x() - chartDragLastX;
+        chartDragLastX = event->pos().x();
 
-
-        if (abs(distance) > 200)
-        {
+        if (abs(chartDragDistance) > 200) // a long horizontal drag looks at history: stop following live data
             ui->checkBoxAutoTrack->setChecked(false);
-        }
     }
     else
     {
-        distance = 0;
+        chartDragDistance = 0;
+        chartDragLastX = event->pos().x();
     }
 }
 

@@ -739,6 +739,29 @@ private slots:
         find<QLineEdit>("lineEditHighlight")->clear();
     }
 
+    void shortDragKeepsAutoScroll() // a drag started far from where the previous one ended used to count the gap
+    {
+        auto *chart = find<QCustomPlot>("widgetChart");
+        auto *autoTrack = find<QCheckBox>("checkBoxAutoTrack");
+        autoTrack->setChecked(true);
+        auto drag = [chart](int fromX, int toX)
+        {
+            const int y = chart->height() / 2;
+            QTest::mousePress(chart, Qt::LeftButton, {}, QPoint(fromX, y));
+            QMouseEvent move(QEvent::MouseMove, QPointF(toX, y), QPointF(chart->mapToGlobal(QPoint(toX, y))), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(chart, &move);
+            QTest::mouseRelease(chart, Qt::LeftButton, {}, QPoint(toX, y));
+        };
+
+        drag(chart->width() - 40, chart->width() - 30); // short drags, far apart
+        drag(30, 40);
+        QVERIFY(autoTrack->isChecked());
+
+        drag(30, 30 + 250); // a long one
+        QVERIFY(!autoTrack->isChecked());
+        autoTrack->setChecked(true);
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");
