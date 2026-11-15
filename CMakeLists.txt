@@ -75,7 +75,6 @@ add_library(qtsm_core STATIC
     src/core/demotransport.cpp src/core/demotransport.h
     src/core/filereader.cpp   src/core/filereader.h
     src/core/logger.cpp       src/core/logger.h
-    src/core/logtablemodel.cpp src/core/logtablemodel.h
     src/core/networkudp.cpp   src/core/networkudp.h
     src/core/parser.cpp       src/core/parser.h
     src/core/portidentity.cpp src/core/portidentity.h

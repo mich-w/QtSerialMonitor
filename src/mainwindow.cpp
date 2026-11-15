@@ -1136,16 +1136,20 @@ void MainWindow::setupTable()
     for (auto column = 0; column < parsedDataHeaders.count(); ++column)
         ui->tableWidgetParsedData->setHorizontalHeaderItem(column, new QTableWidgetItem(parsedDataHeaders[column]));
 
-    ui->tableWidgetLogTable->setModel(&logTableModel);
-    ui->tableWidgetLogTable->setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-    ui->tableWidgetLogTable->setSortingEnabled(true);
+    // Samples: a browser of the data the chart holds (no copy - see ChartDataModel).
+    chartDataModel.setPlot(ui->widgetChart);
+    ui->tableWidgetLogTable->setModel(&chartDataModel);
+    ui->tableWidgetLogTable->setSortingEnabled(false); // always in time order, like the chart
     ui->tableWidgetLogTable->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed); // no per-row size measuring
     ui->tableWidgetLogTable->verticalHeader()->setDefaultSectionSize(ui->tableWidgetLogTable->fontMetrics().height() + 6);
-    connect(&logTableModel, &LogTableModel::columnsAdded, this, [this]()
+    connect(&chartDataModel, &ChartDataModel::columnsChanged, this, [this]()
             {
                 if (ui->checkBoxAutoSizeColumnsLogTable->isChecked())
                     ui->tableWidgetLogTable->resizeColumnsToContents();
             });
+    // Clear, load, show/hide... all end in a replot; the table follows while it is shown.
+    connect(ui->widgetChart, &QCustomPlot::afterReplot, this, &MainWindow::refreshSamplesTable);
+    connect(ui->tabWidgetTableView, &QTabWidget::currentChanged, this, &MainWindow::refreshSamplesTable);
 }
 
 namespace
@@ -1156,7 +1160,7 @@ namespace
     "checkBoxAppendDate", "checkBoxAutoLogging", "checkBoxAutoReconnect", "checkBoxAutoRefresh",
     "checkBoxAutoRescaleY", "checkBoxAutoSaveBuffer", "checkBoxAutoScrollLogTable",
     "checkBoxAutoSizeColumnsLogTable", "checkBoxAutoTrack", "checkBoxDTR",
-    "checkBoxEnableTracer", "checkBoxRAMClearChart", "checkBoxScrollLogEnableSorting",
+    "checkBoxEnableTracer", "checkBoxRAMClearChart",
     "checkBoxScrollToButtom", "checkBoxSendKey", "checkBoxShowControlChars",
     "checkBoxSimplifyLog", "checkBoxTableAutoResize", "checkBoxTruncateFileOnSave",
     "checkBoxWrapText", "comboBoxAddTextMode",
@@ -1168,8 +1172,8 @@ namespace
     "comboBoxUDPReceiveMode", "comboBoxUDPSendMode", "lineEditCustomParsingRules",
     "lineEditExternalClockLabel", "lineEditLoadFilePath", "lineEditSaveFileName",
     "lineEditSaveLogPath", "lineEditUDPTargetIP", "pushButtonEnablePlot",
-    "pushButtonEnableTableLog", "spinBoxMaxGraphs", "spinBoxMaxLines",
-    "spinBoxMaxRowsLogTable", "spinBoxMaxTimeRange", "spinBoxProcessingDelay", "spinBoxRepeatInterval",
+    "spinBoxMaxGraphs", "spinBoxMaxLines",
+    "spinBoxMaxTimeRange", "spinBoxProcessingDelay", "spinBoxRepeatInterval",
     "spinBoxRemoveOldLabels", "spinBoxScrollingTimeRange", "spinBoxUDPReceivePort",
     "spinBoxUDPTargetPort", "tabWidgetControlSection", "tabWidgetTableView",
     "lineEditOrientationRoll", "lineEditOrientationPitch", "lineEditOrientationYaw", "checkBoxOrientationRadians",
@@ -1372,21 +1376,17 @@ void MainWindow::clearParsedDataTable()
     channelStats.clear();
 }
 
-void MainWindow::processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable)
+void MainWindow::refreshSamplesTable()
 {
-    if (ui->pushButtonEnableTableLog->isChecked()) // checked == logging disabled
-        return;
+    if (!ui->tableWidgetLogTable->isVisible())
+        return; // caught up when shown
 
-    logTableModel.setMaxRows(ui->spinBoxMaxRowsLogTable->value());
-    logTableModel.append(timeTable, labelTable, valueTable);
+    const int rowsBefore = chartDataModel.rowCount();
+    chartDataModel.refresh();
 
-    // scrollToBottom() re-lays out the whole view (85% of processing time when done per batch),
-    // so it happens at most once per chart refresh and only while the table is visible.
-    if (ui->checkBoxAutoScrollLogTable->isChecked())
-    {
-        logTableScrollPending = true;
-        requestChartRefresh();
-    }
+    // scrollToBottom() re-lays out the whole view, so only when rows were added (at most once per chart refresh).
+    if (ui->checkBoxAutoScrollLogTable->isChecked() && !chartPaused && chartDataModel.rowCount() != rowsBefore)
+        ui->tableWidgetLogTable->scrollToBottom();
 }
 
 void MainWindow::on_printIntroChangelog()
@@ -2001,7 +2001,6 @@ void MainWindow::processIncomingLines(const QString &lines, const QList<long> &a
     this->processLogWrite(lines, labelList, numericDataList, timeStamps);
     this->saveToRAM(labelList, numericDataList, timeStamps, ui->comboBoxRAMSaveMode->currentIndex(), lines);
     this->processTable(labelList, numericDataList, timeStamps);
-    this->processLogTable(timeStamps, labelList, numericDataList);
     this->updateOrientation(labelList, numericDataList);
 }
 
@@ -2057,7 +2056,9 @@ void MainWindow::processChart(QStringList labelList, QList<double> numericDataLi
     if (timeStampsList.count() == 0 || labelList.count() == 0 || numericDataList.count() == 0 || ui->pushButtonEnablePlot->isChecked())
         return;
 
-    // Execute plotter
+    // Data older than the newest table row (e.g. an external clock that restarted) is not a plain append.
+    if (*std::min_element(timeStampsList.cbegin(), timeStampsList.cend()) / 1000.0 < chartDataModel.lastKey())
+        chartDataModel.invalidate();
 
     foreach (auto label, labelList)
     {
@@ -2144,11 +2145,7 @@ void MainWindow::refreshChart()
     if (parsedDataDirty)
         refreshParsedDataTable();
 
-    if (logTableScrollPending && ui->tableWidgetLogTable->isVisible())
-    {
-        logTableScrollPending = false;
-        ui->tableWidgetLogTable->scrollToBottom();
-    }
+    refreshSamplesTable();
 
     if (!chartPaused) // keep recording while paused, just don't move the view
     {
@@ -2322,7 +2319,7 @@ void MainWindow::loadFromRAM(bool loadText)
 
     this->processChart(RAMLabels, RAMData, RAMTime);
     this->processTable(RAMLabels, RAMData, RAMTime);
-    this->processLogTable(RAMTime, RAMLabels, RAMData);
+    chartDataModel.invalidate(); // memory may hold data older than what is on the chart
 }
 
 void MainWindow::on_checkBoxAutoRefresh_toggled(bool checked)
@@ -2435,7 +2432,6 @@ void MainWindow::on_pushButtonClearAll_clicked()
     clearGraphs(true);
 
     clearParsedDataTable();
-    logTableModel.clear();
 
     if (ui->checkBoxRAMClearChart->isChecked())
         parser.clearStorage();
@@ -3090,6 +3086,7 @@ void MainWindow::handleFileLoaded(const FileReader::Result &result)
     }
 
     parser.clearStorage();
+    chartDataModel.invalidate();
     this->processChart(result.labels, result.values, result.timeStamps);
     this->processTable(result.labels, result.values, result.timeStamps);
     this->saveToRAM(result.labels, result.values, result.timeStamps);
@@ -3290,15 +3287,6 @@ void MainWindow::on_comboBoxGraphDisplayMode_currentIndexChanged(int index)
     }
 }
 
-void MainWindow::on_pushButtonClearLogTable_clicked()
-{
-    logTableModel.clear();
-}
-
-void MainWindow::on_checkBoxScrollLogEnableSorting_toggled(bool checked)
-{
-    ui->tableWidgetLogTable->setSortingEnabled(checked);
-}
 
 // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
 void MainWindow::exportTableLogToCSV(QTableView *table, QChar sep)
@@ -3341,20 +3329,6 @@ void MainWindow::on_pushButtonExportLogTableToCSV_clicked()
 void MainWindow::on_pushButtonSerialLogScrollown_clicked()
 {
     ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
-}
-
-void MainWindow::on_pushButtonEnableTableLog_toggled(bool checked)
-{
-    if (checked)
-    {
-        ui->pushButtonEnableTableLog->setChecked(true);
-        ui->pushButtonEnableTableLog->setText("Enable");
-    }
-    else
-    {
-        ui->pushButtonEnableTableLog->setChecked(false);
-        ui->pushButtonEnableTableLog->setText("Disable");
-    }
 }
 
 void MainWindow::on_lineEditLoadFilePath_textChanged(const QString &/*arg1*/)

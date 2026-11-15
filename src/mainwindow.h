@@ -12,7 +12,7 @@
 #include "channelstats.h"
 #include "commandhistory.h"
 #include "csvexport.h"
-#include "logtablemodel.h"
+#include "chartdatamodel.h"
 #include "orientationview.h"
 #include "icons.h"
 #include "settingsdialog.h"
@@ -104,7 +104,6 @@ private slots:
     void on_checkBoxAutoSaveBuffer_toggled(bool checked);
     void on_checkBoxAutoTrack_toggled(bool checked);
     void on_checkBoxEnableTracer_toggled(bool checked);
-    void on_checkBoxScrollLogEnableSorting_toggled(bool checked);
     void on_checkBoxShowLegend_toggled(bool checked);
     void on_checkBoxWrapText_toggled(bool checked);
     void on_clearGraphSelection();
@@ -135,10 +134,8 @@ private slots:
     void on_pushButtonClearAll_clicked();
     void on_pushButtonClearGraphs_clicked();
     void on_pushButtonClearHistory_clicked();
-    void on_pushButtonClearLogTable_clicked();
     void on_pushButtonClearTable_clicked();
     void on_pushButtonEnablePlot_toggled(bool checked);
-    void on_pushButtonEnableTableLog_toggled(bool checked);
     void on_pushButtonExportLogTableToCSV_clicked();
     void on_pushButtonLoadFile_clicked();
     void on_pushButtonLoadPath_clicked();
@@ -256,7 +253,7 @@ private:
     void exportTableLogToCSV(QTableView *table, QChar sep = ',');
     void loadFromRAM(bool loadText);
     void processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList);
-    void processLogTable(QList<long> timeTable, QStringList labelTable, QList<double> valueTable);
+    void refreshSamplesTable();
     void processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);
     void processTable(QStringList labels, QList<double> values, QList<long> timeStamps);
     void clearParsedDataTable();
@@ -271,7 +268,7 @@ private:
     void addToCommandHistory(const QString &text);
     void setRepeatSend(bool enabled);
     CommandHistory commandHistory;
-    LogTableModel logTableModel;
+    ChartDataModel chartDataModel;
     OrientationView *orientationView = nullptr;
     double orientationValues[3] = {0, 0, 0}; // roll, pitch, yaw as received
     bool orientationReceived = false;
@@ -287,7 +284,6 @@ private:
     QCheckBox *checkBoxShowPointMarkers = nullptr;
     void updateOrientation(const QStringList &labels, const QList<double> &values);
     void refreshOrientationView();
-    bool logTableScrollPending = false;
     MacroBar *macroBar = nullptr;
     QCheckBox *checkBoxRepeatSend = nullptr;
     QSpinBox *spinBoxRepeatInterval = nullptr;

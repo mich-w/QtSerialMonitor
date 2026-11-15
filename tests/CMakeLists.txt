@@ -17,7 +17,6 @@ qtsm_add_test(tst_portidentity)
 qtsm_add_test(tst_portscanner)
 qtsm_add_test(tst_channelstats)
 qtsm_add_test(tst_commandhistory)
-qtsm_add_test(tst_logtablemodel)
 qtsm_add_test(tst_csvexport)
 
 # Integration test driving the real main window.

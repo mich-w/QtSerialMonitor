@@ -63,6 +63,7 @@ at full CPU; it now processes ~650 lines/s with smooth lines and ~950 lines/s at
 - Refreshed look: new palettes, rounded controls, accent colour, cleaner tabs, tables and scroll bars.
 - Chart follows the theme; series use a curated palette and smooth lines instead of random marker shapes.
 - README: new screenshots and feature list. Releases are built by CI and attached to GitHub releases.
+- Samples tab: a browser of the data the chart holds instead of a separate copy. It follows "Plot only", "Keep data for", Clear plot and loaded files, and handles millions of rows. The Enable/Disable, Max rows, Clear and sort options are gone.
 
 ## [1.9.0]
 

@@ -19,6 +19,7 @@
 #include <QSpinBox>
 #include <QToolButton>
 #include <QTableWidget>
+#include <QTabWidget>
 
 #include <QSettings>
 #include <QTemporaryDir>
@@ -53,6 +54,7 @@ class TestMainWindow : public QObject
     QAbstractItemModel *logTable() { return find<QTableView>("tableWidgetLogTable")->model(); }
     QString logCell(int row, int column) { return logTable()->index(row, column).data().toString(); }
     QString logHeader(int column) { return logTable()->headerData(column, Qt::Horizontal).toString(); }
+    void showSamples() { find<QTabWidget>("tabWidgetTableView")->setCurrentWidget(find<QWidget>("tabWidgetTableViewPage2")); }
 
     QStringList graphNames()
     {
@@ -88,7 +90,6 @@ private slots:
         find<QComboBox>("comboBoxAddTextMode")->setCurrentIndex(0);
         find<QComboBox>("comboBoxFormat")->setCurrentIndex(0);
         find<QPushButton>("pushButtonEnablePlot")->setChecked(false);      // checked == disabled
-        find<QPushButton>("pushButtonEnableTableLog")->setChecked(false);  // checked == disabled
         find<QPushButton>("pushButtonUDPConnect")->setChecked(true);
         QVERIFY(find<QPushButton>("pushButtonUDPConnect")->isChecked());
         find<QPlainTextEdit>("textBrowserLogs")->clear();
@@ -127,14 +128,22 @@ private slots:
         QCOMPARE(table->item(0, 4)->text(), QString::number(37.0 / 6.0));
         QCOMPARE(table->item(0, 5)->text(), QString("6"));
 
-        QCOMPARE(logTable()->rowCount(), 6);
-        QCOMPARE(logHeader(1), QString("a"));
-        QCOMPARE(logCell(0, 1), QString("1")); // first value of a new label is kept
+        // Samples show what the chart holds: a and c were removed with their graphs.
+        showSamples();
+        QTRY_COMPARE(logTable()->rowCount(), 6);
+        QCOMPARE(logTable()->columnCount(), 3);
+        QCOMPARE(logHeader(1), QString("b"));
+        QCOMPARE(logHeader(2), QString("d"));
+        QCOMPARE(logCell(0, 1), QString("2"));
+        QCOMPARE(logCell(5, 1), QString("9"));
+        QCOMPARE(logCell(5, 2), QString("100")); // same line, same row
+        QCOMPARE(logCell(4, 2), QString());
     }
 
     void logTableKeepsLinesFromOneBatch()
     {
         find<QSpinBox>("spinBoxProcessingDelay")->setValue(200); // force both lines into one batch
+        showSamples();
         send("x 1 y 2");
         send("x 3 y 4");
 
@@ -173,6 +182,38 @@ private slots:
         find<QCheckBox>("checkBoxShowControlChars")->setChecked(true);
         send("a b\tc\r\nd\re\n");
         QTRY_COMPARE(logText(), QString::fromUtf8("a·b\\t\tc\\r\\n\nd\\r\ne\\n\n"));
+    }
+
+    void samplesFollowTheChart()
+    {
+        showSamples();
+        send("s 1");
+        QTest::qWait(30);
+        send("s 2");
+        QTRY_COMPARE(logTable()->rowCount(), 2);
+
+        // Clear plot (no new data afterwards) empties the table too.
+        find<QPushButton>("pushButtonPauseChart")->setChecked(true);
+        find<QPushButton>("pushButtonClearGraphs")->click();
+        QCOMPARE(logTable()->rowCount(), 0);
+        find<QPushButton>("pushButtonPauseChart")->setChecked(false);
+
+        // Rows the chart drops ("Keep data for") leave the table.
+        auto *chart = find<QCustomPlot>("widgetChart");
+        send("s 3");
+        QTRY_COMPARE(logTable()->rowCount(), 1);
+        chart->graph(0)->addData(chart->graph(0)->dataMainKey(0) + 10, 4);
+        chart->graph(0)->data()->removeBefore(chart->graph(0)->dataMainKey(0) + 5);
+        chart->replot();
+        QCOMPARE(logTable()->rowCount(), 1);
+        QCOMPARE(logCell(0, 1), QString("4"));
+
+        // Hidden table: caught up when shown again.
+        find<QTabWidget>("tabWidgetTableView")->setCurrentIndex(0);
+        send("s 5");
+        QTRY_COMPARE(chart->graph(0)->dataCount(), 2);
+        showSamples();
+        QCOMPARE(logTable()->rowCount(), 2);
     }
 
     void settingsFromOlderVersionLoad()
