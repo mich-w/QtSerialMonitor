@@ -22,6 +22,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Every received line was displayed, plotted and logged twice, because the serial port and the demo device share a receive pipeline and its outputs were connected once per transport.
 - Up/Down in the send box walked the history in the wrong direction; Up now recalls the most recent command, like a terminal.
 - CSV and parsed-data logs kept only the last line of each received chunk; every line now gets its own row, time-stamped with when it arrived.
+- Load file read the file as CSV or text depending on the logging format setting; it now goes by the file extension.
 
 - Settings window (Tools → Settings…, Ctrl+,): theme, chart refresh rate (30/60 fps) and line rendering (Smooth/Fast).
 - 3D orientation view (View → Change visualisation → 3D Orientation, Ctrl+9): a board rotated by the latest roll / pitch / yaw values, with configurable labels and degrees or radians. While it is shown, the demo device also streams roll / pitch / yaw. Drag to rotate the camera, mouse wheel to zoom, double-click to reset.

@@ -633,6 +633,22 @@ private slots:
         changelog->window()->close();
     }
 
+    void loadFileFormatFollowsExtension() // the logging format used to decide how a file was read
+    {
+        QTemporaryDir dir;
+        QFile csv(dir.filePath("data.CSV"));
+        QVERIFY(csv.open(QIODevice::WriteOnly));
+        csv.write("\"time\",\"a\"\n2024-01-01T10:00:00.000Z,1\n2024-01-01T10:00:01.000Z,2\n");
+        csv.close();
+
+        find<QComboBox>("comboBoxLogFormat")->setCurrentIndex(1); // TXT logging
+        find<QLineEdit>("lineEditLoadFilePath")->setText(csv.fileName());
+        find<QPushButton>("pushButtonLoadFile")->click();
+        QTRY_COMPARE(graphNames(), QStringList{"a"});
+        QCOMPARE(find<QCustomPlot>("widgetChart")->graph(0)->dataCount(), 2);
+        find<QComboBox>("comboBoxLogFormat")->setCurrentIndex(0);
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");

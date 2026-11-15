@@ -3117,7 +3117,7 @@ void MainWindow::on_pushButtonLoadFile_clicked()
     }
 
     FileReader::Options options;
-    options.csv = ui->comboBoxLogFormat->currentIndex() == 0;
+    options.csv = fileInfo.suffix().compare("csv", Qt::CaseInsensitive) == 0; // the logging format setting is for writing
     options.useExternalClockLabel = ui->comboBoxClockSource->currentIndex() == 1;
     options.clockLabel = ui->lineEditExternalClockLabel->text();
     options.minTime = ui->timeEditMinParsingTime->time();
