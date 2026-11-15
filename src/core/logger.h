@@ -21,15 +21,18 @@ public:
     void clearWriteBuffer();
     void closeFile();
     bool openFile(QString fileName, bool trunc = false);
-    void writeLogCSV(QStringList labelList, QList<double> dataList, bool addTime = true);
+    // Several records (lines) may come at once: a label that repeats starts the next row.
+    // timesMsOfDay (optional, parallel to dataList): when each value arrived, used for the time column.
+    void writeLogCSV(QStringList labelList, QList<double> dataList, const QList<long> &timesMsOfDay = {}, bool addTime = true);
     void writeLogTXTLine(QString lineToAppend, bool simplifyText);
-    void writeLogTXTParsedData(QStringList labelList, QList<double> dataList);
+    void writeLogTXTParsedData(QStringList labelList, QList<double> dataList, const QList<long> &timesMsOfDay = {});
 signals:
 
 public slots:
 
 private:
-    static QString timeStamp();
+    static QString timeStamp(long msOfDay = -1);
+    static QList<QPair<int, int>> records(const QStringList &labels); // [begin, end) per record
     void rewriteCSVHeader();
     void writeLine(const QString &line);
 

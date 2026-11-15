@@ -35,6 +35,39 @@ private slots:
         QVERIFY(lines[3].endsWith(",,4"));
     }
 
+    void csvOneRowPerRecord() // values of lines that arrived together used to collapse into one row
+    {
+        QTemporaryDir dir;
+        {
+            Logger logger;
+            QVERIFY(logger.beginLog(dir.path(), false, "x.csv", true));
+            const long t1 = QTime(10, 0, 0, 100).msecsSinceStartOfDay(), t2 = QTime(10, 0, 0, 200).msecsSinceStartOfDay();
+            logger.writeLogCSV({"a", "b", "a", "b"}, {1, 2, 3, 4}, {t1, t1, t2, t2});
+        }
+
+        const auto lines = readLines(dir.filePath("x.csv"));
+        QCOMPARE(lines.count(), 3);
+        QVERIFY(lines[1].endsWith(",1,2"));
+        QVERIFY(lines[2].endsWith(",3,4"));
+        // Time column = arrival time of each line.
+        QCOMPARE(QDateTime::fromString(lines[1].section(',', 0, 0), Qt::ISODateWithMs).toLocalTime().time(), QTime(10, 0, 0, 100));
+        QCOMPARE(QDateTime::fromString(lines[2].section(',', 0, 0), Qt::ISODateWithMs).toLocalTime().time(), QTime(10, 0, 0, 200));
+    }
+
+    void txtParsedDataOneLinePerRecord()
+    {
+        QTemporaryDir dir;
+        {
+            Logger logger;
+            QVERIFY(logger.beginLog(dir.path(), false, "x.txt", true));
+            logger.writeLogTXTParsedData({"a", "b", "a", "b"}, {1, 2, 3, 4});
+        }
+        const auto lines = readLines(dir.filePath("x.txt"));
+        QCOMPARE(lines.count(), 2);
+        QVERIFY(lines[0].endsWith(" a 1 :: b 2"));
+        QVERIFY(lines[1].endsWith(" a 3 :: b 4"));
+    }
+
     void csvAppendReusesHeader()
     {
         QTemporaryDir dir;

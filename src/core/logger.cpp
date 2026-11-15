@@ -1,5 +1,7 @@
 #include "logger.h"
 
+#include <QSet>
+
 namespace
 {
     const char *const timeColumnLabel = "time";
@@ -16,9 +18,31 @@ Logger::~Logger()
     closeFile();
 }
 
-QString Logger::timeStamp()
+QString Logger::timeStamp(long msOfDay)
 {
-    return QDateTime::currentDateTimeUtc().toString("yyyy-MM-ddTHH:mm:ss.zzzZ");
+    if (msOfDay < 0)
+        return QDateTime::currentDateTimeUtc().toString("yyyy-MM-ddTHH:mm:ss.zzzZ");
+    return QDateTime(QDate::currentDate(), QTime::fromMSecsSinceStartOfDay(int(msOfDay))).toUTC().toString("yyyy-MM-ddTHH:mm:ss.zzzZ");
+}
+
+QList<QPair<int, int>> Logger::records(const QStringList &labels)
+{
+    QList<QPair<int, int>> result;
+    QSet<QString> seen;
+    int begin = 0;
+    for (auto i = 0; i < labels.count(); ++i)
+    {
+        if (seen.contains(labels[i]))
+        {
+            result.append({begin, i});
+            begin = i;
+            seen.clear();
+        }
+        seen.insert(labels[i]);
+    }
+    if (begin < labels.count())
+        result.append({begin, int(labels.count())});
+    return result;
 }
 
 bool Logger::openFile(QString fileName, bool trunc)
@@ -125,15 +149,19 @@ void Logger::writeLogTXTLine(QString lineToAppend, bool simplifyText)
         writeLine(stamp + line);
 }
 
-void Logger::writeLogTXTParsedData(QStringList labelList, QList<double> dataList)
+void Logger::writeLogTXTParsedData(QStringList labelList, QList<double> dataList, const QList<long> &timesMsOfDay)
 {
-    QStringList parts;
     const auto count = qMin(labelList.count(), dataList.count());
-    for (auto i = 0; i < count; ++i)
-        parts.append(labelList[i] + " " + QString::number(dataList[i], 'g', 10));
+    labelList = labelList.mid(0, count);
 
-    if (!parts.isEmpty())
-        writeLine(timeStamp() + " " + parts.join(" :: "));
+    for (const auto &record : records(labelList)) // one log line per received line
+    {
+        QStringList parts;
+        for (auto i = record.first; i < record.second; ++i)
+            parts.append(labelList[i] + " " + QString::number(dataList[i], 'g', 10));
+        const long time = record.first < timesMsOfDay.count() ? timesMsOfDay[record.first] : -1;
+        writeLine(timeStamp(time) + " " + parts.join(" :: "));
+    }
 }
 
 void Logger::rewriteCSVHeader()
@@ -159,10 +187,12 @@ void Logger::rewriteCSVHeader()
     logFile->flush();
 }
 
-void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool addTime)
+void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, const QList<long> &timesMsOfDay, bool addTime)
 {
-    if (logFile == nullptr || labelList.isEmpty())
+    const auto count = qMin(labelList.count(), dataList.count());
+    if (logFile == nullptr || count == 0)
         return;
+    labelList = labelList.mid(0, count);
 
     bool headerChanged = false;
 
@@ -184,20 +214,25 @@ void Logger::writeLogCSV(QStringList labelList, QList<double> dataList, bool add
     if (headerChanged)
         rewriteCSVHeader();
 
-    // One field per column; missing values are left empty so columns stay aligned.
-    QStringList row;
-    for (const auto &column : csvLabelsBuffer)
+    // One row per record; missing values are left empty so columns stay aligned.
+    for (const auto &record : records(labelList))
     {
-        const int index = labelList.lastIndexOf(column);
-        if (index >= 0 && index < dataList.count())
-            row.append(QString::number(dataList[index], 'g', 10));
-        else if (column == timeColumnLabel && addTime)
-            row.append(timeStamp());
-        else
-            row.append(QString());
-    }
+        const QStringList recordLabels = labelList.mid(record.first, record.second - record.first);
+        const long time = record.first < timesMsOfDay.count() ? timesMsOfDay[record.first] : -1;
 
-    writeLine(row.join(','));
+        QStringList row;
+        for (const auto &column : csvLabelsBuffer)
+        {
+            const int index = recordLabels.indexOf(column);
+            if (index >= 0)
+                row.append(QString::number(dataList[record.first + index], 'g', 10));
+            else if (column == timeColumnLabel && addTime)
+                row.append(timeStamp(time));
+            else
+                row.append(QString());
+        }
+        writeLine(row.join(','));
+    }
 }
 
 void Logger::clearWriteBuffer()

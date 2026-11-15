@@ -1924,8 +1924,11 @@ void MainWindow::addLogBytes(QByteArray bytes, bool hexToBinary, bool appendAsLi
     }
 }
 
-void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> /*timeList*/)
+void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList)
 {
+    // The time column uses when each line arrived - but only when times are times of day (system clock).
+    const QList<long> times = ui->comboBoxClockSource->currentIndex() == 0 ? timeList : QList<long>();
+
     if (ui->pushButtonLogging->isChecked()) // Write log into file
     {
         if (ui->comboBoxLogFormat->currentIndex() == 1)
@@ -1933,11 +1936,11 @@ void MainWindow::processLogWrite(QString rawLine, QStringList labelList, QList<d
             if (ui->comboBoxLoggingMode->currentIndex() == 0)
                 fileLogger.writeLogTXTLine(rawLine, ui->checkBoxSimplifyLog->isChecked());
             else if (ui->comboBoxLoggingMode->currentIndex() == 1)
-                fileLogger.writeLogTXTParsedData(labelList, dataList);
+                fileLogger.writeLogTXTParsedData(labelList, dataList, times);
         }
         else if (ui->comboBoxLogFormat->currentIndex() == 0)
         {
-            fileLogger.writeLogCSV(labelList, dataList);
+            fileLogger.writeLogCSV(labelList, dataList, times);
         }
     }
 }
