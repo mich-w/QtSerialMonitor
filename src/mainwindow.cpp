@@ -669,6 +669,8 @@ void MainWindow::createChart()
 
     connect(ui->widgetChart, SIGNAL(mouseDoubleClick(QMouseEvent *)), this, SLOT(on_chartMouseDoubleClickHandler(QMouseEvent *)));
     connect(ui->widgetChart, SIGNAL(mousePress(QMouseEvent *)), this, SLOT(on_chartMousePressHandler(QMouseEvent *)));
+    ui->widgetChart->installEventFilter(this); // chart shortcuts, see eventFilter()
+    ui->textBrowserLogs->installEventFilter(this); // Alt and send-keys mode, see eventFilter()
     connect(ui->widgetChart, SIGNAL(mouseMove(QMouseEvent *)), this, SLOT(on_chartMouseMoveHandler(QMouseEvent *)));
 
     connect(ui->widgetChart, SIGNAL(selectionChangedByUser()), this, SLOT(on_chartSelectionChanged()));
@@ -818,6 +820,7 @@ void MainWindow::applyChartEngine()
     if (useQtGraphs && !graphsChartView)
     {
         graphsChartView = new GraphsChartView(this);
+        graphsChartView->installEventFilter(this); // same shortcuts as the QCustomPlot chart
         if (!graphsChartView->isReady())
         {
             addLog("App >>\t Qt Graphs could not be started (" + graphsChartView->errorString() + ") - using QCustomPlot.", true);
@@ -1477,6 +1480,34 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             edit->setText(commandHistory.newer(edit->text()));
             return true;
         }
+    }
+
+    // Text view: Alt jumps to the newest line; in send-keys mode every typed key is sent.
+    // Handled here, not when the key bubbles up: Qt 6.8's QGroupBox swallows Space on the way.
+    if (watched == ui->textBrowserLogs && event->type() == QEvent::KeyPress)
+    {
+        const auto *keyEvent = static_cast<QKeyEvent *>(event);
+        if (keyEvent->key() == Qt::Key_Alt)
+        {
+            ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
+            return true;
+        }
+        if (ui->checkBoxSendKey->isChecked() && !keyEvent->text().isEmpty())
+        {
+            sendText(keyEvent->text());
+            return true;
+        }
+    }
+
+    bool isChart = watched == ui->widgetChart;
+#ifdef QTSM_HAS_QT_GRAPHS
+    isChart = isChart || (graphsChartView && watched == graphsChartView);
+#endif
+    if (isChart && event->type() == QEvent::KeyPress)
+    {
+        const auto *keyEvent = static_cast<QKeyEvent *>(event);
+        if (keyEvent->modifiers() == Qt::NoModifier && !keyEvent->isAutoRepeat() && handleChartShortcut(keyEvent->key()))
+            return true;
     }
     return QMainWindow::eventFilter(watched, event);
 }
@@ -2234,53 +2265,35 @@ void MainWindow::clearGraphs(bool replot)
         ui->widgetChart->replot();
 }
 
-bool MainWindow::chartHasFocus() const
+// Space/P pause, X auto-scroll, Y auto-scale, T tracer, L legend. Handled on the chart widget itself:
+// unhandled keys bubble up through the parents, and Qt 6.8's QGroupBox swallows Space.
+bool MainWindow::handleChartShortcut(int key)
 {
-#ifdef QTSM_HAS_QT_GRAPHS
-    if (graphsChartView && graphsChartView->hasFocus())
+    switch (key)
+    {
+    case Qt::Key_T:
+        ui->checkBoxEnableTracer->toggle();
         return true;
-#endif
-    return ui->widgetChart->hasFocus();
+    case Qt::Key_X:
+        ui->checkBoxAutoTrack->toggle();
+        return true;
+    case Qt::Key_Y:
+        ui->checkBoxAutoRescaleY->toggle();
+        return true;
+    case Qt::Key_Space:
+    case Qt::Key_P:
+        pushButtonPauseChart->toggle();
+        return true;
+    case Qt::Key_L:
+        ui->checkBoxShowLegend->toggle();
+        return true;
+    default:
+        return false;
+    }
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-    if (ui->textBrowserLogs->hasFocus())
-    {
-        if (event->key() == Qt::Key_Alt) // Alt jumps to the newest line
-        {
-            ui->textBrowserLogs->verticalScrollBar()->setValue(ui->textBrowserLogs->verticalScrollBar()->maximum());
-        }
-        else if (ui->checkBoxSendKey->isChecked())
-        {
-            if (!event->text().isEmpty())
-                sendText(event->text());
-        }
-    }
-    else if (chartHasFocus())
-    {
-        if (event->key() == Qt::Key_T)
-        {
-            ui->checkBoxEnableTracer->toggle();
-        }
-        else if (event->key() == Qt::Key_X)
-        {
-            ui->checkBoxAutoTrack->toggle();
-        }
-        else if (event->key() == Qt::Key_Y)
-        {
-            ui->checkBoxAutoRescaleY->toggle();
-        }
-        else if (event->key() == Qt::Key_Space || event->key() == Qt::Key_P)
-        {
-            pushButtonPauseChart->toggle();
-        }
-        else if (event->key() == Qt::Key_L)
-        {
-            ui->checkBoxShowLegend->toggle();
-        }
-    }
-
     if (event->key() == Qt::Key::Key_F1)
     {
         QWhatsThis::enterWhatsThisMode();

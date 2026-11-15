@@ -216,7 +216,7 @@ private:
     void openSettings();
     void applyOpenGl();
     void applyChartEngine();
-    bool chartHasFocus() const; // QCustomPlot or the Qt Graphs chart
+    bool handleChartShortcut(int key); // true if the key is a chart shortcut
     QSize chartSize() const;     // of the chart on screen
     QString withLogExtension(QString fileName) const;
     static constexpr const char *autoLogFileName = "%DateTime%_Log"; // the logger fills in the date

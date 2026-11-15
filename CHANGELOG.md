@@ -37,7 +37,8 @@ send, background file loading, and a long list of crash and data-correctness fix
 - Chart: a short drag could turn auto-scroll off, because the distance was measured from where the previous drag ended.
 - Log table "Export to CSV" did not escape quotes in cells, opened the dialog in the program folder and gave no feedback.
 - "Reset statistics" in the parser data table left the old min / max / mean / count on screen until new data arrived.
-- Qt Graphs chart on Qt 6.8 (used for the Windows and macOS builds): axes, ticks and labels had no plot area to draw in, and Space did not pause the chart.
+- Qt Graphs chart on Qt 6.8 (used for the Windows and macOS builds): axes, ticks and labels had no plot area to draw in.
+- Space did not pause the chart with Qt 6.8 (Windows and macOS builds): a group box around the chart took the key.
 
 - Settings window (Tools → Settings…, Ctrl+,): theme, chart refresh rate (30/60 fps) and line rendering (Smooth/Fast).
 - 3D orientation view (View → Change visualisation → 3D Orientation, Ctrl+9): a board rotated by the latest roll / pitch / yaw values, with configurable labels and degrees or radians. While it is shown, the demo device also streams roll / pitch / yaw. Drag to rotate the camera, mouse wheel to zoom, double-click to reset.

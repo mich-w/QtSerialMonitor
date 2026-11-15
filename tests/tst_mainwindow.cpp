@@ -24,6 +24,7 @@
 
 #include <QSettings>
 #include <QTemporaryDir>
+#include <QNetworkDatagram>
 #include <QUdpSocket>
 #include <QtTest>
 
@@ -928,6 +929,48 @@ private slots:
         cancel->click();
         QTRY_VERIFY(logText().contains("Import cancelled"));
         QTRY_VERIFY(!window->findChild<QProgressDialog *>("importProgress"));
+    }
+
+    void chartShortcuts() // Qt 6.8's QGroupBox swallowed Space on its way to the main window
+    {
+        auto *chart = find<QCustomPlot>("widgetChart");
+        auto *pause = find<QPushButton>("pushButtonPauseChart");
+        chart->setFocus();
+        QVERIFY(!pause->isChecked());
+        QTest::keyClick(chart, Qt::Key_Space);
+        QVERIFY(pause->isChecked());
+        QTest::keyClick(chart, Qt::Key_P);
+        QVERIFY(!pause->isChecked());
+
+        auto *legend = find<QCheckBox>("checkBoxShowLegend");
+        const bool shown = legend->isChecked();
+        QTest::keyClick(chart, Qt::Key_L);
+        QCOMPARE(legend->isChecked(), !shown);
+        legend->setChecked(shown);
+    }
+
+    void sendKeysFromTextView()
+    {
+        QUdpSocket receiver; // the app sends to the target port on localhost
+        QVERIFY(receiver.bind(QHostAddress(QHostAddress::LocalHost), quint16(0)));
+        find<QSpinBox>("spinBoxUDPTargetPort")->setValue(receiver.localPort());
+        find<QComboBox>("comboBoxUDPSendMode")->setCurrentText("LocalHost");
+        find<QComboBox>("comboBoxLineEnding")->setCurrentIndex(0);
+
+        auto *text = find<QPlainTextEdit>("textBrowserLogs");
+        find<QCheckBox>("checkBoxSendKey")->setChecked(true);
+        text->setFocus();
+        QTest::keyClicks(text, "a b");
+
+        QByteArray received; // one datagram per key, the space included
+        auto collect = [&]()
+        {
+            while (receiver.hasPendingDatagrams())
+                received += receiver.receiveDatagram().data();
+            return received;
+        };
+        QTRY_COMPARE(collect(), QByteArray("a b"));
+        find<QCheckBox>("checkBoxSendKey")->setChecked(false);
     }
 
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
