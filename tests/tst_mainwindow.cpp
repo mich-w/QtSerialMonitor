@@ -216,6 +216,50 @@ private slots:
         QCOMPARE(logTable()->rowCount(), 2);
     }
 
+    void samplesLinkedWithChart()
+    {
+        showSamples();
+        for (const char *line : {"k 1", "k 2", "k 3", "k 4"})
+        {
+            send(line);
+            QTest::qWait(30);
+        }
+        QTRY_COMPARE(logTable()->rowCount(), 4);
+        auto *chart = find<QCustomPlot>("widgetChart");
+        auto *view = find<QTableView>("tableWidgetLogTable");
+        const double key1 = chart->graph(0)->dataMainKey(1);
+
+        // Current row -> marker on the chart.
+        view->setCurrentIndex(logTable()->index(1, 1));
+        auto *marker = chart->findChild<QCPItemStraightLine *>("sampleMarker");
+        QVERIFY(marker && marker->visible());
+        QCOMPARE(marker->point1->key(), key1);
+
+        // Double-click -> the chart shows that time and stops following live data.
+        find<QCheckBox>("checkBoxAutoTrack")->setChecked(true);
+        const double width = chart->xAxis->range().size();
+        const QRect cell = view->visualRect(logTable()->index(1, 1));
+        QTest::mouseClick(view->viewport(), Qt::LeftButton, {}, cell.center()); // a double-click starts with a click
+        QTest::mouseDClick(view->viewport(), Qt::LeftButton, {}, cell.center());
+        QVERIFY(!find<QCheckBox>("checkBoxAutoTrack")->isChecked());
+        QVERIFY(qAbs(chart->xAxis->range().center() - key1) < 1e-9);
+        QVERIFY(qAbs(chart->xAxis->range().size() - width) < 1e-9);
+
+        // "Go to chart view" selects the first row of what the chart shows.
+        const double key2 = chart->graph(0)->dataMainKey(2);
+        chart->xAxis->setRange(key2 - 0.001, key2 + 10);
+        find<QPushButton>("pushButtonSamplesGoToChart")->click();
+        QCOMPARE(view->currentIndex().row(), 2);
+        QVERIFY(!find<QCheckBox>("checkBoxAutoScrollLogTable")->isChecked());
+        QCOMPARE(marker->point1->key(), key2);
+        find<QCheckBox>("checkBoxAutoScrollLogTable")->setChecked(true);
+        find<QCheckBox>("checkBoxAutoTrack")->setChecked(true);
+
+        // Clearing the chart removes the marker.
+        find<QPushButton>("pushButtonClearGraphs")->click();
+        QTRY_VERIFY(!marker->visible());
+    }
+
     void settingsFromOlderVersionLoad()
     {
         {
@@ -588,6 +632,16 @@ private slots:
         QCOMPARE(view->seriesCount(), 0);
 
         find<QPushButton>("pushButtonPauseChart")->setChecked(false);
+
+        // The Samples marker is mirrored.
+        send("x 5");
+        QTRY_VERIFY(find<QCustomPlot>("widgetChart")->graphCount() > 0); // Clear All removed the graphs
+        showSamples();
+        QTRY_VERIFY(logTable()->rowCount() > 0);
+        find<QTableView>("tableWidgetLogTable")->setCurrentIndex(logTable()->index(0, 0));
+        QVERIFY(!qIsNaN(view->rootObject()->property("markerX").toDouble()));
+        find<QTableView>("tableWidgetLogTable")->setCurrentIndex(QModelIndex());
+        QVERIFY(qIsNaN(view->rootObject()->property("markerX").toDouble()));
 
         // Chart shortcuts work on the Qt Graphs chart too.
         view->setFocus();

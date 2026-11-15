@@ -15,6 +15,8 @@ Rectangle {
     property color legendBackground: "#e6ffffff"
     property color legendBorder: "#d0d5dd"
     property bool legendVisible: true
+    property real markerX: NaN // time selected in the Samples table, NaN = none
+    property color markerColor: "#3b82f6"
     property var legendModel: [] // [{ name, color, visible }], set from C++
 
     // Visible ranges, set from C++: X in seconds of the day, Y in data units.
@@ -139,6 +141,16 @@ Rectangle {
         // Hidden completely so Qt Graphs reserves no room for them; they still map the data.
         axisX: ValueAxis { objectName: "axisX"; visible: false; labelsVisible: false; lineVisible: false; gridVisible: false; subGridVisible: false }
         axisY: ValueAxis { objectName: "axisY"; visible: false; labelsVisible: false; lineVisible: false; gridVisible: false; subGridVisible: false }
+    }
+
+    // ----- Marker for the row selected in the Samples table ----- //
+    Rectangle {
+        visible: !isNaN(root.markerX) && root.markerX >= root.xMin && root.markerX <= root.xMax
+        x: visible ? Math.round(root.xPos(root.markerX)) : 0
+        y: Math.round(root.plot.y)
+        width: 1
+        height: Math.round(root.plot.height)
+        color: root.markerColor
     }
 
     // ----- Axes box with inward ticks, like QCustomPlot's full axes box ----- //

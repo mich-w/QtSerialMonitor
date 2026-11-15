@@ -1059,6 +1059,9 @@ void MainWindow::applyTheme()
             item->setTextColor(legendTextColor(plot->graph(i)->visible()));
     }
 
+    if (sampleMarker)
+        sampleMarker->setPen(QPen(colors.accent, 1));
+
     if (phaseTracer != nullptr)
     {
         phaseTracer->setPen(QPen(colors.warning, 1.5));
@@ -1150,6 +1153,15 @@ void MainWindow::setupTable()
     // Clear, load, show/hide... all end in a replot; the table follows while it is shown.
     connect(ui->widgetChart, &QCustomPlot::afterReplot, this, &MainWindow::refreshSamplesTable);
     connect(ui->tabWidgetTableView, &QTabWidget::currentChanged, this, &MainWindow::refreshSamplesTable);
+
+    // Linked with the chart: the current row is marked on it, double-click shows that time.
+    connect(ui->tableWidgetLogTable->selectionModel(), &QItemSelectionModel::currentRowChanged, this, [this](const QModelIndex &current)
+            { showSampleMarker(current.isValid() ? chartDataModel.keyAt(current.row()) : std::numeric_limits<double>::quiet_NaN()); });
+    connect(&chartDataModel, &QAbstractItemModel::modelReset, this, [this]()
+            { showSampleMarker(std::numeric_limits<double>::quiet_NaN()); });
+    connect(ui->tableWidgetLogTable, &QTableView::doubleClicked, this, [this](const QModelIndex &index)
+            { showChartAtTime(chartDataModel.keyAt(index.row())); });
+    connect(ui->pushButtonSamplesGoToChart, &QPushButton::clicked, this, &MainWindow::goToChartViewInSamples);
 }
 
 namespace
@@ -1374,6 +1386,51 @@ void MainWindow::clearParsedDataTable()
     ui->tableWidgetParsedData->clearContents();
     ui->tableWidgetParsedData->setRowCount(0);
     channelStats.clear();
+}
+
+void MainWindow::showSampleMarker(double key)
+{
+    if (std::isnan(key))
+    {
+        if (!sampleMarker || !sampleMarker->visible())
+            return;
+        sampleMarker->setVisible(false);
+    }
+    else
+    {
+        if (!sampleMarker)
+        {
+            sampleMarker = new QCPItemStraightLine(ui->widgetChart);
+            sampleMarker->setObjectName("sampleMarker");
+            sampleMarker->setSelectable(false);
+            sampleMarker->setPen(QPen(ThemeManager::instance().colors().accent, 1));
+        }
+        sampleMarker->point1->setCoords(key, 0);
+        sampleMarker->point2->setCoords(key, 1);
+        sampleMarker->setVisible(true);
+    }
+    ui->widgetChart->replot(); // also updates the Qt Graphs chart
+}
+
+void MainWindow::showChartAtTime(double key)
+{
+    if (std::isnan(key))
+        return;
+    ui->checkBoxAutoTrack->setChecked(false); // stay there instead of following live data
+    const double width = ui->widgetChart->xAxis->range().size();
+    ui->widgetChart->xAxis->setRange(key - width / 2, key + width / 2);
+    ui->widgetChart->replot();
+}
+
+void MainWindow::goToChartViewInSamples()
+{
+    const int row = chartDataModel.rowForKey(ui->widgetChart->xAxis->range().lower);
+    if (row >= chartDataModel.rowCount())
+        return;
+    ui->checkBoxAutoScrollLogTable->setChecked(false); // would jump back to the newest row
+    const QModelIndex index = chartDataModel.index(row, 0);
+    ui->tableWidgetLogTable->setCurrentIndex(index);
+    ui->tableWidgetLogTable->scrollTo(index, QAbstractItemView::PositionAtTop);
 }
 
 void MainWindow::refreshSamplesTable()

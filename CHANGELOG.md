@@ -12,6 +12,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Light and dark themes, or follow the system setting; theme button in the menu bar and View → Theme.
 - Main toolbar: Connect, Pause, Clear, Save log, Export chart.
 - Tools menu with *Demo device*; the demo device is listed among serial devices only while it runs.
+- Samples table linked with the chart: the selected row is marked with a vertical line, double-click a row to show that time on the chart, "Go to chart view" jumps to the rows the chart shows.
 
 ### Fixed
 - Exporting large data to CSV took hours: 200 000 rows now take well under a second (#7).

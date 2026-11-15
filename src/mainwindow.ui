@@ -1447,6 +1447,16 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </spacer>
                    </item>
+                   <item row="1" column="3">
+                    <widget class="QPushButton" name="pushButtonSamplesGoToChart">
+                     <property name="text">
+                      <string>Go to chart view</string>
+                     </property>
+                     <property name="toolTip">
+                      <string>Select the first row of the time shown on the chart. Double-click a row to show its time on the chart.</string>
+                     </property>
+                    </widget>
+                   </item>
                    <item row="1" column="4">
                     <widget class="QPushButton" name="pushButtonExportLogTableToCSV">
                      <property name="text">

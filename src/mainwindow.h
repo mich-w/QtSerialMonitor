@@ -44,6 +44,9 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QMessageBox>
+
+#include <cmath>
+#include <limits>
 #include <QScrollBar>
 #include <QSettings>
 #include <QStandardPaths>
@@ -254,6 +257,10 @@ private:
     void loadFromRAM(bool loadText);
     void processChart(QStringList labelList, QList<double> numericDataList, QList<long> timeStampsList);
     void refreshSamplesTable();
+    void showSampleMarker(double key);     // vertical line on the chart, NaN hides it
+    void showChartAtTime(double key);      // centre the chart on this time
+    void goToChartViewInSamples();         // select the first row of the time the chart shows
+    QPointer<QCPItemStraightLine> sampleMarker;
     void processLogWrite(QString rawLine, QStringList labelList, QList<double> dataList, QList<long> timeList);
     void processTable(QStringList labels, QList<double> values, QList<long> timeStamps);
     void clearParsedDataTable();

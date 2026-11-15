@@ -10,6 +10,7 @@
 #include <QValueAxis>
 
 #include <cmath>
+#include <limits>
 
 GraphsChartView::GraphsChartView(QWidget *parent) : QQuickWidget(parent)
 {
@@ -152,6 +153,13 @@ void GraphsChartView::sync(QCustomPlot *source)
         root->setProperty("xMax", xRange.upper);
         root->setProperty("yMin", yRange.lower);
         root->setProperty("yMax", yRange.upper);
+
+        // Marker of the Samples table: a QCustomPlot item, mirrored here.
+        double marker = std::numeric_limits<double>::quiet_NaN();
+        auto *line = source->findChild<QCPItemStraightLine *>("sampleMarker", Qt::FindDirectChildrenOnly);
+        if (line && line->visible())
+            marker = line->point1->key();
+        root->setProperty("markerX", marker);
     }
     axisY->setMin(yRange.lower);
     axisY->setMax(yRange.upper);
@@ -173,6 +181,7 @@ void GraphsChartView::applyTheme(bool fastLines)
         root->setProperty("mutedTextColor", colors.mutedText);
         root->setProperty("legendBackground", legendBackground);
         root->setProperty("legendBorder", colors.border);
+        root->setProperty("markerColor", colors.accent);
     }
 
     // Series are created with these, but the theme or line quality may change later.
