@@ -24,7 +24,7 @@ jobs:
           - qt: 5
             packages: qtbase5-dev libqt5serialport5-dev libgl-dev
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -44,7 +44,7 @@ jobs:
     name: Windows (Qt 6)
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: jurplel/install-qt-action@v4
         with:
@@ -69,16 +69,16 @@ jobs:
           Copy-Item build/Release/QtSerialMonitor.exe dist/
           windeployqt --release --no-translations --no-opengl-sw --qmldir src/qml dist/QtSerialMonitor.exe
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: QtSerialMonitor-windows-x64
           path: dist/
 
   macos:
     name: macOS (Qt 6)
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: jurplel/install-qt-action@v4
         with:
@@ -98,7 +98,7 @@ jobs:
       - name: Package
         run: macdeployqt build/QtSerialMonitor.app -qmldir=src/qml -dmg
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: QtSerialMonitor-macos
           path: build/QtSerialMonitor.dmg
@@ -111,7 +111,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
 
@@ -121,7 +121,7 @@ jobs:
       - name: Rename macOS image
         run: mv artifacts/QtSerialMonitor-macos/QtSerialMonitor.dmg "QtSerialMonitor-${GITHUB_REF_NAME}-macos.dmg"
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           draft: true
           generate_release_notes: true
