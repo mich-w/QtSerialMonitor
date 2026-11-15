@@ -3,7 +3,12 @@
 All notable changes to this project are documented here.
 Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] – towards 2.0.0
+## [2.0.0]
+
+The first release since 1.53: a modernised, Qt 6 based QtSerialMonitor. Highlights of 1.6.0 – 2.0.0:
+Qt 6 and CMake, light/dark themes, a toolbar, demo mode, auto-reconnect, Arduino Serial Plotter and
+Teleplot formats, chart pause and history, per-channel statistics, command history, macros, periodic
+send, background file loading, and a long list of crash and data-correctness fixes.
 
 ### Added
 - Changelog tab in Help → Application Info; Help → What's new opens it.
