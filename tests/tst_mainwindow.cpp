@@ -692,6 +692,31 @@ private slots:
         find<QComboBox>("comboBoxLogFormat")->setCurrentIndex(0);
     }
 
+    void highlightIsReplaced() // old highlights used to stay when searching for something else
+    {
+        auto *text = find<QPlainTextEdit>("textBrowserLogs");
+        text->setPlainText("alpha beta alpha");
+        auto formatAt = [text](int position)
+        {
+            QTextCursor cursor(text->document());
+            cursor.setPosition(position + 1); // format of the character before the cursor
+            return cursor.charFormat();
+        };
+
+        find<QLineEdit>("lineEditHighlight")->setText("alpha");
+        QVERIFY(QMetaObject::invokeMethod(window, "on_lineEditHighlight_returnPressed"));
+        QCOMPARE(formatAt(0).fontWeight(), int(QFont::Bold));
+        QCOMPARE(formatAt(11).fontWeight(), int(QFont::Bold));
+        QVERIFY(formatAt(7).fontWeight() != int(QFont::Bold));
+
+        find<QLineEdit>("lineEditHighlight")->setText("beta");
+        QVERIFY(QMetaObject::invokeMethod(window, "on_lineEditHighlight_returnPressed"));
+        QVERIFY(formatAt(0).fontWeight() != int(QFont::Bold));
+        QVERIFY(!formatAt(0).hasProperty(QTextFormat::BackgroundBrush));
+        QCOMPARE(formatAt(7).fontWeight(), int(QFont::Bold));
+        find<QLineEdit>("lineEditHighlight")->clear();
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");

@@ -2343,9 +2343,9 @@ void MainWindow::on_highlighLog(QString searchString)
     QTextDocument *document = ui->textBrowserLogs->document();
     QTextCursor highlightCursor(document);
 
-    // clear formatting !
-    highlightCursor.setPosition(document->characterCount() - 1, QTextCursor::KeepAnchor);
-    highlightCursor.mergeCharFormat(QTextCharFormat());
+    // Remove the previous highlights (merging an empty format would change nothing).
+    highlightCursor.select(QTextCursor::Document);
+    highlightCursor.setCharFormat(QTextCharFormat());
     highlightCursor.setPosition(0, QTextCursor::MoveAnchor);
 
     if (!searchString.isEmpty())
@@ -2362,10 +2362,7 @@ void MainWindow::on_highlighLog(QString searchString)
             highlightCursor = document->find(searchString, highlightCursor);
 
             if (!highlightCursor.isNull())
-            {
-                highlightCursor.movePosition(QTextCursor::NextCell, QTextCursor::KeepAnchor);
                 highlightCursor.mergeCharFormat(colorFormat);
-            }
         }
     }
 }
