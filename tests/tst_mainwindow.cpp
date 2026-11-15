@@ -107,11 +107,22 @@ private slots:
     {
         find<QSpinBox>("spinBoxRemoveOldLabels")->setValue(3);
 
-        // "Max missing" counts processing batches, so give each line its own batch.
+        // "Max missing" counts processing batches, so give each line its own batch:
+        // send the next line only after the previous one was plotted (every line has a "b").
+        int sent = 0;
+        auto pointsOfB = [this]()
+        {
+            auto *chart = find<QCustomPlot>("widgetChart");
+            for (auto i = 0; i < chart->graphCount(); ++i)
+                if (chart->graph(i)->name() == "b")
+                    return chart->graph(i)->dataCount();
+            return 0;
+        };
         for (const char *line : {"a 1 b 2 c 3", "a 4 b 5", "b 6", "b 7", "b 8", "b 9 d +1e2"})
         {
             send(line);
-            QTest::qWait(30);
+            ++sent;
+            QTRY_COMPARE(pointsOfB(), sent);
         }
 
         // a and c disappear after more than 3 updates without data
