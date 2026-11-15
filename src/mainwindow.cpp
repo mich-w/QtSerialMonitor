@@ -626,6 +626,10 @@ void MainWindow::setupGUI()
             ui->comboBoxBaudRates->addItem(QString::number(item));
 
         ui->comboBoxBaudRates->setCurrentIndex(ui->comboBoxBaudRates->count() / 2); // select middle
+
+        // Any rate can be typed in, e.g. 1152000 or 2000000 (issue #5).
+        ui->comboBoxBaudRates->setValidator(new QIntValidator(1, 100000000, ui->comboBoxBaudRates));
+        ui->comboBoxBaudRates->setToolTip("Pick a standard baud rate or type any other, e.g. 2000000");
     }
     // ----------------------------------------------------------------- //
 
@@ -1152,7 +1156,7 @@ namespace
     "checkBoxEnableTracer", "checkBoxRAMClearChart", "checkBoxScrollLogEnableSorting",
     "checkBoxScrollToButtom", "checkBoxSendKey", "checkBoxShowControlChars",
     "checkBoxSimplifyLog", "checkBoxTableAutoResize", "checkBoxTruncateFileOnSave",
-    "checkBoxWrapText", "comboBoxAddTextMode", "comboBoxBaudRates",
+    "checkBoxWrapText", "comboBoxAddTextMode",
     "comboBoxClockSource", "comboBoxDataBits", "comboBoxExternalTimeFormat",
     "comboBoxFlowControl", "comboBoxGraphDisplayMode", "comboBoxLineEnding",
     "comboBoxLoggingMode", "comboBoxMessagesDisplayMode", "comboBoxParity",
@@ -1216,6 +1220,13 @@ void MainWindow::settingsLoadAll()
     // ----- Widgets ----- //
     WidgetSettings::load(settings, this, persistentWidgets);
 
+    // Baud rate is saved as the number, so typed-in custom rates survive a restart.
+    // Older versions saved the list position.
+    if (settings.contains("GUI_Elements/comboBoxBaudRates.text"))
+        ui->comboBoxBaudRates->setCurrentText(settings.value("GUI_Elements/comboBoxBaudRates.text").toString());
+    else if (const int index = settings.value("GUI_Elements/comboBoxBaudRates.currentIndex", -1).toInt(); index >= 0 && index < ui->comboBoxBaudRates->count())
+        ui->comboBoxBaudRates->setCurrentIndex(index);
+
     if (!ui->lineEditLoadFilePath->text().isEmpty())
     {
         QFile file(ui->lineEditLoadFilePath->text());
@@ -1244,6 +1255,7 @@ void MainWindow::settingsSaveAll()
     macroBar->save(settings);
 
     WidgetSettings::save(settings, this, persistentWidgets);
+    settings.setValue("GUI_Elements/comboBoxBaudRates.text", ui->comboBoxBaudRates->currentText());
 
     settings.sync();
 }

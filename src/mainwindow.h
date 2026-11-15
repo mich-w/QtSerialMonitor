@@ -38,6 +38,7 @@
 #include <QPointer>
 #include <QMainWindow>
 #include <QFormLayout>
+#include <QIntValidator>
 #include <QGroupBox>
 #include <QScreen>
 #include <QToolBar>

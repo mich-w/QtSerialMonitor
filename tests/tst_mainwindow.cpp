@@ -597,6 +597,22 @@ private slots:
         QVERIFY2(sameTime < graph->dataCount() / 10, qPrintable(QString("%1 of %2 points share a time stamp").arg(sameTime).arg(graph->dataCount())));
     }
 
+    void customBaudRateIsKept() // issue #5
+    {
+        auto *baud = find<QComboBox>("comboBoxBaudRates");
+        QVERIFY(baud->isEditable());
+
+        int position = 0;
+        QString text = "12x34";
+        QCOMPARE(baud->validator()->validate(text, position), QValidator::Invalid); // numbers only
+
+        baud->setCurrentText("2000000"); // not in the standard list
+        QVERIFY(QMetaObject::invokeMethod(window, "on_aboutToQuitSlot"));
+
+        MainWindow restarted;
+        QCOMPARE(restarted.findChild<QComboBox *>("comboBoxBaudRates")->currentText(), QString("2000000"));
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");
