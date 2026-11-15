@@ -1354,6 +1354,17 @@ void MainWindow::refreshParsedDataTable()
     }
 }
 
+// Min / max / mean / count / rate start over; the table keeps its rows and last values.
+void MainWindow::resetChannelStatistics()
+{
+    channelStats.clear();
+    auto *table = ui->tableWidgetParsedData;
+    for (auto row = 0; row < table->rowCount(); ++row)
+        for (int column : {Min, Max, Mean, Count, Rate})
+            if (auto *item = table->item(row, column))
+                item->setText(QString());
+}
+
 void MainWindow::clearParsedDataTable()
 {
     ui->tableWidgetParsedData->clearContents();
@@ -2974,8 +2985,7 @@ void MainWindow::on_tableWidgetParsedData_customContextMenuRequested(const QPoin
                             ui->lineEditExternalClockLabel->setText(selected.first()->text());
                     });
 
-    menu->addAction("Reset statistics", this, [this]()
-                    { channelStats.clear(); });
+    menu->addAction("Reset statistics", this, &MainWindow::resetChannelStatistics);
 
     menu->addAction("Clear table contents", this, [this]()
                     { clearParsedDataTable(); });

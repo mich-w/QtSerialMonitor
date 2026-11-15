@@ -72,6 +72,7 @@ public slots:
     void handleFileLoaded(const FileReader::Result &result);
     void closeEvent(QCloseEvent *event) override;
 private slots:
+    void resetChannelStatistics();
     void on_aboutToQuitSlot();
     void on_action3D_orientation_triggered();
     void on_action50_50_view_triggered();

@@ -30,6 +30,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Logging: turning auto-logging off erased the log file name, and switching between TXT and CSV replaced "txt"/"csv" anywhere in the name (`my_txt_data.txt` became `my_csv_data.csv`).
 - Chart: a short drag could turn auto-scroll off, because the distance was measured from where the previous drag ended.
 - Log table "Export to CSV" did not escape quotes in cells, opened the dialog in the program folder and gave no feedback.
+- "Reset statistics" in the parser data table left the old min / max / mean / count on screen until new data arrived.
 
 - Settings window (Tools → Settings…, Ctrl+,): theme, chart refresh rate (30/60 fps) and line rendering (Smooth/Fast).
 - 3D orientation view (View → Change visualisation → 3D Orientation, Ctrl+9): a board rotated by the latest roll / pitch / yaw values, with configurable labels and degrees or radians. While it is shown, the demo device also streams roll / pitch / yaw. Drag to rotate the camera, mouse wheel to zoom, double-click to reset.

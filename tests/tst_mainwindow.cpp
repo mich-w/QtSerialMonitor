@@ -762,6 +762,26 @@ private slots:
         autoTrack->setChecked(true);
     }
 
+    void resetStatisticsClearsTable() // the old numbers used to stay until new data arrived
+    {
+        auto *table = find<QTableWidget>("tableWidgetParsedData");
+        send("v 1");
+        QTest::qWait(30);
+        send("v 3");
+        QTRY_VERIFY(table->rowCount() == 1 && table->item(0, 5) && table->item(0, 5)->text() == "2"); // Count
+        QCOMPARE(table->item(0, 3)->text(), QString("3"));                                           // Max
+
+        QVERIFY(QMetaObject::invokeMethod(window, "resetChannelStatistics"));
+        QCoreApplication::processEvents();
+        QCOMPARE(table->item(0, 5)->text(), QString());
+        QCOMPARE(table->item(0, 3)->text(), QString());
+        QCOMPARE(table->item(0, 1)->text(), QString("3")); // last value stays
+
+        send("v 2");
+        QTRY_COMPARE(table->item(0, 5)->text(), QString("1"));
+        QCOMPARE(table->item(0, 3)->text(), QString("2"));
+    }
+
     void tracerToggleAndClearAll() // used to leave dangling pointers inside QCustomPlot
     {
         send("x 1 y 2");
